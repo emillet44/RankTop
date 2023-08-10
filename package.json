@@ -20,7 +20,10 @@
     "@types/node": "20.3.1",
     "@types/react": "18.2.13",
     "@types/react-dom": "18.2.6",
+<<<<<<< HEAD
     "algoliasearch": "^4.19.1",
+=======
+>>>>>>> 961814b0f3497d03dae7f16f8c8af38e4a3375da
     "dependencies": "^0.0.1",
     "eslint": "8.43.0",
     "eslint-config-next": "13.4.7",
