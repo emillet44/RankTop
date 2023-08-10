@@ -8,6 +8,8 @@ CREATE TABLE "Post" (
     "rank4" TEXT,
     "rank5" TEXT,
     "explain" TEXT,
+    "views" INTEGER DEFAULT 0,
+    "likes" INTEGER DEFAULT 0,
     "verified" BOOLEAN NOT NULL DEFAULT false,
     "authorId" TEXT,
 
@@ -50,9 +52,16 @@ CREATE TABLE "User" (
     "name" TEXT,
     "email" TEXT,
     "emailVerified" TIMESTAMP(3),
+    "username" TEXT,
     "image" TEXT,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Likes" (
+    "postid" TEXT NOT NULL,
+    "userId" TEXT NOT NULL
 );
 
 -- CreateTable
@@ -75,6 +84,12 @@ CREATE UNIQUE INDEX "Session_session_token_key" ON "Session"("session_token");
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Likes_postid_key" ON "Likes"("postid");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "VerificationToken_token_key" ON "VerificationToken"("token");
 
 -- CreateIndex
@@ -88,3 +103,6 @@ ALTER TABLE "Account" ADD CONSTRAINT "Account_user_id_fkey" FOREIGN KEY ("user_i
 
 -- AddForeignKey
 ALTER TABLE "Session" ADD CONSTRAINT "Session_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Likes" ADD CONSTRAINT "Likes_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
