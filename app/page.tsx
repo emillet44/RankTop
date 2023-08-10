@@ -3,7 +3,6 @@ import { Header } from "../components/Header"
 import { LoadVerified } from "@/components/loadposts";
 import { Footer } from "@/components/Footer";
 import ReactGA from "react-ga4";
-import { runReport } from "@/components/PageView";
 
 export default async function Home() {
 
@@ -11,8 +10,6 @@ export default async function Home() {
 
   ReactGA.initialize('G-JGMST5F7CL');
   ReactGA.send("pageview");
-
-  runReport();
 
   return (
     <>
