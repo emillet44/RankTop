@@ -1,9 +1,13 @@
 import Link from "next/link";
-import { LoadUnverified } from "../../components/loadposts";
-import { Header } from "@/components/Header";
+import { Header } from "@/components/headers/Header";
 import { Footer } from "@/components/Footer";
+import { LoadUnverified } from "@/components/serverActions/loadposts";
 
+//This page imports a different header that contains a search box specifically for searching unverified posts. This functionality may change
+//to a unified search box to reduce the number of excess one off headers. This page displays the tabs for post types, and on this page specifically
+//the "unverified" tab is highlighted.
 export default async function UnverifiedPosts() {
+
   const posts = await LoadUnverified();
 
   return (
@@ -21,11 +25,11 @@ export default async function UnverifiedPosts() {
             <Link href="/all" aria-current="page" className="hover:text-red-500 hover:border-b-2 border-neutral-400 text-3xl">All</Link>
           </li>
         </ul>
-        <div className="pt-4 px-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-10"> {posts?.map((list: any) => (
-          <div key={list.id}>
+        <div className=" pt-4 px-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-10"> {posts?.map((list: any) => (
+          <div className="outline rounded-md p-5 pb-4" key={list.id}>
             <Link href={`/post/${list.id}`}>
-              <button className="outline rounded-md h-52 w-full">
-                <form className="h-52 p-5 text-left">
+              <button className="h-40 w-full">
+                <div className="h-40 text-left">
                   <header className="capitalize text-2xl">{list.title}</header>
                   <ul className="list-inside list-decimal">
                     <li className="capitalize">{list.rank1}</li>
@@ -34,7 +38,7 @@ export default async function UnverifiedPosts() {
                     <li className="capitalize empty:hidden">{list.rank4}</li>
                     <li className="capitalize empty:hidden">{list.rank5}</li>
                   </ul>
-                </form>
+                </div>
               </button>
             </Link>
           </div>

@@ -1,24 +1,24 @@
-import { faXmark } from "@fortawesome/free-solid-svg-icons"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import Link from "next/link"
-import { Logout } from "./logout"
-import { SignState } from "./signinstate"
-import { AddUsername } from "./AddUsername"
+import { Logout } from "../logout"
+import { SignState } from "../serverActions/signinstate"
+import { AddUsername } from "../AddUsername"
+import { Search } from "../search/SearchBox"
 
+//This header is used by the /all page to display all posts, verified or not. Like every header, it also displays sign in state, and determines
+//whether the user has added a username or not. If not, it will employ the AddUsername component. The states array is widely used throughout the code
+//to store important states like sign in state, like state, username, email, etc. States[0] stores login state, and states[1] stores username state.
+//States[2] stores the actual username.
 export async function Header() {
 
   const states: any[] = await SignState();
 
   return (
-    <div className="flex justify-center pt-14 md:py-2 bg-slate-500">
-      <div className="grid grid-flow-col outline outline-2 rounded-md p-1">
+    <div className="flex justify-center pt-14 pb-2 lg:py-2 bg-slate-500">
+      <div className="grid grid-flow-col min-w-[330px] h-9 justify-center">
         <Link href="/">
           <button className="absolute left-2 top-3 text-4xl/7">DIGBTT</button>
         </Link>
-        <input type="text" placeholder="Search" className="w-80 h-7 bg-slate-500 outline-none pl-1 peer" />
-        <button className="peer-placeholder-shown:invisible">
-          <FontAwesomeIcon icon={faXmark} className="w-6 h-6 flex justify-center" />
-        </button>
+        <Search />
         {states[1] && states[0] &&
           <label className="absolute right-52 top-3.5">{states[2]}</label>
         }

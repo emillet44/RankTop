@@ -1,15 +1,15 @@
 import Link from "next/link";
-import { Header } from "../components/Header"
-import { LoadVerified } from "@/components/loadposts";
+import { Header } from "../components/headers/Header"
 import { Footer } from "@/components/Footer";
-import ReactGA from "react-ga4";
+import { AlgoliaUpdate } from "@/components/search/AlgoliaUpdate";
+import { LoadVerified } from "@/components/serverActions/loadposts";
 
+//This is the homepage, very similar to /unverified and /all, but it displays verified posts by default. This is to prevent potentially NSFW posts from displaying
+//as soon as the user opens the website. Currently posts have to be manually marked as verified by me. This page displays the tabs for post types, and on this page 
+//specifically the "verified" tab is highlighted.
 export default async function Home() {
 
   const posts = await LoadVerified();
-
-  ReactGA.initialize('G-JGMST5F7CL');
-  ReactGA.send("pageview");
 
   return (
     <>
@@ -46,7 +46,7 @@ export default async function Home() {
         ))}
         </div>
       </div>
-
+      
       <Footer />
     </>
   )

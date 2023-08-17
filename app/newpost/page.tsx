@@ -1,16 +1,18 @@
-import { Header } from "@/components/NewPostHeader";
+import { Header } from "@/components/headers/NewPostHeader";
 import { CSForm } from "../../components/CSForm";
-import ReactGA from "react-ga4";
+import { Footer } from "@/components/Footer";
 
+//This page displays under the /newpost url, and calls the header and CSForm functions. Due to the way that Nextjs renders components, this page
+//had to work like this to avoid the fetch waterfall error, which happens when server actions are called during the initial render of a client component.
+//Importing CSForm, a client component, allows the page to be rendered as a server component, which can safely call server actions during the initial render, while
+//still employing client interactivity from CSForm.
 export default function NewPost() {
-
-  ReactGA.initialize('G-JGMST5F7CL');
-  ReactGA.send({hitType: "pageview", page: "/newpost"});
 
   return (
     <>
       <Header />
-      <CSForm></CSForm>
+      <CSForm />
+      <Footer />
     </>
   )
 }

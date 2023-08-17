@@ -2,10 +2,11 @@
 
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth/next"
-import { authOptions } from "../app/api/auth/[...nextauth]/route"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 let authorid: any;
 
+//This server action will upload a list to the database, and it also loads the sign in state to determine whether to add an author to the post or not.
 export async function newList(formData: FormData) {
 
   authorid = null;

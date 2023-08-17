@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+//This function just holds the links to common pages like About, FAQ, and Report Bugs, and is the same size as the header.
 export function Footer() {
   return (
     <>

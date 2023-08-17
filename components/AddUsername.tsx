@@ -1,10 +1,15 @@
 'use client'
 
 import { useState } from "react";
-import { CreateUsername, UniqueUsername } from "./signinstate";
+import { CreateUsername, UniqueUsername } from "./serverActions/username";
 import { useRouter } from "next/navigation";
 
-
+//This function starts by initializing state variables and the Nextjs router. When the "Add Username" button is clicked, the toggleForm function is called
+//which opens the form if it was closed, or closes all the forms if any were open. As soon as the user types in the input, characters are validated using
+//regex in checkChars, replacing invalid characters with "". When the continue button is clicked, checkUnique is called, which either displays the notunique
+//form that says the username is already taken, or the confirmopen form, that asks if the user is sure of this username as its permanent, and displays a back
+//and submit button. If the back button is clicked, the base form with the username input is shown again, and if the submit button is clicked, newUsername
+//is called which adds the username to the database and silently refreshes the page(similar to ctrl + r but the page never goes blank) to display the username.
 export function AddUsername() {
 
   const [formopen, setFormOpen] = useState(Boolean);
@@ -72,7 +77,7 @@ export function AddUsername() {
     <>
       <button onClick={toggleForm} className="hover:outline outline-2 py-2 px-2 rounded-sm peer">Add Username</button>
       {formopen && !confirmopen && !notunique &&
-        <div className="absolute top-20 outline rounded-lg w-64 p-4">
+        <div className="absolute top-32 lg:top-20 outline rounded-lg w-64 p-4">
           <div className="grid grid-cols-1 gap-2 grid-flow-row auto-rows-auto">
             <label>Username</label>
             <input name="username" id="username" value={inputValue} onChange={checkChars} className="outline outline-2 rounded-sm" maxLength={24}></input>

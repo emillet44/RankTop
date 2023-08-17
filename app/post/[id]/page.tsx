@@ -1,20 +1,23 @@
 import { AddLike } from "@/components/AddLike";
-import { Header } from "@/components/PostHeader";
+import { Header } from "@/components/headers/Header";
 import { Footer } from "@/components/Footer";
 import { prisma } from "@/lib/prisma";
-import ReactGA from "react-ga4";
+import { runReport } from "@/components/serverActions/pageview";
 
+//This is a dynamic page that displays posts when users click on them from homepage, unverified, or all, or after they submit a post. 
+//It recieves the post id as a parameter and fetches the post using the findUnique Prisma API. Then it creates a Google Analytics report on the current
+//post id to fetch the total number of pageviews this page has(temp solution, better to populate database with views instead). It calls its own "PostHeader"
+//(slightly different than other headers, needed to be another component), and AddLikes to manage the like state and the like counter. It will also conditionally
+//render "Explanation" if there is an explanation or not.
 export default async function Post({ params }: { params: { id: string } }) {
 
   const post = await prisma.post.findUnique({
     where: { id: params.id },
   });
+
+  const views = await runReport(`/post/${params.id}`);
   
   if (post !== null) {
-
-    ReactGA.initialize('G-JGMST5F7CL');
-    ReactGA.send({hitType: "pageview", page: `/post/${params.id}`});
-
     return (
       <>
         <Header />
@@ -30,6 +33,7 @@ export default async function Post({ params }: { params: { id: string } }) {
               <li className="text-xl outline-none p-2 w-11/12 empty:hidden">{post?.rank4}</li>
               <li className="text-xl outline-none p-2 w-11/12 empty:hidden">{post?.rank5}</li>
             </ul>
+            <header className="w-40 pt-2 text-lg">{views} views</header>
             <div>
               <AddLike likes={post?.likes} postid={params.id} />
             </div>

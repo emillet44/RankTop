@@ -1,9 +1,16 @@
 'use client'
 
 import { useState } from "react"
-import { newList } from "./listupload"
+import { newList } from "./serverActions/listupload"
 import { useRouter } from "next/navigation"
 
+//This function starts by intializing an unfortunate amount of state variables and the Nextjs router. The component initially renders with two ranks, and when the
+//select element is changed, getInput is called and the number of ranks is updated based on what was selected. When the "Add Explanation" button is clicked, toggleExp
+//is called, the button is renamed to "Remove Explanation", and a textarea element becomes visible. The reason for all the state variables is that each input needs to 
+//be individually validated for text content using regex. If only one state variable was used, all inputs would display the same text and they would not be individually
+//editable. Any inputs that are visible on the screen are required elements, for example if you fill out 2 ranks but there are 5 visible, you will be required to fill out
+//all 5 or lower the ranks back down to 2. When the submit button is clicked, the listupload server action is called, and when it's done, the router will route the user to 
+//the posts unique url based on its post id.
 export function CSForm() {
 
   const [selected, setSelected] = useState("");
@@ -65,7 +72,8 @@ export function CSForm() {
   }
 
   return (
-    <form id="newpost" action={subHandler} method="POST" className="flex justify-center pt-12 px-6 pb-16">
+    <div className="min-h-[calc(100vh-116px)]"> 
+<form id="newpost" action={subHandler} method="POST" className="flex justify-center pt-12 px-6 pb-16">
       <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 w-full max-w-2xl">
         <header className="text-3xl justify-self-left">New Post</header>
         <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 p-10 rounded-xl outline">
@@ -115,5 +123,7 @@ export function CSForm() {
         </div>
       </div>
     </form>
+    </div>
+    
   )
 }
