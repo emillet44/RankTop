@@ -17,8 +17,8 @@ export default function RootLayout({
 }) {
   return (
     <>
-      <Script async src="https://www.googletagmanager.com/gtag/js?id=G-JGMST5F7CL"></Script>
-      <Script>
+      <Script id="google-tag-manager" async src="https://www.googletagmanager.com/gtag/js?id=G-JGMST5F7CL"></Script>
+      <Script id="page-view-counter">
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
