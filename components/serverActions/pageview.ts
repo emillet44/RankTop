@@ -4,7 +4,15 @@ let propertyId = '402469134';
 
 const { BetaAnalyticsDataClient } = require('@google-analytics/data');
 
-const analyticsDataClient = new BetaAnalyticsDataClient();
+const options = {
+  credentials: {
+    client_email: process.env.GOOGLE_CLIENT_EMAIL,
+    private_key: process.env.GOOGLE_PROJECT_ID
+  },
+  projectId: process.env.GOOGLE_PRIVATE_KEY
+}
+
+const analyticsDataClient = new BetaAnalyticsDataClient(options);
 
 //This server action runs a Google Analytics report, with a date range, and a page path that matches the "pathname" given by the page that called the server action
 //and screenPageViews, which is the total number of views on the page from users(not unique)
