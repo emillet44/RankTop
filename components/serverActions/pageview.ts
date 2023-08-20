@@ -4,12 +4,14 @@ let propertyId = '402469134';
 
 const { BetaAnalyticsDataClient } = require('@google-analytics/data');
 
+const { privateKey } = JSON.parse(process.env.GOOGLE_PRIVATE_KEY || '{ privateKey: null }')
+
 const options = {
   credentials: {
     client_email: process.env.GOOGLE_CLIENT_EMAIL,
-    private_key: process.env.GOOGLE_PROJECT_ID
+    private_key: privateKey
   },
-  projectId: process.env.GOOGLE_PRIVATE_KEY
+  projectId: process.env.GOOGLE_PROJECT_ID
 }
 
 const analyticsDataClient = new BetaAnalyticsDataClient(options);
