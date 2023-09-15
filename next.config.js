@@ -4,5 +4,4 @@ module.exports = {
   experimental: {
     serverActions: true,
   },
-  distDir: 'build',
 }
