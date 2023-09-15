@@ -77,12 +77,12 @@ export function AddUsername() {
     <>
       <button onClick={toggleForm} className="hover:outline outline-2 py-2 px-2 rounded-sm peer">Add Username</button>
       {formopen && !confirmopen && !notunique &&
-        <div className="absolute top-32 lg:top-20 outline rounded-lg w-64 p-4">
+        <div className="absolute top-32 lg:top-20 outline outline-slate-700 rounded-lg w-64 p-4">
           <div className="grid grid-cols-1 gap-2 grid-flow-row auto-rows-auto">
-            <label>Username</label>
-            <input name="username" id="username" value={inputValue} onChange={checkChars} className="outline outline-2 rounded-sm" maxLength={24}></input>
+            <label className="text-slate-400">Username</label>
+            <input name="username" id="username" value={inputValue} onChange={checkChars} className="outline outline-2 outline-slate-700 rounded-sm bg-transparent text-offwhite" maxLength={24}></input>
             <div className="flex justify-end">
-              <button type="submit" onClick={checkUnique} disabled={disabled} className="outline outline-2 rounded-sm w-20 disabled:bg-red-600">Continue</button>
+              <button type="submit" onClick={checkUnique} disabled={disabled} className="outline outline-2 outline-slate-700 rounded-sm w-20 disabled:bg-red-900 bg-slate-50 bg-opacity-5 text-slate-400">Continue</button>
             </div>
           </div>
         </div>
@@ -96,13 +96,13 @@ export function AddUsername() {
       </div>
       }
       {confirmopen &&
-        <div className="absolute top-20 outline rounded-lg w-64 p-4">
+        <div className="absolute top-20 outline outline-slate-700 rounded-lg w-64 p-4">
           <div className="grid grid-cols-2 gap-2 grid-flow-row auto-rows-auto">
-            <label>{inputValue}</label>
-            <label className="col-span-2">This will be your permanent username. Are you sure?</label>
-            <button onClick={back} className="outline outline-2 rounded-sm w-16">Back</button>
+            <label className="text-slate-400">{inputValue}</label>
+            <label className="col-span-2 text-slate-400">This will be your permanent username. Are you sure?</label>
+            <button onClick={back} className="outline outline-2 outline-slate-700 rounded-sm w-16 bg-slate-50 bg-opacity-5 text-slate-400">Back</button>
             <div className="col-start-2 flex justify-end">
-              <button onClick={newUsername} className="outline outline-2 rounded-sm w-16">Submit</button>
+              <button onClick={newUsername} className="outline outline-2 outline-slate-700 rounded-sm w-16 bg-slate-50 bg-opacity-20 text-slate-400">Submit</button>
             </div>
           </div>
         </div>

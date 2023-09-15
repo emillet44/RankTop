@@ -16,7 +16,7 @@ export async function Header() {
     <div className="flex justify-center pt-14 pb-2 lg:py-2 bg-slate-500">
       <div className="grid grid-flow-col min-w-[330px] h-9 justify-center">
         <Link href="/">
-          <button className="absolute left-2 top-3 text-4xl/7">DIGBTT</button>
+          <button className="absolute left-2 top-3 text-4xl/7">RankTop</button>
         </Link>
         <Search />
         {states[1] && states[0] &&

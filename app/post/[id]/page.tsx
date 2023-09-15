@@ -22,18 +22,17 @@ export default async function Post({ params }: { params: { id: string } }) {
       <>
         <Header />
 
-        <div className="flex justify-center pt-12 px-6 pb-16 min-h-[calc(100vh-116px)]">
+        <div className="flex justify-center pt-16 px-6 pb-16 min-h-[calc(100vh-116px)] bg-gradient-radial from-emerald-950 to-slate-950">
           <div className="grid grid-cols-1 grid-flow-row auto-rows-min gap-6 w-full max-w-2xl">
-            <header className="text-3xl justify-self-left">Post</header>
-            <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-10 rounded-xl outline">
-              <header className="text-4xl outline-none">{post?.title}</header>
-              <li className="text-xl outline-none p-2 w-11/12">{post?.rank1}</li>
-              <li className="text-xl outline-none p-2 w-11/12">{post?.rank2}</li>
-              <li className="text-xl outline-none p-2 w-11/12 empty:hidden">{post?.rank3}</li>
-              <li className="text-xl outline-none p-2 w-11/12 empty:hidden">{post?.rank4}</li>
-              <li className="text-xl outline-none p-2 w-11/12 empty:hidden">{post?.rank5}</li>
+            <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-10 rounded-xl outline outline-slate-700">
+              <header className="text-4xl text-slate-400 outline-none">{post?.title}</header>
+              <li className="text-xl text-slate-400 outline-none p-2 w-11/12">{post?.rank1}</li>
+              <li className="text-xl text-slate-400 outline-none p-2 w-11/12">{post?.rank2}</li>
+              <li className="text-xl text-slate-400 outline-none p-2 w-11/12 empty:hidden">{post?.rank3}</li>
+              <li className="text-xl text-slate-400 outline-none p-2 w-11/12 empty:hidden">{post?.rank4}</li>
+              <li className="text-xl text-slate-400 outline-none p-2 w-11/12 empty:hidden">{post?.rank5}</li>
             </ul>
-            <header className="w-40 pt-2 text-lg">{views} views</header>
+            <header className="w-40 pt-2 text-lg text-slate-400">{views} views</header>
             <div>
               <AddLike likes={post?.likes} postid={params.id} />
             </div>

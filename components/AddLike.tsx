@@ -77,17 +77,17 @@ export function AddLike(props: any) {
         <>
           <button className="flex justify-self-left w-9 h-9" onClick={toggleLike}>
             {!states[2] && !isValidating &&
-              <FontAwesomeIcon icon={faHeart} className="w-9 h-9" />
+              <FontAwesomeIcon icon={faHeart} className="w-9 h-9" style={{color: "#334155",}} />
             }
             {states[2] && !isValidating &&
-              <FontAwesomeIcon icon={faHeartSolid} className="w-9 h-9" />
+              <FontAwesomeIcon icon={faHeartSolid} className="w-9 h-9" style={{color: "#334155",}} />
             }
             {isValidating &&
               <header className="w-40 pt-2 text-lg">...</header>
             }
           </button>
           {!isValidating &&
-            <header className="w-40 pt-2 text-lg">{states[3] + like} Likes</header>
+            <header className="w-40 pt-2 text-lg text-slate-400">{states[3] + like} Likes</header>
           }
           
         </>
@@ -98,13 +98,13 @@ export function AddLike(props: any) {
         <>
           <button className="flex justify-self-left w-9 h-9" onClick={toggleLike}>
             {!liked &&
-              <FontAwesomeIcon icon={faHeart} className="w-9 h-9" />
+              <FontAwesomeIcon icon={faHeart} className="w-9 h-9" style={{color: "#334155",}} />
             }
             {liked &&
-              <FontAwesomeIcon icon={faHeartSolid} className="w-9 h-9" />
+              <FontAwesomeIcon icon={faHeartSolid} className="w-9 h-9" style={{color: "#334155",}} />
             }
           </button>
-          <header className="w-40 pt-2 text-lg">{states[3] + like} Likes</header>
+          <header className="w-40 pt-2 text-lg text-slate-400">{states[3] + like} Likes</header>
         </>
       )
     }
@@ -112,16 +112,16 @@ export function AddLike(props: any) {
       return (
         <>
           <button className="flex justify-self-left w-9 h-9" onClick={toggleModal}>
-            <FontAwesomeIcon icon={faHeart} className="w-9 h-9" />
+            <FontAwesomeIcon icon={faHeart} className="w-9 h-9" style={{color: "#334155",}} />
           </button>
-          <header className="w-40 pt-2 text-lg">{states[3] + like} Likes</header>
+          <header className="w-40 pt-2 text-lg text-slate-400">{states[3] + like} Likes</header>
           {modalon &&
             <div className="fixed inset-0 flex items-center justify-center bg-gray-600/50">
               <div className="max-w-xs w-full px-2 py-2 grid grid-cols-1 grid-flow-row auto-rows-min gap-2 bg-white rounded-lg">
                 <button onClick={toggleModal} className="flex justify-self-end justify-center">
-                  <FontAwesomeIcon className="w-6 h-6" icon={faCircleXmark} />
+                  <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
                 </button>
-                <h1 className="text-3xl justify-self-center pb-2">Sign in to like posts</h1>
+                <h1 className="text-3xl justify-self-center pb-2 z-50">Sign in to like posts</h1>
                 <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postid}` })} className="px-4 py-2 w-24 justify-self-end bg-green-500 text-white rounded-full">Sign In</button>
               </div>
             </div>

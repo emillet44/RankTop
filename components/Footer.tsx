@@ -4,16 +4,16 @@ import Link from "next/link";
 export function Footer() {
   return (
     <>
-      <footer className="py-5 w-full text-center bg-slate-500">
-        <div className="grid grid-flow-col auto-cols-auto">
-          <Link href="/about">
-            <header className="">About</header>
+      <footer className="py-3 w-full text-center bg-slate-500">
+        <div className="grid grid-flow-col auto-cols-auto justify-center gap-44 h-10 items-center">
+          <Link href="/about" className="w-20 py-2">
+            <header>About</header>
           </Link>
-          <Link href="/faq">
-            <header className="">FAQ</header>
+          <Link href="/faq" className="w-16 py-2">
+            <header>FAQ</header>
           </Link>
-          <Link href="/bugs">
-            <header className="">Report Bugs</header>
+          <Link href="/feedback" className="w-36 py-2">
+            <header>Site Feedback</header>
           </Link>
         </div>
       </footer>

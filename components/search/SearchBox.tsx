@@ -11,11 +11,13 @@ import Link from "next/link";
 //This function holds the entire search box, with the Instant Search react widget, the searchbox itself with custom CSS, and the hits display with custom
 //CSS. The hits display shows results as buttons with the title and two ranks, and they are aligned and formatted with a div in this file. On click of the
 //result or the "Search for" button, users are redirected to a dynamic search result.
+
+const searchClient = algoliasearch('PL301U4XAW', '29040181c146c8aadf2e332b7fe43db9');
+
 export function Search() {
 
   const [search, setSearch] = useState("");
   
-  const searchClient = algoliasearch('PL301U4XAW', '29040181c146c8aadf2e332b7fe43db9');
   const router = useRouter();
 
   const saveQuery = (e: any) => {

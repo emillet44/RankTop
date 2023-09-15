@@ -1,7 +1,7 @@
 'use server'
 
 import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "@/app/api/auth/[...nextauth]/auth"
 import { prisma } from "@/lib/prisma"
 
 //This server action has a function to check if a users inputted username is unique or not, and a function to post the username to the database.
