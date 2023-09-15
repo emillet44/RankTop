@@ -17,7 +17,7 @@ export default async function ReportBugs() {
             <li>Google Analytics-tracks views on each post, and is best in class for providing important website traffic analytics.</li>
             <li>Algolia- the best choice for a free search platform, and it provides rich functionality like synonym matching, spelling error correction, and instant 
               searching, very easy.</li>
-            <li>MailerSend- A good SMTP for sending and receiving mail to your domain, while also providing helpful analytics. Currently it's only used for sending bug 
+            <li>MailerSend- A good SMTP for sending and receiving mail to your domain, while also providing helpful analytics. Currently it is only used for sending bug 
               reports.
             </li>
             <li>Tailwind- One of the best CSS frameworks for writing convenience and concise CSS. It provides high quality documentation and simplifies many common
