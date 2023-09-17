@@ -33,7 +33,7 @@ export function AddUsername() {
 
   const back = (e: any) => {
     e.preventDefault();
-    if(e.target.value == "uniqueback") {
+    if (e.target.value == "uniqueback") {
       setNotunique(false);
     }
     else {
@@ -41,7 +41,7 @@ export function AddUsername() {
     }
   }
 
-  const checkUnique = (e:any) => {
+  const checkUnique = (e: any) => {
     e.preventDefault();
 
     UniqueUsername(inputValue).then((result) => {
@@ -53,13 +53,13 @@ export function AddUsername() {
         setNotunique(false);
         setConfirmation(true);
       }
-    })    
+    })
   }
 
   const checkChars = (e: any) => {
     const result = e.target.value.replace(/[^a-z0-9-_]/gi, '');
     setInputValue(result);
-    if(e.target.value !== "") {
+    if (e.target.value !== "") {
       setDisabled(false);
     }
     else {
@@ -67,7 +67,7 @@ export function AddUsername() {
     }
   }
 
-  const newUsername = (e:any) => {
+  const newUsername = (e: any) => {
     CreateUsername(inputValue).then((result) => {
       router.refresh();
     });
@@ -77,7 +77,7 @@ export function AddUsername() {
     <>
       <button onClick={toggleForm} className="hover:outline outline-2 py-2 px-2 rounded-sm peer">Add Username</button>
       {formopen && !confirmopen && !notunique &&
-        <div className="absolute top-32 lg:top-20 outline outline-slate-700 rounded-lg w-64 p-4">
+        <div className="absolute top-28 lg:top-16 outline outline-slate-700 bg-slate-900 rounded-lg w-64 p-4">
           <div className="grid grid-cols-1 gap-2 grid-flow-row auto-rows-auto">
             <label className="text-slate-400">Username</label>
             <input name="username" id="username" value={inputValue} onChange={checkChars} className="outline outline-2 outline-slate-700 rounded-sm bg-transparent text-offwhite" maxLength={24}></input>
@@ -88,15 +88,15 @@ export function AddUsername() {
         </div>
       }
       {notunique &&
-        <div className="absolute top-20 outline rounded-lg w-64 p-4">
-        <div className="grid grid-cols-1 gap-2 grid-flow-row auto-rows-auto">
-          <label>Username Taken</label>
-          <button value="uniqueback" onClick={back} className="outline outline-2 rounded-sm w-24">Try Another</button>
+        <div className="absolute top-28 lg:top-16 outline outline-slate-700 bg-slate-900 rounded-lg w-64 p-4">
+          <div className="grid grid-cols-1 gap-2 grid-flow-row auto-rows-auto">
+            <label>Username Taken</label>
+            <button value="uniqueback" onClick={back} className="outline outline-2 rounded-sm w-24">Try Another</button>
+          </div>
         </div>
-      </div>
       }
       {confirmopen &&
-        <div className="absolute top-20 outline outline-slate-700 rounded-lg w-64 p-4">
+        <div className="absolute top-28 lg:top-16 outline outline-slate-700 bg-slate-900 rounded-lg w-64 p-4">
           <div className="grid grid-cols-2 gap-2 grid-flow-row auto-rows-auto">
             <label className="text-slate-400">{inputValue}</label>
             <label className="col-span-2 text-slate-400">This will be your permanent username. Are you sure?</label>

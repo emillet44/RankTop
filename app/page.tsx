@@ -14,7 +14,7 @@ export default async function Home() {
   return (
     <>
       <Header />
-      <div className="min-h-[calc(100vh-116px)] bg-gradient-radial from-emerald-950 to-slate-950">
+      <div className="min-h-[calc(100vh-116px)] bg-gradient-radial from-emerald-950 to-slate-950 bg-fixed">
         <ul className="flex pl-16 pt-16">
           <li className="mr-2">
             <Link href="/" aria-current="page" className="text-3xl border-b-2 border-white text-slate-400">Verified</Link>
@@ -27,17 +27,17 @@ export default async function Home() {
           </li>
         </ul>
         <div className=" pt-4 px-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-10"> {posts?.map((list: any) => (
-          <div className="outline outline-slate-700 rounded-md p-5 bg-slate-50 bg-opacity-5" key={list.id}>
+          <div className="outline outline-slate-700 rounded-md p-5 bg-slate-50 bg-opacity-5 hover:scale-105" key={list.id}>
             <Link href={`/post/${list.id}`}>
               <button className="h-44 w-full">
                 <div className="h-44 text-left">
-                  <header className="capitalize text-2xl text-slate-400">{list.title}</header>
+                <header className="capitalize text-2xl line-clamp-2 text-slate-400">{list.title}</header>
                   <ul className="list-inside list-decimal text-slate-400">
-                    <li className="capitalize text-slate-400">{list.rank1}</li>
+                    <li className="capitalize truncate text-slate-400">{list.rank1}</li>
                     <li className="capitalize">{list.rank2}</li>
-                    <li className="capitalize empty:hidden text-slate-400">{list.rank3}</li>
-                    <li className="capitalize empty:hidden text-slate-400">{list.rank4}</li>
-                    <li className="capitalize empty:hidden text-slate-400">{list.rank5}</li>
+                    <li className="capitalize empty:hidden truncate text-slate-400">{list.rank3}</li>
+                    <li className="capitalize empty:hidden truncate text-slate-400">{list.rank4}</li>
+                    <li className="capitalize empty:hidden truncate text-slate-400">{list.rank5}</li>
                   </ul>
                 </div>
               </button>

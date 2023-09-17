@@ -6,9 +6,9 @@ export default async function ReportBugs() {
   return (
     <>
       <Header />
-      <div className="min-h-[calc(100vh-116px)] bg-gradient-radial from-emerald-950 to-slate-950">
+      <div className="min-h-[calc(100vh-116px)] bg-gradient-radial from-emerald-950 to-slate-950 bg-fixed">
         <div className="flex justify-center py-20 px-6">
-          <ul className="p-5 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5 max-w-4xl w-full h-3/4 text-xl text-slate-400 space-y-5">
+          <ul className="p-5 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5 max-w-5xl w-full h-3/4 text-xl text-slate-400 space-y-5">
             <li>NextJS app router- Using the app router allows for high client interactivity while also preserving fast response times with React server components.</li>
             <li>Prisma- built in support of NextJS, and it also heavily simplifies database management with any major database system like PostgreSQL. It enables
               the construction of descriptive yet simple database schema, as well as easy access to perform CRUD functions with its APIs.</li>

@@ -21,7 +21,7 @@ export async function Header() {
         </Link>
         <Search />
         {states[1] && states[0] &&
-          <label className="absolute right-52 top-3.5">{states[2]}</label>
+          <label className="absolute right-28 top-3.5">{states[2]}</label>
         }
         {!states[1] && states[0] &&
           <>

@@ -97,10 +97,9 @@ export function AddLike(props: any) {
       return (
         <>
           <button className="flex justify-self-left w-9 h-9" onClick={toggleLike}>
-            {!liked &&
+            {!liked ? 
               <FontAwesomeIcon icon={faHeart} className="w-9 h-9" style={{color: "#334155",}} />
-            }
-            {liked &&
+              :
               <FontAwesomeIcon icon={faHeartSolid} className="w-9 h-9" style={{color: "#334155",}} />
             }
           </button>
