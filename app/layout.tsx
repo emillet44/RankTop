@@ -17,9 +17,12 @@ export default function RootLayout({
 }) {
   return (
     <>
-      <Script id="google-tag-manager" async src="https://www.googletagmanager.com/gtag/js?id=G-JGMST5F7CL"></Script>
-      <Script id="page-view-counter">
-        {`
+
+      <html lang="en">
+        <head>
+          <Script id="google-tag-manager" async src="https://www.googletagmanager.com/gtag/js?id=G-JGMST5F7CL"></Script>
+          <Script id="page-view-counter">
+            {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
@@ -27,8 +30,8 @@ export default function RootLayout({
           gtag('config', 'G-JGMST5F7CL');
         `}
 
-      </Script>
-      <html lang="en">
+          </Script>
+        </head>
         <body className={inter.className}>{children}</body>
       </html>
     </>
