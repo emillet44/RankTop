@@ -20,15 +20,16 @@ export default function RootLayout({
 
       <html lang="en">
         <head>
+          <meta name="google-site-verification" content="DVHvBfg1RjRArve45Es4EY9USwgJc3xtaCYYljYElMU" />
           <Script id="google-tag-manager" async src="https://www.googletagmanager.com/gtag/js?id=G-JGMST5F7CL"></Script>
           <Script id="page-view-counter">
             {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
 
-          gtag('config', 'G-JGMST5F7CL');
-        `}
+              gtag('config', 'G-JGMST5F7CL');
+            `}
 
           </Script>
         </head>
