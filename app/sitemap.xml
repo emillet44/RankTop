@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<!-- created with Free Online Sitemap Generator www.xml-sitemaps.com -->
+
+
+<url>
+  <loc>https://ranktop.vercel.app/</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>1.00</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/api/auth/signin</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/newpost</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/unverified</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/all</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/post/clmmsiqv4000g31hg6foqwb3p</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/post/clmmooxsr000031o84g9tc2wq</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/post/clmmssk8j000h31hg89b01qll</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/post/clmmt8g690000l3084bv4ku85</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/about</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/faq</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/feedback</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/post/clm10qx4f0000mk08f57f40nu</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/post/clkyjkmsf000531dkaki3m5s0</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/post/cllbggedx0002319ob3e3vgis</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://ranktop.vercel.app/post/cll764s99000031gokle4bl80</loc>
+  <lastmod>2023-10-15T23:58:56+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+
+
+</urlset>
