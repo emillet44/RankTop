@@ -4,6 +4,18 @@ import { Footer } from "@/components/Footer";
 import { prisma } from "@/lib/prisma";
 import { runReport } from "@/components/serverActions/pageview";
 
+//Title is set to post title for better SEO
+export async function generateMetadata({ params }: { params: { id: string }}) {
+  const post = await prisma.post.findUnique({
+    where: { id: params.id },
+  });
+  if (post !== null) {
+    return {
+      title: post.title
+    }
+  }
+}
+
 //This is a dynamic page that displays posts when users click on them from homepage, unverified, or all, or after they submit a post. 
 //It recieves the post id as a parameter and fetches the post using the findUnique Prisma API. Then it creates a Google Analytics report on the current
 //post id to fetch the total number of pageviews this page has(temp solution, better to populate database with views instead). It calls its own "PostHeader"
