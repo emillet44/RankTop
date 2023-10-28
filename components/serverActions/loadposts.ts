@@ -32,6 +32,8 @@ export async function LoadAll() {
 }
 export async function LoadResults(search: string) {
   rposts = await prisma.post.findMany({
-    where: { title: { contains: search } }
+    where: { title: { contains: search, mode: 'insensitive' } }
   })
+
+  return rposts;
 }

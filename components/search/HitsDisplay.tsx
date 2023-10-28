@@ -12,11 +12,11 @@ export function CustomHits(props: UseHitsProps) {
           <div key={list.id}>
             <Link href={`/post/${list.id}`}>
               <button>
-                <div className="h-24 w-[330px] text-left hover:bg-slate-300">
-                  <header className="capitalize text-2xl">{list.title}</header>
+                <div className="h-28 w-[330px] text-left even:bg-gray-50 hover:bg-slate-300">
+                  <header className="capitalize text-xl line-clamp-2">{list.title}</header>
                   <ul className="list-inside list-decimal">
-                    <li className="capitalize">{list.rank1}</li>
-                    <li className="capitalize">{list.rank2}</li>
+                    <li className="capitalize text-sm truncate">{list.rank1}</li>
+                    <li className="capitalize text-sm truncate">{list.rank2}</li>
                   </ul>
                 </div>
               </button>
