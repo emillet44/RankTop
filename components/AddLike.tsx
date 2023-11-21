@@ -87,7 +87,7 @@ export function AddLike(props: any) {
             }
           </button>
           {!isValidating &&
-            <header className="w-40 pt-2 text-lg text-slate-400">{states[3] + like} Likes</header>
+            <header className="pt-0.5 text-2xl text-slate-400">{states[3] + like}</header>
           }
           
         </>
@@ -103,7 +103,7 @@ export function AddLike(props: any) {
               <FontAwesomeIcon icon={faHeartSolid} className="w-9 h-9" style={{color: "#334155",}} />
             }
           </button>
-          <header className="w-40 pt-2 text-lg text-slate-400">{states[3] + like} Likes</header>
+          <header className="pt-0.5 text-2xl text-slate-400">{states[3] + like}</header>
         </>
       )
     }
@@ -113,7 +113,7 @@ export function AddLike(props: any) {
           <button className="flex justify-self-left w-9 h-9" onClick={toggleModal}>
             <FontAwesomeIcon icon={faHeart} className="w-9 h-9" style={{color: "#334155",}} />
           </button>
-          <header className="w-40 pt-2 text-lg text-slate-400">{states[3] + like} Likes</header>
+          <header className="pt-0.5 text-2xl text-slate-400">{states[3] + like}</header>
           {modalon &&
             <div className="fixed inset-0 flex items-center justify-center bg-gray-600/50">
               <div className="max-w-xs w-full px-2 py-2 grid grid-cols-1 grid-flow-row auto-rows-min gap-2 bg-white rounded-lg">
