@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { runReport } from "@/components/serverActions/pageview";
 import { SignState } from "@/components/serverActions/signinstate";
 import Delete from "@/components/Delete";
+import Link from "next/link";
 
 //Title is set to post title for better SEO
 export async function generateMetadata({ params }: { params: { id: string } }) {
@@ -60,7 +61,9 @@ export default async function Post({ params }: { params: { id: string } }) {
             }
             {!yours && editable &&
               <div className="max-w-2xl w-full h-10 flex justify-end space-x-4">
-                <button className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Edit Post</button>
+                <button className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
+                  <Link href={`/edit/${params.id}`}>Edit Post</Link>
+                </button>
                 <Delete id={params.id} />
               </div>
             }
