@@ -45,31 +45,31 @@ export function CSForm() {
       <form id="newpost" action={subHandler} className="flex justify-center pt-12 px-6 pb-16">
         <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 w-full max-w-2xl">
           <header className="text-3xl justify-self-left text-slate-400">New Post</header>
-          <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 p-10 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5">
+          <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 p-8 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5">
             <input name="title" placeholder="Title" className="text-4xl text-slate-400 outline-none bg-transparent placeholder:text-slate-400" required />
-            <div>
-              <label className="text-xl p-2 text-slate-400">1.</label>
+            <div className="row-span-1">
+              <label className="text-xl text-slate-400 pr-2">1.</label>
               <input name="r1" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
             </div>
             <div>
-              <label className="text-xl p-2 text-slate-400">2.</label>
+              <label className="text-xl text-slate-400 pr-2">2.</label>
               <input name="r2" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
             </div>
             {parseInt(selected) >= 3 &&
               <div>
-                <label className="text-xl p-2 text-slate-400">3.</label>
+                <label className="text-xl text-slate-400 pr-2">3.</label>
                 <input name="r3" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
               </div>
             }
             {parseInt(selected) >= 4 &&
               <div>
-                <label className="text-xl p-2 text-slate-400">4.</label>
+                <label className="text-xl text-slate-400 pr-2">4.</label>
                 <input name="r4" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
               </div>
             }
             {selected === "5" &&
               <div>
-                <label className="text-xl p-2 text-slate-400">5.</label>
+                <label className="text-xl text-slate-400 pr-2">5.</label>
                 <input name="r5" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
               </div>
             }

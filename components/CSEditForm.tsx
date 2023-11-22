@@ -82,16 +82,16 @@ const CSEditForm: FC<Props> = ({ id, post }) => {
           <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 p-10 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5">
             <input name="title" type="text" value={title} onChange={setVal} placeholder="Title" className="text-4xl text-slate-400 outline-none bg-transparent placeholder:text-slate-400" required />
             <div>
-              <label className="text-xl p-2 text-slate-400">1.</label>
+              <label className="text-xl text-slate-400 pr-2">1.</label>
               <input name="r1" value={rank1} onChange={setVal} className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
             </div>
             <div>
-              <label className="text-xl p-2 text-slate-400">2.</label>
+              <label className="text-xl text-slate-400 pr-2">2.</label>
               <input name="r2" value={rank2} onChange={setVal} className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
             </div>
             {parseInt(selected) >= 3 &&
               <div>
-                <label className="text-xl p-2 text-slate-400">3.</label>
+                <label className="text-xl text-slate-400 pr-2">3.</label>
                 {rank3 != null &&
                   <input name="r3" value={rank3} onChange={setVal} className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
                 }
@@ -103,7 +103,7 @@ const CSEditForm: FC<Props> = ({ id, post }) => {
             }
             {parseInt(selected) >= 4 &&
               <div>
-                <label className="text-xl p-2 text-slate-400">4.</label>
+                <label className="text-xl text-slate-400 pr-2">4.</label>
                 {rank4 != null &&
                   <input name="r4" value={rank4} onChange={setVal} className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
                 }
@@ -115,7 +115,7 @@ const CSEditForm: FC<Props> = ({ id, post }) => {
             }
             {selected === "5" &&
               <div>
-                <label className="text-xl p-2 text-slate-400">5.</label>
+                <label className="text-xl text-slate-400 pr-2">5.</label>
                 {rank5 != null &&
                   <input name="r5" value={rank5} onChange={setVal} className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
                 }

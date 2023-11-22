@@ -5,7 +5,7 @@ export function Footer() {
   return (
     <>
       <footer className="py-3 w-full text-center bg-slate-500">
-        <div className="grid grid-flow-col auto-cols-auto justify-center gap-44 h-10 items-center">
+        <div className="grid grid-flow-col auto-cols-auto justify-center gap-10 sm:gap-40 h-10 items-center">
           <Link href="/about" className="w-20 py-2">
             <header>About</header>
           </Link>
