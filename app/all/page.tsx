@@ -27,8 +27,8 @@ export default async function AllPosts() {
             </li>
           </ul>
           <div className="grid grid-cols-1 justify-items-center"> {posts?.map((list: any) => (
-            <Link href={`/post/${list.id}`} className="w-full">
-              <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8 border-x border-b border-slate-700" key={list.id}>
+            <Link href={`/post/${list.id}`} className="w-full" key={list.id}>
+              <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8 border-x border-b border-slate-700">
                 <header className="capitalize text-4xl line-clamp-2 text-slate-400">{list.title}</header>
                 <li className="capitalize truncate text-xl text-slate-400">{list.rank1}</li>
                 <li className="capitalize truncate text-xl text-slate-400">{list.rank2}</li>
