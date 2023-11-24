@@ -4,9 +4,9 @@ import { useState } from "react"
 import { newList } from "./serverActions/listupload"
 import { useRouter } from "next/navigation"
 
-//This function starts by intializing state variables and the NextJS router. Selected is for the number of ranks, and exptoggle is to enable/disable the explanation. 
+//This function starts by intializing state variables and the NextJS router. Selected is for the number of ranks, and desctoggle is to enable/disable the description. 
 //The component initially renders with two ranks, and when the select element is changed, getInput is called and the number of ranks is updated based on what was 
-//selected. When the "Add Explanation" button is clicked, toggleExp is called, the button is renamed to "Remove Explanation", and a textarea element becomes visible. 
+//selected. When the "Add Description" button is clicked, toggleDesc is called, the button is renamed to "Remove Description", and a textarea element becomes visible. 
 //Any inputs that are visible on the screen are required elements, for example if you fill out 2 ranks but there are 5 visible, you will be required to fill out all 
 //5 or lower the ranks back down to 2. When the submit button is clicked, the listupload server action is called, and when it's done, the router will redirect the user
 //to the posts unique url based on its post id.
@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation"
 export function CSForm() {
 
   const [selected, setSelected] = useState("");
-  const [exptoggle, setexp] = useState("");
+  const [desctoggle, setDesc] = useState("");
   const router = useRouter();
 
   const getInput = (e: any) => {
@@ -22,15 +22,15 @@ export function CSForm() {
 
   };
 
-  const toggleExp = (e: any) => {
+  const toggleDesc = (e: any) => {
     e.preventDefault();
-    if (e.target.textContent == "Add Explanation") {
-      e.target.textContent = "Remove Explanation";
-      setexp(e.target.textContent);
+    if (e.target.textContent == "Add Description") {
+      e.target.textContent = "Remove Description";
+      setDesc(e.target.textContent);
     }
     else {
-      e.target.textContent = "Add Explanation";
-      setexp(e.target.textContent);
+      e.target.textContent = "Add Description";
+      setDesc(e.target.textContent);
     }
   };
 
@@ -74,14 +74,14 @@ export function CSForm() {
               </div>
             }
           </div>
-          {exptoggle == "Remove Explanation" &&
+          {desctoggle == "Remove Description" &&
             <div>
-              <header className="text-3xl justify-self-left pb-6 text-slate-400">Explanation</header>
-              <textarea name="explain" className="w-full max-w-2xl max-h-96 h-44 outline focus:outline-4 outline-slate-700 rounded-xl p-5 text-slate-400 bg-slate-50 bg-opacity-5" required />
+              <header className="text-3xl justify-self-left pb-6 text-slate-400">Description</header>
+              <textarea name="description" className="w-full max-w-2xl max-h-96 h-44 outline focus:outline-4 outline-slate-700 rounded-xl p-5 text-slate-400 bg-slate-50 bg-opacity-5" required />
             </div>
           }
           <div className="max-w-2xl w-full h-10 flex justify-end space-x-5">
-            <button onClick={toggleExp} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Explanation</button>
+            <button onClick={toggleDesc} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Description</button>
             <select onChange={getInput} className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
               <option value="2" className="text-black">2 Ranks</option>
               <option value="3" className="text-black">3 Ranks</option>

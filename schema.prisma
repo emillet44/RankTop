@@ -1,30 +1,29 @@
-// schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
-  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING") // used for migrations
+  provider          = "postgresql"
+  url               = env("POSTGRES_PRISMA_URL")
+  directUrl         = env("POSTGRES_URL_NON_POOLING")
+  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model Post {
-  id        String     @default(cuid()) @id
-  title     String
-  rank1     String
-  rank2     String
-  rank3     String?
-  rank4     String?
-  rank5     String?
-  explain   String? 
-  views     Int?    @default(0)
-  likes     Int?    @default(0)
-  verified  Boolean @default(false)
-  author    User?   @relation(fields: [authorId], references: [id])
-  authorId  String?
+  id          String     @id @default(cuid())
+  title       String
+  rank1       String
+  rank2       String
+  rank3       String?
+  rank4       String?
+  rank5       String?
+  views       Int?       @default(0)
+  likes       Int?       @default(0)
+  verified    Boolean    @default(false)
+  authorId    String?
+  description String?
+  comments    Comments[]
+  author      User?      @relation(fields: [authorId], references: [id])
 }
 
 model Account {
@@ -33,47 +32,48 @@ model Account {
   type               String
   provider           String
   providerAccountId  String  @map("provider_account_id")
-  refresh_token      String? @db.Text
-  access_token       String? @db.Text
+  refresh_token      String?
+  access_token       String?
   expires_at         Int?
   token_type         String?
   scope              String?
-  id_token           String? @db.Text
+  id_token           String?
   session_state      String?
   oauth_token_secret String?
   oauth_token        String?
-
-  user User @relation(fields:[userId], references:[id], onDelete: Cascade)
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
-  }
+}
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique@map("session_token")
+  sessionToken String   @unique @map("session_token")
   userId       String   @map("user_id")
   expires      DateTime
-  user         User     @relation(fields:[userId], references:[id], onDelete: Cascade)
-  }
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
 model User {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?    @unique
   emailVerified DateTime?
-  username      String?   @unique    
+  username      String?    @unique
   image         String?
+  accounts      Account[]
+  comments      Comments[]
   likes         Likes[]
   posts         Post[]
-  accounts      Account[]
   sessions      Session[]
-  }
+}
 
 model Likes {
-  postid String  @unique
-  user   User    @relation(fields: [userId], references: [id])
   userId String
+  postId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 }
+
 model VerificationToken {
   id         Int      @id @default(autoincrement())
   identifier String
@@ -81,4 +81,13 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
-  }
+}
+
+model Comments {
+  id     String @id @default(cuid())
+  text   String
+  postId String
+  userId String
+  post   Post   @relation(fields: [postId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+}

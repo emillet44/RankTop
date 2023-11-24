@@ -4,7 +4,7 @@ import { FC, useState } from "react"
 import { useRouter } from "next/navigation"
 import { editList } from "./serverActions/listedit";
 
-//This function starts by intializing state variables and the NextJS router. Selected is for the number of ranks, and exptoggle is to enable/disable the explanation. 
+//This function starts by intializing state variables and the NextJS router. Selected is for the number of ranks, and desctoggle is to enable/disable the description. 
 //There is also a variable for each data field which is unfortunately necessary to allow pre populated inputs that can still be edited. The setVal function handles 
 //input using a switch case an updating the state variables. If the post did not contain data in certain fields like ranks 3-5 or description, their default inputs
 //will be used, as this limits state variable and event handler usage. When the submit button is clicked, editList from listedit.ts is passed the original post id 
@@ -17,29 +17,29 @@ interface Props {
 
 const CSEditForm: FC<Props> = ({ id, post }) => {
   const [selected, setSelected] = useState("");
-  const [exptoggle, setexp] = useState("");
+  const [desctoggle, setDesc] = useState("");
   const [title, setTitle] = useState(post.title);
   const [rank1, setR1] = useState(post.rank1);
   const [rank2, setR2] = useState(post.rank2);
   const [rank3, setR3] = useState(post.rank3);
   const [rank4, setR4] = useState(post.rank4);
   const [rank5, setR5] = useState(post.rank5);
-  const [explain, setExplain] = useState(post.explain);
+  const [description, setDescription] = useState(post.description);
   const router = useRouter();
 
   const getInput = (e: any) => {
     setSelected(e.target.value);
   };
 
-  const toggleExp = (e: any) => {
+  const toggleDesc = (e: any) => {
     e.preventDefault();
-    if (e.target.textContent == "Add Explanation") {
-      e.target.textContent = "Remove Explanation";
-      setexp(e.target.textContent);
+    if (e.target.textContent == "Add Description") {
+      e.target.textContent = "Remove Description";
+      setDesc(e.target.textContent);
     }
     else {
-      e.target.textContent = "Add Explanation";
-      setexp(e.target.textContent);
+      e.target.textContent = "Add Description";
+      setDesc(e.target.textContent);
     }
   };
 
@@ -69,8 +69,8 @@ const CSEditForm: FC<Props> = ({ id, post }) => {
       case "r5":
         setR5(e.target.value);
         break;
-      case "explain":
-        setExplain(e.target.value);
+      case "description":
+        setDescription(e.target.value);
     }
   }
 
@@ -126,19 +126,19 @@ const CSEditForm: FC<Props> = ({ id, post }) => {
               </div>
             }
           </div>
-          {exptoggle == "Remove Explanation" &&
+          {desctoggle == "Remove Description" &&
             <div>
-              <header className="text-3xl justify-self-left pb-6 text-slate-400">Explanation</header>
-              {explain != null &&
-                <textarea name="explain" value={explain} onChange={setVal} className="w-full max-w-2xl max-h-96 h-44 outline focus:outline-4 outline-slate-700 rounded-xl p-5 text-slate-400 bg-slate-50 bg-opacity-5" required />
+              <header className="text-3xl justify-self-left pb-6 text-slate-400">Description</header>
+              {description != null &&
+                <textarea name="description" value={description} onChange={setVal} className="w-full max-w-2xl max-h-96 h-44 outline focus:outline-4 outline-slate-700 rounded-xl p-5 text-slate-400 bg-slate-50 bg-opacity-5" required />
               }
-              {explain == null &&
-                <textarea name="explain" className="w-full max-w-2xl max-h-96 h-44 outline focus:outline-4 outline-slate-700 rounded-xl p-5 text-slate-400 bg-slate-50 bg-opacity-5" required />
+              {description == null &&
+                <textarea name="description" className="w-full max-w-2xl max-h-96 h-44 outline focus:outline-4 outline-slate-700 rounded-xl p-5 text-slate-400 bg-slate-50 bg-opacity-5" required />
               }
             </div>
           }
           <div className="max-w-2xl w-full h-10 flex justify-end space-x-5">
-            <button onClick={toggleExp} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Explanation</button>
+            <button onClick={toggleDesc} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Description</button>
             <select onChange={getInput} className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
               <option value="2" className="text-black">2 Ranks</option>
               <option value="3" className="text-black">3 Ranks</option>

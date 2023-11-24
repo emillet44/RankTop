@@ -6,6 +6,7 @@ import { runReport } from "@/components/serverActions/pageview";
 import { SignState } from "@/components/serverActions/signinstate";
 import Delete from "@/components/Delete";
 import Link from "next/link";
+import AddComment from "@/components/AddComment";
 
 //Title is set to post title for better SEO
 export async function generateMetadata({ params }: { params: { id: string } }) {
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 //It recieves the post id as a parameter and fetches the post using the findUnique Prisma API. Then it creates a Google Analytics report on the current
 //post id to fetch the total number of pageviews this page has(temp solution, better to populate database with views instead). It calls its own "PostHeader"
 //(slightly different than other headers, needed to be another component), and AddLikes to manage the like state and the like counter. It will also conditionally
-//render "Explanation" if there is an explanation or not.
+//render "Description" if there is an description or not.
 export default async function Post({ params }: { params: { id: string } }) {
 
   let author;
@@ -33,10 +34,12 @@ export default async function Post({ params }: { params: { id: string } }) {
     where: { id: params.id },
   });
   if (post?.authorId != null) {
-      author = await prisma.user.findUnique({
+    author = await prisma.user.findUnique({
       where: { id: post?.authorId }
     })
   };
+
+  
 
   const yours = (author?.username == states[2]) || (states[2] == "Cinnamon");
   const editable = (0 < 10);
@@ -77,16 +80,17 @@ export default async function Post({ params }: { params: { id: string } }) {
             </ul>
             <div className="flex space-x-5">
               <div className="flex space-x-2">
-                <AddLike likes={post?.likes} postid={params.id} />
+                <AddLike likes={post?.likes} postId={params.id} />
               </div>
               <header className="text-2xl text-slate-400 pt-0.5">{0} views</header>
             </div>
-            {post.explain !== null &&
-              <div className="">
+            {post.description !== null &&
+              <div>
                 <header className="text-3xl text-slate-400 justify-self-left pb-4 row-start-1">Description</header>
-                <p className="w-full max-w-2xl outline outline-slate-700 rounded-md p-5 row-start-2 break-words text-slate-400">{post.explain}</p>
+                <p className="w-full max-w-2xl outline outline-slate-700 rounded-md p-5 row-start-2 break-words text-slate-400">{post.description}</p>
               </div>
             }
+            <AddComment />
           </div>
         </div>
 

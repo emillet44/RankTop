@@ -32,10 +32,10 @@ export function AddLike(props: any) {
   const [like, setLike] = useState(0);
   const [modalon, setModal] = useState(false);
 
-  const postid = props.postid;
+  const postId = props.postId;
 
-  const fetcher = (postid: string) => Likes(postid);
-  const { data, isValidating } = useSWR(postid, fetcher, {
+  const fetcher = (postId: string) => Likes(postId);
+  const { data, isValidating } = useSWR(postId, fetcher, {
     revalidateOnFocus: false
   });
 
@@ -58,14 +58,14 @@ export function AddLike(props: any) {
         setLiked(true);
         setLike(like + 1);
         addCount(count + 1);
-        ChangeLikes(postid, true, states[1]);
+        ChangeLikes(postId, true, states[1]);
         states[2] = true;
       }
       else {
         setLiked(false);
         setLike(like - 1);
         addCount(count + 1);
-        ChangeLikes(postid, false, states[1]);
+        ChangeLikes(postId, false, states[1]);
         states[2] = false;
       }
     }
@@ -121,7 +121,7 @@ export function AddLike(props: any) {
                   <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
                 </button>
                 <h1 className="text-3xl justify-self-center pb-2 z-50">Sign in to like posts</h1>
-                <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postid}` })} className="px-4 py-2 w-24 justify-self-end bg-green-500 text-white rounded-full">Sign In</button>
+                <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postId}` })} className="px-4 py-2 w-24 justify-self-end bg-green-500 text-white rounded-full">Sign In</button>
               </div>
             </div>
           }

@@ -14,7 +14,7 @@ export async function editList(formData: FormData, id: string) {
   formDataObj.r3 = formDataObj.r3 == undefined ? null : formDataObj.r3;
   formDataObj.r4 = formDataObj.r4 == undefined ? null : formDataObj.r4;
   formDataObj.r5 = formDataObj.r5 == undefined ? null : formDataObj.r5;
-  formDataObj.explain = formDataObj.explain == undefined ? null : formDataObj.explain;
+  formDataObj.description = formDataObj.description == undefined ? null : formDataObj.description;
 
   const updateList = await prisma.post.update({
     where: {
@@ -27,7 +27,7 @@ export async function editList(formData: FormData, id: string) {
       rank3: formDataObj.r3,
       rank4: formDataObj.r4,
       rank5: formDataObj.r5,
-      explain: formDataObj.explain,
+      description: formDataObj.description,
     }
   })
   return (id);
