@@ -17,6 +17,8 @@ export default async function Home() {
 
   const posts = await LoadVerified();
 
+  // AlgoliaUpdate();
+
   return (
     <>
       <Header />
