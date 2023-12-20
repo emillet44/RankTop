@@ -53,7 +53,6 @@ export function FeedbackForm() {
             <header className="flex justify-end text-slate-400">Redirecting in {redirectSeconds}</header>
           </div>
         </div>
-
       }
     </div>
   )

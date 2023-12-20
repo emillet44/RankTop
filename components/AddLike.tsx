@@ -32,10 +32,10 @@ export function AddLike(props: any) {
   const [like, setLike] = useState(0);
   const [modalon, setModal] = useState(false);
 
-  const postid = props.postid;
+  const postId = props.postId;
 
-  const fetcher = (postid: string) => Likes(postid);
-  const { data, isValidating } = useSWR(postid, fetcher, {
+  const fetcher = (postId: string) => Likes(postId);
+  const { data, isValidating } = useSWR(postId, fetcher, {
     revalidateOnFocus: false
   });
 
@@ -58,14 +58,14 @@ export function AddLike(props: any) {
         setLiked(true);
         setLike(like + 1);
         addCount(count + 1);
-        ChangeLikes(postid, true, states[1]);
+        ChangeLikes(postId, true, states[1]);
         states[2] = true;
       }
       else {
         setLiked(false);
         setLike(like - 1);
         addCount(count + 1);
-        ChangeLikes(postid, false, states[1]);
+        ChangeLikes(postId, false, states[1]);
         states[2] = false;
       }
     }
@@ -87,7 +87,7 @@ export function AddLike(props: any) {
             }
           </button>
           {!isValidating &&
-            <header className="w-40 pt-2 text-lg text-slate-400">{states[3] + like} Likes</header>
+            <header className="pt-0.5 text-2xl text-slate-400">{states[3] + like}</header>
           }
           
         </>
@@ -103,7 +103,7 @@ export function AddLike(props: any) {
               <FontAwesomeIcon icon={faHeartSolid} className="w-9 h-9" style={{color: "#334155",}} />
             }
           </button>
-          <header className="w-40 pt-2 text-lg text-slate-400">{states[3] + like} Likes</header>
+          <header className="pt-0.5 text-2xl text-slate-400">{states[3] + like}</header>
         </>
       )
     }
@@ -113,7 +113,7 @@ export function AddLike(props: any) {
           <button className="flex justify-self-left w-9 h-9" onClick={toggleModal}>
             <FontAwesomeIcon icon={faHeart} className="w-9 h-9" style={{color: "#334155",}} />
           </button>
-          <header className="w-40 pt-2 text-lg text-slate-400">{states[3] + like} Likes</header>
+          <header className="pt-0.5 text-2xl text-slate-400">{states[3] + like}</header>
           {modalon &&
             <div className="fixed inset-0 flex items-center justify-center bg-gray-600/50">
               <div className="max-w-xs w-full px-2 py-2 grid grid-cols-1 grid-flow-row auto-rows-min gap-2 bg-white rounded-lg">
@@ -121,7 +121,7 @@ export function AddLike(props: any) {
                   <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
                 </button>
                 <h1 className="text-3xl justify-self-center pb-2 z-50">Sign in to like posts</h1>
-                <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postid}` })} className="px-4 py-2 w-24 justify-self-end bg-green-500 text-white rounded-full">Sign In</button>
+                <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postId}` })} className="px-4 py-2 w-24 justify-self-end bg-green-500 text-white rounded-full">Sign In</button>
               </div>
             </div>
           }

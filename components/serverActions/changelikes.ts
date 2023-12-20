@@ -4,7 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/auth";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 
-//This server action has a function to update likes on the database, which updates the post first, then it adds the postid to the users liked posts.
+//This server action has a function to update likes on the database, which updates the post first, then it adds the postId to the users liked posts.
 //It can both add or remove likes depending on the add parameter. The likes function first loads the user email, the uses it to find the user record
 //in the database. It then uses the user id to check whether the user has liked the post or not, then it uses the post id parameter it recieved to
 //find how many likes the post has already.
@@ -19,7 +19,7 @@ export async function ChangeLikes(identifier: string, add: boolean, userid: stri
     if (userid !== null) {
       const userlike = await prisma.likes.create({
         data:{ 
-          postid: identifier,
+          postId: identifier,
           user: { connect: {id: userid} } 
         }
       });
@@ -32,7 +32,7 @@ export async function ChangeLikes(identifier: string, add: boolean, userid: stri
     });
     if (userid !== null) {
       const removelike = await prisma.likes.delete({
-        where: { userId: userid, postid: identifier }
+        where: { userId: userid, postId: identifier }
       })
     }
   }
@@ -57,7 +57,7 @@ export async function Likes(id: string) {
     }
   }
   const likes = await prisma.likes.findUnique({
-    where: { userId: userid, postid: id }
+    where: { userId: userid, postId: id }
   });
   const liked = likes !== null;
   states[2] = liked;

@@ -54,7 +54,7 @@ export async function newList(formData: FormData) {
         rank3: formDataObj.r3,
         rank4: formDataObj.r4,
         rank5: formDataObj.r5,
-        explain: formDataObj.explain,
+        description: formDataObj.description,
         author: { connect: {id: authorid}},
       }
     })
@@ -69,7 +69,7 @@ export async function newList(formData: FormData) {
         rank3: formDataObj.r3,
         rank4: formDataObj.r4,
         rank5: formDataObj.r5,
-        explain: formDataObj.explain,
+        description: formDataObj.description,
       }
     })
     return (List.id);

@@ -31,7 +31,7 @@ export default function Loading() {
               </div>
             </div>
             <div className="max-w-2xl w-full h-10 flex justify-end space-x-5">
-              <button className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Explanation</button>
+              <button className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Description</button>
               <select className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
                 <option value="2" className="text-black">2 Ranks</option>
                 <option value="3" className="text-black">3 Ranks</option>

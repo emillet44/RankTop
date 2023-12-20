@@ -13,18 +13,20 @@ export default function Loading() {
         </div>
       </div>
 
-      <div className="min-h-[calc(100vh-116px)] bg-gradient-radial from-emerald-950 to-slate-950 bg-fixed">
-        <ul className="flex pl-16 pt-16">
-          <li className="mr-2">
-            <header className="hover:text-offwhite hover:border-b-2 border-white text-slate-400 text-3xl">Verified</header>
-          </li>
-          <li className="mr-2">
-            <header className="hover:text-offwhite hover:border-b-2 border-white text-slate-400 text-3xl">Unverified</header>
-          </li>
-          <li className="mr-2">
-            <header className="hover:text-offwhite hover:border-b-2 border-white text-slate-400 text-3xl">All</header>
-          </li>
-        </ul>
+      <div className="flex justify-center pb-10 px-6 min-h-[calc(100vh-116px)] bg-gradient-radial from-emerald-950 to-slate-950 bg-fixed">
+        <div className="grid grid-cols-1 w-full max-w-2xl">
+          <ul className="flex pt-6 pb-8 justify-center border-x border-b border-slate-700">
+            <li className="mr-2">
+              <header className="text-3xl hover:text-offwhite hover:border-b-2 border-white text-slate-400">Verified</header>
+            </li>
+            <li className="mr-2">
+              <header className="text-3xl hover:text-offwhite hover:border-b-2 border-white text-slate-400">Unverified</header>
+            </li>
+            <li className="mr-2">
+              <header className="text-3xl hover:text-offwhite hover:border-b-2 border-white text-slate-400">All</header>
+            </li>
+          </ul>
+        </div>
       </div>
 
       <footer className="py-3 w-full text-center bg-slate-500">
