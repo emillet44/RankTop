@@ -10,20 +10,26 @@ datasource db {
 }
 
 model Post {
-  id          String     @id @default(cuid())
+  id          String        @id @default(cuid())
   title       String
   rank1       String
   rank2       String
   rank3       String?
   rank4       String?
   rank5       String?
-  views       Int?       @default(0)
-  likes       Int?       @default(0)
-  verified    Boolean    @default(false)
   authorId    String?
   description String?
   comments    Comments[]
-  author      User?      @relation(fields: [authorId], references: [id])
+  author      User?          @relation(fields: [authorId], references: [id])
+  metadata    Post_Metadata? 
+}
+
+model Post_Metadata {
+  post_id  String   @id @map("post_id") @unique
+  images   Boolean  @default(false)
+  verified Boolean  @default(false)
+  likes    Int?     @default(0)
+  post     Post     @relation(fields: [post_id], references: [id], onDelete: Cascade)
 }
 
 model Account {

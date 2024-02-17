@@ -11,7 +11,11 @@ let rposts: any;
 export async function LoadVerified() {
 
   vposts = await prisma.post.findMany({
-    where: { verified: true },
+    where: {
+      metadata: {
+        verified: true,
+      },
+    },
   });
 
   return vposts;
@@ -19,7 +23,11 @@ export async function LoadVerified() {
 export async function LoadUnverified() {
 
   uposts = await prisma.post.findMany({
-    where: { verified: false },
+    where: {
+      metadata: {
+        verified: false,
+      },
+    },
   });
 
   return uposts;

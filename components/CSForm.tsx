@@ -1,11 +1,16 @@
 'use client'
 
-import { useState } from "react"
+import { FC, useState } from "react"
 import { newList } from "./serverActions/listupload"
 import { useRouter } from "next/navigation"
 import Image from 'next/image'
 import { faCircleXmark } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { signIn } from "next-auth/react"
+
+interface Prop {
+  signedin: boolean;
+}
 
 //This function starts by intializing state variables and the NextJS router. Selected is for the number of ranks, and desctoggle is to enable/disable the description. 
 //The component initially renders with two ranks, and when the select element is changed, getInput is called and the number of ranks is updated based on what was 
@@ -17,20 +22,81 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 //New functionality: The form now has a new toggle button for adding images to the post. The number of image inputs corresponds to the number of ranks, and images are
 // draggable using the HTML drag and drop API in combination with React state to update the display as well as the url so images correspond to their proper rank. The drop 
 //container div toggles between storing the file input or preview image based on whether a file was uploaded or not, however only the image is draggable and can be 
-//dropped/swapped to another div. Images can also be cleared with a hover X button. A significant amount of switch cases and near duplicate code was used in this new update,
-//making this function the first on the chopping block for refactoring(if ever).
+//dropped/swapped to another div. Images can also be cleared with a hover X button. Images are only allowed to be uploaded by signed in users, to prevent abuse, which was
+//done by making the component a functional component and passing the signed in state prop from the newpost page. A significant amount of switch cases and near duplicate code 
+//was used in this new update, making this function the first on the chopping block for refactoring(if ever).
 
-export function CSForm() {
+//Update: I know no one asked but I actually came across the refactoring solution for this function before I even actually finished building it! It has to be the largest code
+//simplification in this project, in which the file state variables were replaced with two arrays(there's two for another reason, because the files need to be both uploaded and
+//previewed, the preview url and file have to be stored), and the HTML element ids are used as indices to correctly update each index in the array. An array of null values was also
+//added so that the other two arrays can be cleared easily. superUpdateImage may seem very similar to updateImage however it was necessary to prevent a data race in the updating of
+//two React state array indices. Both indices are updated in one function now, which is important to ensure the drag and drop functionality works properly.
+
+const CSForm: FC<Prop> = ({ signedin }) => {
 
   const [selected, setSelected] = useState("");
   const [desctoggle, setDesc] = useState("");
   const [image, setImage] = useState(false);
-  const [file1, setFile1] = useState("");
-  const [file2, setFile2] = useState("");
-  const [file3, setFile3] = useState("");
-  const [file4, setFile4] = useState("");
-  const [file5, setFile5] = useState("");
+
+  const[files, setFiles] = useState<Array<File | null>>(Array(5).fill(null));
+  const[urls, setUrls] = useState<Array<string | null>>(Array(5).fill(null));
+  const clearedlist = [null, null, null, null, null];
+
+  const [modalon, setModal] = useState(false);
   const router = useRouter();
+
+  const superUpdateImage = (index1: number, newfile1: File | null, newurl1: string | null, index2: number, newfile2: File | null, newurl2: string | null) => {
+    const updatedFiles = files.map((c, i) => {
+      if (i === index1) {
+        return newfile1;
+      }
+      else if (i === index2) {
+        return newfile2;
+      }
+      else {
+        return c;
+      }
+    })
+    setFiles(updatedFiles);
+
+
+    const updatedUrls = urls.map((c, i) => {
+      if (i === index1) {
+        return newurl1;
+      }
+      else if (i === index2) {
+        return newurl2;
+      }
+      else {
+        return c;
+      }
+    })
+    setUrls(updatedUrls);
+  }
+
+  const updateImage = (index: number, newfile: File | null, newurl: string | null) => {
+
+    const updatedFiles = files.map((c, i) => {
+      if (i === index) {
+        return newfile;
+      }
+      else {
+        return c;
+      }
+    })
+    setFiles(updatedFiles);
+
+
+    const updatedUrls = urls.map((c, i) => {
+      if (i === index) {
+        return newurl;
+      }
+      else {
+        return c;
+      }
+    })
+    setUrls(updatedUrls);
+  }
 
   const getInput = (e: any) => {
     setSelected(e.target.value);
@@ -49,11 +115,26 @@ export function CSForm() {
   };
 
   const subHandler = (formData: FormData) => {
-    formData.append("img1", file1);
-    formData.append("img2", file2);
-    formData.append("img3", file3);
-    formData.append("img4", file4);
-    formData.append("img5", file5);
+    if (files[0] !== null) {
+      const blob = new Blob([files[0]], { type: files[0].type });
+      formData.append("img1", blob);
+    }
+    if (files[1] !== null) {
+      const blob = new Blob([files[1]], { type: files[1].type });
+      formData.append("img2", blob);
+    }
+    if (files[2] !== null) {
+      const blob = new Blob([files[2]], { type: files[2].type });
+      formData.append("img3", blob);
+    }
+    if (files[3] !== null) {
+      const blob = new Blob([files[3]], { type: files[3].type });
+      formData.append("img4", blob);
+    }
+    if (files[4] !== null) {
+      const blob = new Blob([files[4]], { type: files[4].type });
+      formData.append("img5", blob);
+    }
     newList(formData).then((result) => {
       router.push(`/post/${result}`);
     });
@@ -66,55 +147,22 @@ export function CSForm() {
     }
     else {
       e.target.textContent = "Remove Images";
-      setFile1("");
-      setFile2("");
-      setFile3("");
-      setFile4("");
-      setFile5("");
+
+      setFiles(clearedlist);
+      setUrls(clearedlist);
     }
     setImage(!image);
   }
 
   const previewImage = (e: any) => {
     if (e.target.files[0] != undefined) {
-      switch (parseInt(e.target.id)) {
-        case 1:
-          setFile1(URL.createObjectURL(e.target.files[0]));
-          break;
-        case 2:
-          setFile2(URL.createObjectURL(e.target.files[0]));
-          break;
-        case 3:
-          setFile3(URL.createObjectURL(e.target.files[0]));
-          break;
-        case 4:
-          setFile4(URL.createObjectURL(e.target.files[0]));
-          break;
-        case 5:
-          setFile5(URL.createObjectURL(e.target.files[0]));
-      }
+      updateImage(parseInt(e.target.id), e.target.files[0], URL.createObjectURL(e.target.files[0]));
     }
   }
 
-  const removeImg = (e: any) => {
+  const removeImg = (e: any, imgnum: number) => {
     e.preventDefault();
-    const bname = e.target.parentElement.parentElement.id;
-    switch (parseInt(bname)) {
-      case 1:
-        setFile1("");
-        break;
-      case 2:
-        setFile2("");
-        break;
-      case 3:
-        setFile3("");
-        break;
-      case 4:
-        setFile4("");
-        break;
-      case 5:
-        setFile5("");
-    }
+    updateImage(imgnum-1, null, null);
   }
 
   function dragstartHandler(e: any) {
@@ -130,44 +178,21 @@ export function CSForm() {
     e.preventDefault();
     const url = e.dataTransfer.getData("text/uri-list");
     const imgid = e.dataTransfer.getData("text/plain");
-    if (e.target.src != url) {
-      switch (parseInt(imgid)) {
-        case 1:
-          setFile1(e.target.src);
-          break;
-        case 2:
-          setFile2(e.target.src);
-          break;
-        case 3:
-          setFile3(e.target.src);
-          break;
-        case 4:
-          setFile4(e.target.src);
-          break;
-        case 5:
-          setFile5(e.target.src);
-      }
-      switch (parseInt(e.target.id)) {
-        case 1:
-          setFile1(url);
-          break;
-        case 2:
-          setFile2(url);
-          break;
-        case 3:
-          setFile3(url);
-          break;
-        case 4:
-          setFile4(url);
-          break;
-        case 5:
-          setFile5(url);
-      }
+    if (e.target.src != url) { 
+      const test = files[e.target.id];
+      
+      superUpdateImage(parseInt(e.target.id), files[parseInt(imgid)], url, parseInt(imgid), test, e.target.src);
+
     }
   }
 
+  const toggleModal = (e: any) => {
+    e.preventDefault();
+    setModal(!modalon);
+  }
+
   return (
-    <div className="min-h-[calc(100vh-116px)] bg-gradient-radial from-emerald-950 to-slate-950 bg-fixed">
+    <div className="min-h-[calc(100vh-116px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
       <form id="newpost" action={subHandler} className="flex justify-center pt-12 px-6 pb-16">
         <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 w-full max-w-2xl">
           <header className="text-3xl justify-self-left text-slate-400">New Post</header>
@@ -203,100 +228,122 @@ export function CSForm() {
           {image &&
             <div>
               <header className="text-3xl justify-self-left pb-6 text-slate-400">Images</header>
-              <div className="w-full max-w-2xl max-h-96 outline outline-slate-700 rounded-xl p-5 text-slate-400 bg-slate-50 bg-opacity-5 grid grid-cols-5 gap-3 grid-flow-row auto-rows-min">
-                <label>1.</label>
-                <div onDrop={dropHandler} onDragOver={dragoverHandler} className="outline flex row-start-2">
-                  {!file1 &&
-                    <input id="1" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
-                  }
-                  {file1 != "" &&
-                    <div className="group relative">
-                      <Image id="1" draggable onDragStart={dragstartHandler} src={file1} alt="Image 1" width={200} height={200} className=""></Image>
-                      <button id="1" className="invisible group-hover:visible absolute top-0 right-0" onClick={removeImg}>
+              <div className="w-full max-w-2xl outline outline-slate-700 rounded-xl p-5 text-slate-400 bg-slate-50 bg-opacity-5 flex flex-wrap gap-3">
+                {urls[0] == null &&
+                  <div>
+                    <label>1.</label>
+                    <div className="outline w-28">
+                      <input id="0" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
+                    </div>
+                  </div>
+
+                }
+                {urls[0] != null &&
+                  <div>
+                    <label>1.</label>
+                    <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
+                      <Image id="0" draggable onDragStart={dragstartHandler} src={urls[0]} alt="Image 1" width={200} height={200}></Image>
+                      <button id="0" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 1)}>
                         <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
                       </button>
                     </div>
-                  }
-                </div>
-                <label>2.</label>
-                <div onDrop={dropHandler} onDragOver={dragoverHandler} className="outline flex row-start-2">
-                  {!file2 &&
-                    <input id="2" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
-                  }
-                  {file2 != "" &&
-                    <div className="group relative">
-                      <Image id="2" draggable onDragStart={dragstartHandler} src={file2} alt="Image 2" width={200} height={200} className=""></Image>
-                      <button id="2" className="invisible group-hover:visible absolute top-0 right-0" onClick={removeImg}>
+                  </div>
+                }
+                {urls[1] == null &&
+                  <div>
+                    <label>2.</label>
+                    <div className="outline w-28">
+                      <input id="1" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
+                    </div>
+                  </div>
+
+                }
+                {urls[1] != null &&
+                  <div>
+                    <label>2.</label>
+                    <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
+                      <Image id="1" draggable onDragStart={dragstartHandler} src={urls[1]} alt="Image 2" width={200} height={200}></Image>
+                      <button id="1" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 2)}>
                         <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
                       </button>
                     </div>
-                  }
-                </div>
+                  </div>
+                }
                 {parseInt(selected) >= 3 &&
                   <>
-                    <label>3.</label>
-                    <div onDrop={dropHandler} onDragOver={dragoverHandler} className="outline flex row-start-2">
-                      {!file3 &&
-                        <input id="3" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
-                      }
-                      {file3 != "" &&
-                        <div className="group relative">
-                          <Image id="3" draggable onDragStart={dragstartHandler} src={file3} alt="Image 3" width={200} height={200} className=""></Image>
-                          <button id="3" className="invisible group-hover:visible absolute top-0 right-0" onClick={removeImg}>
+                    {urls[2] == null &&
+                      <div>
+                        <label>3.</label>
+                        <div className="outline w-28">
+                          <input id="2" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
+                        </div>
+                      </div>
+
+                    }
+                    {urls[2] != null &&
+                      <div>
+                        <label>3.</label>
+                        <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
+                          <Image id="2" draggable onDragStart={dragstartHandler} src={urls[2]} alt="Image 3" width={200} height={200}></Image>
+                          <button id="2" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 3)}>
                             <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
                           </button>
                         </div>
-                      }
-                    </div>
+                      </div>
+                    }
                   </>
                 }
                 {parseInt(selected) >= 4 &&
                   <>
-                    <label>4.</label>
-                    <div onDrop={dropHandler} onDragOver={dragoverHandler} className="outline flex row-start-2">
-                      {!file4 &&
-                        <input id="4" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
-                      }
-                      {file4 != "" &&
-                        <div className="group relative">
-                          <Image id="4" draggable onDragStart={dragstartHandler} src={file4} alt="Image 4" width={200} height={200} className=""></Image>
-                          <button id="4" className="invisible group-hover:visible absolute top-0 right-0" onClick={removeImg}>
+                    {urls[3] == null &&
+                      <div>
+                        <label>4.</label>
+                        <div className="outline w-28">
+                          <input id="3" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
+                        </div>
+                      </div>
+
+                    }
+                    {urls[3] != null &&
+                      <div>
+                        <label>4.</label>
+                        <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
+                          <Image id="3" draggable onDragStart={dragstartHandler} src={urls[3]} alt="Image 4" width={200} height={200}></Image>
+                          <button id="3" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 4)}>
                             <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
                           </button>
                         </div>
-                      }
-                    </div>
+                      </div>
+                    }
                   </>
                 }
                 {selected === "5" &&
                   <>
-                    <label>5.</label>
-                    <div onDrop={dropHandler} onDragOver={dragoverHandler} className="outline flex row-start-2">
-                      {!file5 &&
-                        <input id="5" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
-                      }
-                      {file5 != "" &&
-                        <div className="group relative">
-                          <Image id="5" draggable onDragStart={dragstartHandler} src={file5} alt="Image 5" width={200} height={200} className="group"></Image>
-                          <button id="5" className="invisible group-hover:visible absolute top-0 right-0" onClick={removeImg}>
+                    {urls[4] == null &&
+                      <div>
+                        <label>5.</label>
+                        <div className="outline w-28">
+                          <input id="4" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
+                        </div>
+                      </div>
+
+                    }
+                    {urls[4] != null &&
+                      <div>
+                        <label>5.</label>
+                        <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
+                          <Image id="4" draggable onDragStart={dragstartHandler} src={urls[4]} alt="Image 5" width={200} height={200}></Image>
+                          <button id="4" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 5)}>
                             <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
                           </button>
                         </div>
-                      }
-                    </div>
+                      </div>
+                    }
                   </>
                 }
               </div>
             </div>
           }
-          {desctoggle &&
-            <div>
-              <header className="text-3xl justify-self-left pb-6 text-slate-400">Description</header>
-              <textarea name="explain" className="w-full max-w-2xl max-h-96 h-44 outline focus:outline-4 outline-slate-700 rounded-xl p-5 text-slate-400 bg-slate-50 bg-opacity-5" required />
-            </div>
-          }
-          <div className="max-w-2xl w-full h-10 flex justify-end space-x-5">
-            <button onClick={toggleImages} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Images</button>
           {desctoggle == "Remove Description" &&
             <div>
               <header className="text-3xl justify-self-left pb-6 text-slate-400">Description</header>
@@ -304,6 +351,12 @@ export function CSForm() {
             </div>
           }
           <div className="max-w-2xl w-full h-10 flex justify-end space-x-5">
+            {!signedin &&
+              <button type="button" onClick={toggleModal} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Images</button>
+            }
+            {signedin &&
+              <button onClick={toggleImages} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Images</button>
+            }
             <button onClick={toggleDesc} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Description</button>
             <select onChange={getInput} className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
               <option value="2" className="text-black">2 Ranks</option>
@@ -315,6 +368,18 @@ export function CSForm() {
           </div>
         </div>
       </form>
+      {modalon &&
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-600/50">
+          <div className="max-w-xs w-full px-2 py-2 grid grid-cols-1 grid-flow-row auto-rows-min gap-2 bg-white rounded-lg">
+            <button onClick={toggleModal} className="flex justify-self-end justify-center">
+              <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
+            </button>
+            <h1 className="text-3xl justify-self-center pb-2 z-50">Sign in to add images to your post</h1>
+            <button onClick={() => signIn(undefined, { callbackUrl: `/newpost` })} className="px-4 py-2 w-24 justify-self-end bg-green-500 text-white rounded-full">Sign In</button>
+          </div>
+        </div>
+      }
     </div>
   )
 }
+export default CSForm;

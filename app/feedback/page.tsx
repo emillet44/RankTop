@@ -1,6 +1,6 @@
 import { Header } from "@/components/headers/Header";
 import { Footer } from "@/components/Footer";
-import { FeedbackForm } from "./FeedbackForm";
+import { FeedbackForm } from "../../components/FeedbackForm";
 
 export default function ReportBugs() {
 

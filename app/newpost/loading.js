@@ -7,52 +7,37 @@ export default function Loading() {
 
   return (
     <>
-      <div className="flex justify-center pt-14 pb-2 lg:py-2 bg-slate-500">
+      <div className="flex justify-center pt-14 pb-2 lg:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
         <div className="grid grid-flow-col min-w-[330px] h-9 justify-center">
-          <button className="absolute left-2 top-3 text-4xl/7">RankTop</button>
-          <input placeholder="Search" className="w-[330px] h-9 py-2 bg-slate-500 outline outline-2 rounded-md indent-1" />
-          <button className="absolute right-2 top-1.5 hover:outline outline-2 py-2 px-2 rounded-sm">Sign In</button>
+          <button className="absolute left-2 top-3 text-4xl/7 text-offwhite">RankTop</button>
+          <input placeholder="Search" className="w-[330px] h-9 py-2 bg-transparent outline outline-2 outline-slate-700 rounded-md indent-1" />
         </div>
       </div>
 
-      <div className="min-h-[calc(100vh-116px)] bg-gradient-radial from-emerald-950 to-slate-950 bg-fixed">
+      <div className="min-h-[calc(100vh-116px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
         <div className="flex justify-center pt-12 px-6 pb-16">
           <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 w-full max-w-2xl">
-            <header className="text-3xl justify-self-left text-slate-400">New Post</header>
-            <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 p-10 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5">
-              <input name="title" placeholder="Title" className="text-4xl text-slate-400 outline-none bg-transparent placeholder:text-slate-400" />
+            <header className="text-3xl justify-self-left text-slate-400">Loading...</header>
+            <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 p-8 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5">
+              <header className="text-4xl text-slate-400 outline-none bg-transparent pb-1">...</header>
               <div>
-                <label className="text-xl p-2 text-slate-400">1.</label>
-                <input name="r1" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" />
+                <label className="text-xl pr-2 text-slate-400">...</label>
+                <header name="r1" className="outline-none p-2 border-slate-400 w-11/12" />
               </div>
               <div>
-                <label className="text-xl p-2 text-slate-400">2.</label>
-                <input name="r2" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" />
+                <label className="text-xl pr-2 text-slate-400">...</label>
+                <header name="r2" className="outline-none p-2 border-slate-400 w-11/12" />
               </div>
-            </div>
-            <div className="max-w-2xl w-full h-10 flex justify-end space-x-5">
-              <button className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Description</button>
-              <select className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
-                <option value="2" className="text-black">2 Ranks</option>
-                <option value="3" className="text-black">3 Ranks</option>
-              </select>
-              <button className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Submit</button>
             </div>
           </div>
         </div>
       </div>
 
-      <footer className="py-3 w-full text-center bg-slate-500">
-        <div className="grid grid-flow-col auto-cols-auto justify-center gap-44 h-10 items-center">
-          <div className="w-20 py-2">
-            <header>About</header>
-          </div>
-          <div className="w-16 py-2">
-            <header>FAQ</header>
-          </div>
-          <div className="w-36 py-2">
-            <header>Site Feedback</header>
-          </div>
+      <footer className="py-3 w-full text-center bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
+        <div className="grid grid-flow-col justify-center gap-10 sm:gap-40 h-10">
+          <header className="w-20 py-2 text-offwhite">About</header>
+          <header className="w-16 py-2 text-offwhite">FAQ</header>
+          <header className="w-36 py-2 text-offwhite">Site Feedback</header>
         </div>
       </footer>
     </>

@@ -13,7 +13,13 @@ export async function ChangeLikes(identifier: string, add: boolean, userid: stri
   if(add) {
     const post = await prisma.post.update({
       where: { id: identifier },
-      data: { likes: { increment: 1 } }
+      data: { 
+        metadata: {
+          update: {
+            likes: { increment: 1 }
+          }
+        } 
+      }
     });
     
     if (userid !== null) {
@@ -28,7 +34,13 @@ export async function ChangeLikes(identifier: string, add: boolean, userid: stri
   else {
     const post = await prisma.post.update({
       where: { id: identifier },
-      data: { likes: { decrement: 1 } }
+      data: { 
+        metadata: {
+          update: {
+            likes: { decrement: 1 }
+          }
+        } 
+      }
     });
     if (userid !== null) {
       const removelike = await prisma.likes.delete({
@@ -64,8 +76,9 @@ export async function Likes(id: string) {
 
   const post = await prisma.post.findUnique({
     where: { id: id },
+    include: { metadata: true }
   });
-  states[3] = post?.likes;
+  states[3] = post?.metadata?.likes;
 
   return states;
 }

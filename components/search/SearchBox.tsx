@@ -33,18 +33,18 @@ export function Search() {
   return (
     <InstantSearch searchClient={searchClient} indexName="posts">
       <SearchBox placeholder="Search" classNames={{
-        root: 'z-20 outline outline-2 rounded-md',
+        root: 'z-20 outline outline-2 outline-slate-700 rounded-md',
         form: '',
-        input: 'w-[330px] h-9 bg-slate-500 outline-none indent-1',
+        input: 'w-[330px] h-9 bg-transparent outline-none indent-1',
         reset: '',
         submitIcon: 'hidden',
         resetIcon: 'hidden',
       }} onInput={saveQuery} onKeyDown={checkEnter} />
       <EmptyQueryBoundary fallback={null}>
-        <div className="absolute grid grid-cols-1 z-10 outline outline-2 empty:outline-none rounded-md pt-10 bg-white">
+        <div className="absolute grid grid-cols-1 z-10 outline outline-2 outline-slate-700 empty:outline-none rounded-md pt-10 bg-white">
           <CustomHits />
           <Link href={`/search/${search}`} className="w-[330px] hover:bg-slate-300">Search for {search}</Link>
-          <div className="p-1 w-full border-t-2 border-black flex justify-end">
+          <div className="p-1 w-full border-t-2 border-slate-700 flex justify-end">
             <div className="w-36">
               <PoweredBy/>
             </div>

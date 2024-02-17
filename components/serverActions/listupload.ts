@@ -10,30 +10,18 @@ let authorid: any;
 //This server action will fetch any image blobs uploaded by the user based on their urls(already created for generating image previews), and send them to imgupload for uploading.
 //Then it uploads the list to the database, and it also loads the sign in state to determine whether to add an author to the post or not.
 
-//More work needs to be done to give the blobs a proper name so they can be identified when it comes time to display the images.
 export async function newList(formData: FormData) {
+
+  const images: Record<string, Blob> = {};
+
+  formData.forEach((value, key) => {
+    if (value instanceof Blob) {
+      images[key] = value;
+    }
+  })
 
   const data = JSON.stringify(Object.fromEntries(formData));
   const formDataObj = JSON.parse(data);
-
-  if(formDataObj.img1 != "") {
-    let blob1 = await fetch(formDataObj.img1.substring(5)).then(res => res.blob());
-    upload(blob1, formDataObj.img1);
-  }
-  if(formDataObj.img2 != "") {
-    let blob2 = await fetch(formDataObj.img2.substring(5)).then(res => res.blob());
-  }
-  if(formDataObj.img3 != "") {
-    let blob3 = await fetch(formDataObj.img3.substring(5)).then(res => res.blob());
-  }
-  if(formDataObj.img4 != "") {
-    let blob4 = await fetch(formDataObj.img4.substring(5)).then(res => res.blob());
-  }
-  if(formDataObj.img5 != "") {
-    let blob5 = await fetch(formDataObj.img5.substring(5)).then(res => res.blob());
-  }
-
-  
 
   authorid = null;
   const session = await getServerSession(authOptions);
@@ -56,8 +44,30 @@ export async function newList(formData: FormData) {
         rank5: formDataObj.r5,
         description: formDataObj.description,
         author: { connect: {id: authorid}},
+        metadata: {
+          create: {
+            images: images["img1"] != null || images["img2"] != null || images["img3"] != null || images["img4"] != null || images["img5"] != null
+          }
+        }
       }
     })
+
+    if(images["img1"] != null) {
+      upload(images["img1"], List.id + "1.png");
+    }
+    if(images["img2"] != null) {
+      upload(images["img2"], List.id + "2.png");
+    }
+    if(images["img3"] != null) {
+      upload(images["img3"], List.id + "3.png");
+    }
+    if(images["img4"] != null) {
+      upload(images["img4"], List.id + "4.png");
+    }
+    if(images["img5"] != null) {
+      upload(images["img5"], List.id + "5.png");
+    }
+
     return (List.id);
   }
   else {
@@ -73,5 +83,5 @@ export async function newList(formData: FormData) {
       }
     })
     return (List.id);
-  }
+  }  
 }

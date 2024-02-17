@@ -1,6 +1,6 @@
 'use server'
 
-//This server action will upload image blobs to Google Cloud Storage with their generated url(needs to be changed to something more identifiable) as their name.
+//This server action will upload image blobs to Google Cloud Storage with the postid + rank as their name.
 
 const { Storage } = require('@google-cloud/storage');
 
@@ -15,16 +15,14 @@ const { Storage } = require('@google-cloud/storage');
 
 const storage = new Storage(options);
 
-export async function upload(imgblob: Blob, imgname: String) {
+export async function upload(blob: Blob, imgname: String) {
   const bucketName = 'ranktop-i';
 
-  const arraybuffer = await imgblob.arrayBuffer();
-  const buffer = Buffer.from(arraybuffer);
-
-  imgname = imgname.substring(27) + ".png";
+  const arrayBuffer = await blob.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
 
   async function uploadFile() {
-    await storage.bucket(bucketName).file(imgname).save(Buffer.from(buffer));
+    await storage.bucket(bucketName).file(imgname).save(buffer);
   }
 
   uploadFile().catch(console.error);

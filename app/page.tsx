@@ -22,9 +22,9 @@ export default async function Home() {
   return (
     <>
       <Header />
-      <div className="flex justify-center pb-10 px-6 min-h-[calc(100vh-116px)] bg-gradient-radial from-emerald-950 to-slate-950 bg-fixed">
+      <div className="flex justify-center pb-10 px-6 min-h-[calc(100vh-116px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
         <div className="grid grid-cols-1 w-full max-w-2xl">
-          <ul className="flex pt-6 pb-8 justify-center border-x border-b border-slate-700">
+          <ul className="flex pt-6 justify-center border-x border-b border-slate-700">
             <li className="mr-2">
               <Link href="/" aria-current="page" className="text-3xl border-b-2 border-white text-slate-400">Verified</Link>
             </li>
@@ -35,7 +35,7 @@ export default async function Home() {
               <Link href="/all" aria-current="page" className="text-3xl hover:text-offwhite hover:border-b-2 border-white text-slate-400">All</Link>
             </li>
           </ul>
-          <div className="grid grid-cols-1 justify-items-center"> {posts?.map((list: any) => (
+          <div className="grid grid-cols-1 justify-items-center auto-rows-min"> {posts?.map((list: any) => (
             <Link href={`/post/${list.id}`} className="w-full" key={list.id}>
               <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8 border-x border-b border-slate-700">
                 <header className="capitalize text-4xl line-clamp-2 text-slate-400">{list.title}</header>

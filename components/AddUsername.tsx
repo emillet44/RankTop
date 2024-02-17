@@ -75,7 +75,7 @@ export function AddUsername() {
 
   return (
     <>
-      <button onClick={toggleForm} className="hover:outline outline-2 py-2 px-2 rounded-sm peer">Add Username</button>
+      <button onClick={toggleForm} className="hover:outline outline-2 py-2 px-2 rounded-sm peer text-offwhite">Add Username</button>
       {formopen && !confirmopen && !notunique &&
         <div className="absolute top-28 lg:top-16 outline outline-slate-700 bg-slate-900 rounded-lg w-64 p-4">
           <div className="grid grid-cols-1 gap-2 grid-flow-row auto-rows-auto">

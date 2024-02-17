@@ -4,8 +4,8 @@ import Link from "next/link";
 export function Footer() {
   return (
     <>
-      <footer className="py-3 w-full text-center bg-slate-500">
-        <div className="grid grid-flow-col auto-cols-auto justify-center gap-10 sm:gap-40 h-10 items-center">
+      <footer className="py-3 w-full text-center text-offwhite bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
+        <div className="grid grid-flow-col justify-center gap-10 sm:gap-40 h-10">
           <Link href="/about" className="w-20 py-2">
             <header>About</header>
           </Link>
