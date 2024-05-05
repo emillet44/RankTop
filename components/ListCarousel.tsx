@@ -6,11 +6,12 @@ import { FC, useState } from "react";
 import Image from 'next/image'
 
 interface Prop {
+  title: string;
   ranks: (string | null)[];
   postid: string;
 }
 
-const ListCarousel: FC<Prop> = ({ ranks, postid }) => {
+const ListCarousel: FC<Prop> = ({ title, ranks, postid }) => {
 
   const [index, setIndex] = useState(0);
 
@@ -26,7 +27,7 @@ const ListCarousel: FC<Prop> = ({ ranks, postid }) => {
 
   return (
     <>
-      <div className="pt-8 pb-8 rounded-xl outline outline-slate-700">
+        <header className="text-4xl capitalize text-slate-400 font-semibold outline-none pl-8 pb-2">{title}</header>
         <header className="text-xl text-slate-400 outline-none pb-2 pl-8 w-11/12">{ranks[index]}</header>
 
         <div className="grid grid-flow-col items-center">
@@ -61,12 +62,7 @@ const ListCarousel: FC<Prop> = ({ ranks, postid }) => {
               </button>
             }
           </div>
-
-
         </div>
-
-      </div >
-
     </>
   )
 }

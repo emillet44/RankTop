@@ -80,6 +80,9 @@ export async function newList(formData: FormData) {
         rank4: formDataObj.r4,
         rank5: formDataObj.r5,
         description: formDataObj.description,
+        metadata: {
+          create:{}
+        }
       }
     })
     return (List.id);

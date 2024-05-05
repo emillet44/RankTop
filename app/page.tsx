@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import { AlgoliaUpdate } from "@/components/search/AlgoliaUpdate";
 import { LoadVerified } from "@/components/serverActions/loadposts";
 import { Metadata } from 'next'
+import ListCarousel from "@/components/ListCarousel";
 
 //The description under the title when it shows up on Google Search
 export const metadata: Metadata = {
@@ -35,18 +36,26 @@ export default async function Home() {
               <Link href="/all" aria-current="page" className="text-3xl hover:text-offwhite hover:border-b-2 border-white text-slate-400">All</Link>
             </li>
           </ul>
-          <div className="grid grid-cols-1 justify-items-center auto-rows-min"> {posts?.map((list: any) => (
-            <Link href={`/post/${list.id}`} className="w-full" key={list.id}>
-              <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8 border-x border-b border-slate-700">
-                <header className="capitalize text-4xl line-clamp-2 text-slate-400">{list.title}</header>
-                <li className="capitalize truncate text-xl text-slate-400">{list.rank1}</li>
-                <li className="capitalize truncate text-xl text-slate-400">{list.rank2}</li>
-                <li className="capitalize empty:hidden truncate text-xl text-slate-400">{list.rank3}</li>
-                <li className="capitalize empty:hidden truncate text-xl text-slate-400">{list.rank4}</li>
-                <li className="capitalize empty:hidden truncate text-xl text-slate-400">{list.rank5}</li>
-              </ul>
-            </Link>
-          ))}
+          <div className="grid grid-cols-1 justify-items-center auto-rows-min">
+            {posts?.map((list: any) => (
+              <Link href={`/post/${list.id}`} className="w-full" key={list.id}>
+                {list.metadata?.images &&
+                  <div className="pt-8 pb-8 border-x border-b border-slate-700">
+                    <ListCarousel title={list.title} ranks={[list.rank1, list.rank2, list.rank3, list.rank4, list.rank5]} postid={list.id} />
+                  </div>
+                }
+                {!list.metadata?.images &&
+                  <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8 border-x border-b border-slate-700">
+                    <header className="capitalize text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
+                    <li className="capitalize truncate text-xl text-slate-400">{list.rank1}</li>
+                    <li className="capitalize truncate text-xl text-slate-400">{list.rank2}</li>
+                    <li className="capitalize empty:hidden truncate text-xl text-slate-400">{list.rank3}</li>
+                    <li className="capitalize empty:hidden truncate text-xl text-slate-400">{list.rank4}</li>
+                    <li className="capitalize empty:hidden truncate text-xl text-slate-400">{list.rank5}</li>
+                  </ul>
+                }
+              </Link>
+            ))}
           </div>
         </div>
       </div>

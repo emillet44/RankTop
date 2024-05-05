@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { prisma } from "@/lib/prisma"
 
 //This server action will update a post given its unique id and new post data. Due to the nature of the formData object however, optional values that
@@ -30,5 +31,6 @@ export async function editList(formData: FormData, id: string) {
       description: formDataObj.description,
     }
   })
+  revalidatePath(`/post/${id}`);
   return (id);
 }

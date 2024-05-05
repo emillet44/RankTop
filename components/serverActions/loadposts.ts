@@ -16,6 +16,9 @@ export async function LoadVerified() {
         verified: true,
       },
     },
+    include: {
+      metadata: true,
+    },
   });
 
   return vposts;
@@ -28,19 +31,31 @@ export async function LoadUnverified() {
         verified: false,
       },
     },
+    include: {
+      metadata: true,
+    },
   });
 
   return uposts;
 }
 export async function LoadAll() {
 
-  aposts = await prisma.post.findMany();
+  aposts = await prisma.post.findMany({
+    include: {
+      metadata: true,
+    },
+  });
 
   return aposts;
 }
 export async function LoadResults(search: string) {
   rposts = await prisma.post.findMany({
-    where: { title: { contains: search, mode: 'insensitive' } }
+    where: { 
+      title: { contains: search, mode: 'insensitive' } 
+    },
+    include: {
+      metadata: true,
+    },
   })
 
   return rposts;

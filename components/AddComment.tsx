@@ -22,7 +22,7 @@ export default function AddComment() {
     <div>
       <header className="text-3xl text-slate-400 justify-self-left pb-4">Comments</header>
       <div className="pb-4 grid">
-        <span contentEditable onInput={setVal} id="comment" className="peer text-xl text-slate-400 outline-none border-b border-slate-400 min-w-full inline-block row-start-1 col-start-1 z-50" />
+        <span contentEditable onInput={setVal} id="comment" className="peer text-xl text-slate-400 outline-none border-b border-slate-400 min-w-full inline-block row-start-1 col-start-1 z-40" />
         <label className="peer-[&:not(:empty)]:invisible text-slate-400 peer-focus:invisible row-start-1 col-start-1 z-0">Add a comment...</label>
       </div>
       {comment != "" &&
