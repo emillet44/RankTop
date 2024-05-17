@@ -1,4 +1,4 @@
-import CSEditForm from "@/components/CSEditForm";
+import { CSEditForm } from "@/components/CSEditForm";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/headers/Header";
 import { SignState } from "@/components/serverActions/signinstate";
@@ -24,7 +24,7 @@ export default async function Post({ params }: { params: { id: string } }) {
     })
   };
 
-  const yours = (author?.username == states[2]) || (states[2] == "Cinnamon");
+  const yours = (author?.username == states[1]) || (states[1] == "Cinnamon");
   if (!yours && post !== null) {
     if(post.rank5 != null) {
       startranks = 5;

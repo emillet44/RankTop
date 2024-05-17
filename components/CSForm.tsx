@@ -18,6 +18,7 @@ interface Prop {
 //Any inputs that are visible on the screen are required elements, for example if you fill out 2 ranks but there are 5 visible, you will be required to fill out all 
 //5 or lower the ranks back down to 2. When the submit button is clicked, the listupload server action is called, and when it's done, the router will redirect the user
 //to the posts unique url based on its post id.
+//The form buttons now scale to accomodate for mobile viewing.
 
 //New functionality: The form now has a new toggle button for adding images to the post. The number of image inputs corresponds to the number of ranks, and images are
 // draggable using the HTML drag and drop API in combination with React state to update the display as well as the url so images correspond to their proper rank. The drop 
@@ -198,30 +199,30 @@ const CSForm: FC<Prop> = ({ signedin }) => {
           <header className="text-3xl justify-self-left text-slate-400">New Post</header>
           <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 p-8 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5">
             <input name="title" placeholder="Title" className="text-4xl text-slate-400 outline-none bg-transparent placeholder:text-slate-400" required />
-            <div className="row-span-1">
+            <div className="flex items-center">
               <label className="text-xl text-slate-400 pr-2">1.</label>
-              <input name="r1" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
+              <input name="r1" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent flex-1" required />
             </div>
-            <div>
+            <div className="flex items-center">
               <label className="text-xl text-slate-400 pr-2">2.</label>
-              <input name="r2" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
+              <input name="r2" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent flex-1" required />
             </div>
             {parseInt(selected) >= 3 &&
-              <div>
+              <div className="flex items-center">
                 <label className="text-xl text-slate-400 pr-2">3.</label>
-                <input name="r3" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
+                <input name="r3" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent flex-1" required />
               </div>
             }
             {parseInt(selected) >= 4 &&
-              <div>
+              <div className="flex items-center">
                 <label className="text-xl text-slate-400 pr-2">4.</label>
-                <input name="r4" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
+                <input name="r4" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent flex-1" required />
               </div>
             }
             {selected === "5" &&
-              <div>
+              <div className="flex items-center">
                 <label className="text-xl text-slate-400 pr-2">5.</label>
-                <input name="r5" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent" required />
+                <input name="r5" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent flex-1" required />
               </div>
             }
           </div>
@@ -350,7 +351,7 @@ const CSForm: FC<Prop> = ({ signedin }) => {
               <textarea name="description" className="w-full max-w-2xl max-h-96 h-44 outline focus:outline-4 outline-slate-700 rounded-xl p-5 text-slate-400 bg-slate-50 bg-opacity-5" required />
             </div>
           }
-          <div className="max-w-2xl w-full h-10 flex justify-end space-x-5">
+          <div className="max-w-2xl w-full h-10 flex flex-wrap justify-end space-x-5 gap-y-5">
             {!signedin &&
               <button type="button" onClick={toggleModal} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Images</button>
             }

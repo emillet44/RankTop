@@ -9,13 +9,7 @@ import { editList } from "./serverActions/listedit";
 //when first loading the post When the submit button is clicked, editList from listedit.ts is passed the original post id and form data to update the post. Once done the
 //user is redirected to the edited post. Refer to CSForm for info on other functionalities of this page.
 
-interface Props {
-  id: string;
-  post: any;
-  startranks: number;
-}
-
-const CSEditForm: FC<Props> = ({ id, post, startranks }) => {
+export function CSEditForm({ id, post, startranks } : {id:string, post:any, startranks:number}) {
   const [selected, setSelected] = useState(startranks.toString());
   const [desctoggle, setDesc] = useState("");
   const router = useRouter();
@@ -97,4 +91,3 @@ const CSEditForm: FC<Props> = ({ id, post, startranks }) => {
     </div>
   )
 }
-export default CSEditForm;

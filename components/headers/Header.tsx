@@ -1,13 +1,17 @@
 import Link from "next/link"
-import { Logout } from "../Logout"
 import { SignState } from "../serverActions/signinstate"
-import { AddUsername } from "../AddUsername"
 import { Search } from "../search/SearchBox"
+import { ProfileButton } from "../ProfileButton";
+import { CompressedMenu } from "../CompressedMenu";
+
 
 //This header is used by the /all page to display all posts, verified or not. Like every header, it also displays sign in state, and determines
 //whether the user has added a username or not. If not, it will employ the AddUsername component. The states array is widely used throughout the code
 //to store important states like sign in state, like state, username, email, etc. States[0] stores login state, and states[1] stores username state.
-//States[2] stores the actual username.
+//States[2] stores the actual username. 
+//The header has been revamped to scale properly now on mobile. When the header gets compressed to the sm breakpoint, the right side buttons will turn
+//into a menu that is expandable and lists the three buttons vertically.
+
 export async function Header() {
 
   const states: any[] = await SignState();
@@ -19,23 +23,18 @@ export async function Header() {
           <button className="absolute left-2 top-3 text-4xl/7 text-offwhite opacity-100">RankTop</button>
         </Link>
         <Search />
-        {states[1] && states[0] &&
-          <label className="absolute right-52 top-3.5 text-offwhite">{states[2]}</label>
-        }
-        {!states[1] && states[0] &&
-          <>
-            <div className="absolute right-48 top-1.5 flex justify-center">
-              <AddUsername />
-            </div>
-          </>
-        }
+
         {states[0] &&
           <>
-            <Logout />
-            <Link href="/newpost">
-              <button className="absolute right-24 top-1.5 hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">New Post</button>
-            </Link>
+            <CompressedMenu username={states[1]}/>
+            <div className="fixed flex-row right-2 top-1 gap-2 items-center hidden sm:flex">
+              <Link href="/newpost">
+                <button className="hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">New Post</button>
+              </Link>
+              <ProfileButton username={states[1]} />
+            </div>
           </>
+
         }
         {!states[0] &&
           <>

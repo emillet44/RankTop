@@ -7,6 +7,6 @@ import { signOut } from "next-auth/react"
 //server actions(Nextjs fetch waterfall error)
 export function Logout() {
     return (
-        <button onClick={() => signOut({ callbackUrl: "/" })} className="absolute right-3 top-1.5 hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">Log Out</button>
+        <button onClick={() => signOut({ callbackUrl: "/" })} className="absolute right-6 sm:right-3 top-1.5 hover:outline outline-2 py-2 sm:px-2 rounded-sm text-offwhite">Log Out</button>
     )
 }

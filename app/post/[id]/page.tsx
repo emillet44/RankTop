@@ -43,7 +43,7 @@ export default async function Post({ params }: { params: { id: string } }) {
     })
   };
 
-  const yours = (author?.username == states[2]) || (states[2] == "Cinnamon");
+  const yours = (author?.username == states[1]) || (states[1] == "Cinnamon");
   const views = await runReport(`/post/${params.id}`);
   const editable = (views < 10);
 

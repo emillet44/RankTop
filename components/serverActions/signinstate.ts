@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/api/auth/[...nextauth]/auth"
 import { prisma } from "@/lib/prisma"
 
-let states: any[] = [false, false, ""];
+let states: any[] = [false, ""];
 
 //This server action uses the states array to store pertinent data about the user. States[0] stores the sign in state used in many parts of the site, primarily
 //to display either "Sign In" or "Log Out" on the headers. States[1] stores whether the user has a username or not, to display either "Add Username" or "states[2]"
@@ -22,11 +22,7 @@ export async function SignState() {
     });
 
     if (user?.username !== null) {
-      states[1] = true;
-      states[2] = user?.username;
-    }
-    else {
-      states[1] = false;
+      states[1] = user?.username;
     }
   }
   else {
