@@ -17,7 +17,7 @@ export async function Header() {
   const states: any[] = await SignState();
 
   return (
-    <div className="flex justify-center pt-14 pb-2 lg:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
+    <div className="fixed w-screen flex justify-center pt-14 pb-2 lg:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
       <div className="grid grid-flow-col min-w-[330px] h-9 justify-center">
         <Link href="/">
           <button className="absolute left-2 top-3 text-4xl/7 text-offwhite opacity-100">RankTop</button>
@@ -27,7 +27,7 @@ export async function Header() {
         {states[0] &&
           <>
             <CompressedMenu username={states[1]}/>
-            <div className="fixed flex-row right-2 top-1 gap-2 items-center hidden sm:flex">
+            <div className="absolute flex-row right-2 top-1 gap-2 items-center hidden sm:flex">
               <Link href="/newpost">
                 <button className="hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">New Post</button>
               </Link>

@@ -6,6 +6,10 @@ import { useEffect, useRef, useState } from 'react'
 import { AddUsername } from './AddUsername';
 import { signOut } from 'next-auth/react';
 
+//This button displays the username and eventually it will display the profile picture of users(for now its a default image). menuOpen is used to toggle the drawer either through the
+//button or clicking anywhere outside the drawer. drawerRef is a reference to the div that contains the drawer, which is used to determine in combination with buttonRef to determine
+//all potential locations that the user can click to exit the drawer(basically not the button or the drawer[not the button because it already has it's own toggle function]).
+
 export function ProfileButton({ username }: { username: string }) {
 
   const [menuOpen, setMenuOpen] = useState(false);

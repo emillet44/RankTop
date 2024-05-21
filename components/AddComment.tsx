@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 
+//This function will be used to add comments to a post, however currently they are not stored anywhere and are only displayed client side for the user to see, until they refresh the
+//page.
+
 export default function AddComment() {
 
   const [comment, setComment] = useState("");

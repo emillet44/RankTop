@@ -35,15 +35,15 @@ export function Search() {
       <SearchBox placeholder="Search" classNames={{
         root: 'z-20 outline outline-2 outline-slate-700 rounded-md',
         form: '',
-        input: 'w-[330px] h-9 bg-transparent outline-none indent-1',
+        input: 'w-[330px] h-9 bg-transparent outline-none indent-1 text-offwhite placeholder-offwhite',
         reset: '',
         submitIcon: 'hidden',
         resetIcon: 'hidden',
       }} onInput={saveQuery} onKeyDown={checkEnter} />
       <EmptyQueryBoundary fallback={null}>
-        <div className="absolute grid grid-cols-1 z-10 outline outline-2 outline-slate-700 empty:outline-none rounded-md pt-10 bg-white">
+        <div className="absolute grid grid-cols-1 z-10 outline outline-2 outline-slate-700 empty:outline-none rounded-md pt-10 bg-slate-900 text-offwhite">
           <CustomHits />
-          <Link href={`/search/${search}`} className="w-[330px] hover:bg-slate-300">Search for {search}</Link>
+          <Link href={`/search/${search}`} className="w-[330px] hover:bg-slate-800">Search for {search}</Link>
           <div className="p-1 w-full border-t-2 border-slate-700 flex justify-end">
             <div className="w-36">
               <PoweredBy/>

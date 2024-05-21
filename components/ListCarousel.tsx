@@ -11,6 +11,9 @@ interface Prop {
   postid: string;
 }
 
+//This function contains all the images of a post and cycles through them when the left/right chevrons are clicked. The index variable is used to display the proper post after a 
+//chevron is clicked. As for accessing the images, they are loaded from a Google Cloud bucket using a custom url with the post id and rank number.
+
 const ListCarousel: FC<Prop> = ({ title, ranks, postid }) => {
 
   const [index, setIndex] = useState(0);
