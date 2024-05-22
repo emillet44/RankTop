@@ -18,7 +18,7 @@ export default async function Results({ params }: { params: { results: string } 
   return (
     <>
       <Header />
-      <div className="min-h-[calc(100vh-116px)] bg-gradient-radial from-emerald-950 to-slate-950 bg-fixed">
+      <div className="min-h-[calc(100vh-64px)] pt-14 bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
         <header className="text-3xl text-slate-400 pl-16 pt-16">Results</header>
         <div className=" pt-4 px-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-10"> {results?.map((list: any) => (
           <div className="outline outline-slate-700 rounded-md p-5 bg-slate-50 bg-opacity-5 hover:scale-105" key={list.id}>

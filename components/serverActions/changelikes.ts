@@ -11,7 +11,7 @@ import { getServerSession } from "next-auth";
 export async function ChangeLikes(identifier: string, add: boolean, userid: string) {
 
   if(add) {
-    const post = await prisma.post.update({
+    const post = await prisma.posts.update({
       where: { id: identifier },
       data: { 
         metadata: {
@@ -32,7 +32,7 @@ export async function ChangeLikes(identifier: string, add: boolean, userid: stri
     }
   }
   else {
-    const post = await prisma.post.update({
+    const post = await prisma.posts.update({
       where: { id: identifier },
       data: { 
         metadata: {
@@ -74,7 +74,7 @@ export async function Likes(id: string) {
   const liked = likes !== null;
   states[2] = liked;
 
-  const post = await prisma.post.findUnique({
+  const post = await prisma.posts.findUnique({
     where: { id: id },
     include: { metadata: true }
   });

@@ -7,7 +7,7 @@ export default function ReportBugs() {
   return (
     <>
       <Header />
-      <FeedbackForm />
+      <FeedbackForm />    
       <Footer />
     </>
   )

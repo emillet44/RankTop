@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 //by likes, or by views
 
 export async function LoadAll() {
-  const aposts = await prisma.post.findMany({
+  const aposts = await prisma.posts.findMany({
     include: {
       metadata: true,
     },
@@ -15,7 +15,7 @@ export async function LoadAll() {
 }
 export async function LoadBatch(batch: number) {
 
-  const bposts = await prisma.post.findMany({
+  const bposts = await prisma.posts.findMany({
     skip: 3*batch,
     take: 3,
     include: {
@@ -25,7 +25,7 @@ export async function LoadBatch(batch: number) {
   return bposts;
 }
 export async function LoadResults(search: string) {
-  const rposts = await prisma.post.findMany({
+  const rposts = await prisma.posts.findMany({
     take: 50,
     where: { 
       title: { contains: search, mode: 'insensitive' } 

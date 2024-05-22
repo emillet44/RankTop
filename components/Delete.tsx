@@ -2,17 +2,13 @@
 
 import { faCircleXmark } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { FC, useState } from "react";
+import { useState } from "react";
 import { DeletePost } from "./serverActions/deletepost";
 import { useRouter } from "next/navigation"
 
-interface Prop {
-  id: string;
-}
-
 //This is a functional component that receives the id prop from post. It contains a button and confirmation modal, and when 
 //the delete button is clicked the delete server action is called with the post id and the user is redirected to the homepage.
-const Delete: FC<Prop> = ({id}) => {
+export function Delete({id} : {id: string}) {
 
   const [modalon, setModal] = useState(false);
   const router = useRouter();
@@ -47,4 +43,3 @@ const Delete: FC<Prop> = ({id}) => {
     </>
   );
 }
-export default Delete;

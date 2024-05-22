@@ -3,6 +3,7 @@ import { Logout } from "../Logout";
 import { SignState } from "../serverActions/signinstate";
 import { AddUsername } from "../AddUsername";
 import { Search } from "../search/SearchBox";
+import { ProfileButton } from "../ProfileButton";
 
 
 //This header is used by the /newpost page. It only exists to hide the "New Post" button whenever the user is already on the "New Post" page. Like every 
@@ -14,27 +15,16 @@ export async function Header() {
   const states: any[] = await SignState();
 
   return (
-    <div className="flex justify-center pt-14 pb-2 md:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
+    <div className="fixed w-screen flex justify-center pt-14 pb-2 md:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
       <div className="grid grid-flow-col min-w-[330px] h-9 justify-center">
         <Link href="/">
           <button className="absolute left-2 top-3 text-4xl/7 text-offwhite">RankTop</button>
         </Link>
         <Search />
         {states[0] &&
-          <>
-            {states[1] != "" &&
-              <label className="absolute right-28 top-3.5 text-offwhite">{states[2]}</label>
-            }
-            {states[1] == "" &&
-              <>
-                <div className="absolute right-24 top-1.5 flex justify-center">
-                  <AddUsername type="header" />
-                </div>
-              </>
-            }
-            <Logout />
-          </>
-
+          <div className="absolute right-2 top-1 gap-2">
+            <ProfileButton username={states[1]} />
+          </div>
         }
         {!states[0] &&
           <Link href="/api/auth/signin">

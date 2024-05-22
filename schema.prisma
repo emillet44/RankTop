@@ -9,8 +9,8 @@ datasource db {
   shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
-model Post {
-  id          String        @id @default(cuid())
+model Posts {
+  id          String          @id @default(cuid())
   title       String
   rank1       String
   rank2       String
@@ -19,17 +19,19 @@ model Post {
   rank5       String?
   authorId    String?
   description String?
+  category    String
   comments    Comments[]
-  author      User?          @relation(fields: [authorId], references: [id])
+  author      User?           @relation(fields: [authorId], references: [id])
   metadata    Post_Metadata? 
 }
 
 model Post_Metadata {
   post_id  String   @id @map("post_id") @unique
   images   Boolean  @default(false)
-  verified Boolean  @default(false)
-  likes    Int?     @default(0)
-  post     Post     @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  likes    Int      @default(0)
+  views    Int      @default(0)
+  date     DateTime @default(now())
+  post     Posts    @relation(fields: [post_id], references: [id], onDelete: Cascade)
 }
 
 model Account {
@@ -70,8 +72,16 @@ model User {
   accounts      Account[]
   comments      Comments[]
   likes         Likes[]
-  posts         Post[]
+  posts         Posts[]
+  reports       Reports[]
   sessions      Session[]
+}
+
+model Reports {
+  userId   String?
+  report   String
+  reportID String @id @default(cuid())
+  user     User?   @relation(fields: [userId], references: [id])
 }
 
 model Likes {
@@ -94,6 +104,6 @@ model Comments {
   text   String
   postId String
   userId String
-  post   Post   @relation(fields: [postId], references: [id])
+  post   Posts  @relation(fields: [postId], references: [id])
   user   User   @relation(fields: [userId], references: [id])
 }

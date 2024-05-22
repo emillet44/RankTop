@@ -11,7 +11,7 @@ import ListCarousel from "@/components/ListCarousel";
 
 //Title is set to post title for better SEO
 export async function generateMetadata({ params }: { params: { id: string } }) {
-  const post = await prisma.post.findUnique({
+  const post = await prisma.posts.findUnique({
     where: { id: params.id },
   });
   if (post !== null) {
@@ -33,7 +33,7 @@ export default async function Post({ params }: { params: { id: string } }) {
   let author;
   const states: any[] = await SignState();
 
-  const post = await prisma.post.findUnique({
+  const post = await prisma.posts.findUnique({
     where: { id: params.id },
     include: { metadata: true },
   });
@@ -52,7 +52,7 @@ export default async function Post({ params }: { params: { id: string } }) {
       <>
         <Header />
 
-        <div className="flex justify-center py-10 px-6 min-h-[calc(100vh-116px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+        <div className="flex justify-center px-6 pb-10 min-h-[calc(100vh-64px)] pt-24 bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
           <div className="grid grid-cols-1 grid-flow-row auto-rows-min gap-4 w-full max-w-2xl h-4/5">
             <div className="max-w-2xl w-full flex justify-between items-end space-x-4">
               <header className="h-6 text-lg text-slate-400">Posted by: {author?.username || "Guest"}</header>

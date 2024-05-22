@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/api/auth/[...nextauth]/auth";
 import { upload } from "./imgupload";
 
-let authorid: any;
+let authorid: any = null;
 
 //This server action will fetch any image blobs uploaded by the user based on their urls(already created for generating image previews), and send them to imgupload for uploading.
 //Then it uploads the list to the database, and it also loads the sign in state to determine whether to add an author to the post or not.
@@ -23,7 +23,6 @@ export async function newList(formData: FormData) {
   const data = JSON.stringify(Object.fromEntries(formData));
   const formDataObj = JSON.parse(data);
 
-  authorid = null;
   const session = await getServerSession(authOptions);
 
   if(session?.user?.email != null) {
@@ -34,7 +33,7 @@ export async function newList(formData: FormData) {
   }
 
   if(authorid !== null) {
-    const List = await prisma.post.create({
+    const List = await prisma.posts.create({
       data: {
         title: formDataObj.title,
         rank1: formDataObj.r1,
@@ -43,6 +42,7 @@ export async function newList(formData: FormData) {
         rank4: formDataObj.r4,
         rank5: formDataObj.r5,
         description: formDataObj.description,
+        category: "",
         author: { connect: {id: authorid}},
         metadata: {
           create: {
@@ -71,7 +71,7 @@ export async function newList(formData: FormData) {
     return (List.id);
   }
   else {
-    const List = await prisma.post.create({
+    const List = await prisma.posts.create({
       data: {
         title: formDataObj.title,
         rank1: formDataObj.r1,
@@ -80,6 +80,7 @@ export async function newList(formData: FormData) {
         rank4: formDataObj.r4,
         rank5: formDataObj.r5,
         description: formDataObj.description,
+        category: "",
         metadata: {
           create:{}
         }

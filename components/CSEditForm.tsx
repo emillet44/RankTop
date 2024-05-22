@@ -9,7 +9,7 @@ import { editList } from "./serverActions/listedit";
 //when first loading the post When the submit button is clicked, editList from listedit.ts is passed the original post id and form data to update the post. Once done the
 //user is redirected to the edited post. Refer to CSForm for info on other functionalities of this page.
 
-export function CSEditForm({ id, post, startranks } : {id:string, post:any, startranks:number}) {
+export function CSEditForm({ id, post, startranks } : {id: string, post: any, startranks: number}) {
   const [selected, setSelected] = useState(startranks.toString());
   const [desctoggle, setDesc] = useState("");
   const router = useRouter();
@@ -37,7 +37,7 @@ export function CSEditForm({ id, post, startranks } : {id:string, post:any, star
   }
 
   return (
-    <div className="min-h-[calc(100vh-116px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+    <div className="min-h-[calc(100vh-64px)] pt-14 bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
       <form id="editpost" action={subHandler} className="flex justify-center pt-12 px-6 pb-16">
         <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 w-full max-w-2xl">
           <header className="text-3xl justify-self-left text-slate-400">Edit Post</header>

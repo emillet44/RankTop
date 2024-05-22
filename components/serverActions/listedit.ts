@@ -17,7 +17,7 @@ export async function editList(formData: FormData, id: string) {
   formDataObj.r5 = formDataObj.r5 == undefined ? null : formDataObj.r5;
   formDataObj.description = formDataObj.description == undefined ? null : formDataObj.description;
 
-  const updateList = await prisma.post.update({
+  const updateList = await prisma.posts.update({
     where: {
       id: id
     },
