@@ -2,7 +2,7 @@
 
 import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { FC, useState } from "react";
+import { useState } from "react";
 import Image from 'next/image';
 
 //This function contains all the images of a post and cycles through them when the left/right chevrons are clicked. The index variable is used to display the proper post after a 

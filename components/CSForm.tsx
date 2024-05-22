@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useState } from "react"
+import { useState } from "react"
 import { newList } from "./serverActions/listupload"
 import { useRouter } from "next/navigation"
 import Image from 'next/image'

@@ -4,10 +4,10 @@ import { Footer } from "@/components/Footer";
 import { prisma } from "@/lib/prisma";
 import { runReport } from "@/components/serverActions/pageview";
 import { SignState } from "@/components/serverActions/signinstate";
-import Delete from "@/components/Delete";
+import { Delete } from "@/components/Delete";
 import Link from "next/link";
 import AddComment from "@/components/AddComment";
-import ListCarousel from "@/components/ListCarousel";
+import { ListCarousel } from "@/components/ListCarousel";
 
 //Title is set to post title for better SEO
 export async function generateMetadata({ params }: { params: { id: string } }) {

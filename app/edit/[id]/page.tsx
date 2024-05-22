@@ -15,7 +15,7 @@ export default async function Post({ params }: { params: { id: string } }) {
   let startranks = 2;
   const states: any[] = await SignState();
 
-  const post = await prisma.post.findUnique({
+  const post = await prisma.posts.findUnique({
     where: { id: params.id },
   });
   if (post?.authorId != null) {

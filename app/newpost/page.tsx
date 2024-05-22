@@ -1,5 +1,5 @@
 import { Header } from "@/components/headers/NewPostHeader";
-import  CSForm  from "../../components/CSForm";
+import { CSForm }  from "../../components/CSForm";
 import { Footer } from "@/components/Footer";
 import { SignState } from "@/components/serverActions/signinstate";
 

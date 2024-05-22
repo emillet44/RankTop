@@ -1,7 +1,7 @@
 'use client'
 
 import Link from "next/link"
-import ListCarousel from "./ListCarousel"
+import { ListCarousel } from "./ListCarousel"
 import { useEffect, useRef, useState } from "react";
 import { LoadBatch } from "./serverActions/loadposts";
 
