@@ -76,45 +76,44 @@ export function AddLike(props: any) {
     if (firstrender && states[0]) {
       return (
         <>
-          <button className="flex justify-self-left w-9 h-9" onClick={toggleLike}>
+          <button className="flex justify-self-left w-7 h-7" onClick={toggleLike}>
             {!states[2] && !isValidating &&
-              <FontAwesomeIcon icon={faHeart} className="w-9 h-9" style={{color: "#334155",}} />
+              <FontAwesomeIcon icon={faHeart} className="w-7 h-7" style={{color: "#334155",}} />
             }
             {states[2] && !isValidating &&
-              <FontAwesomeIcon icon={faHeartSolid} className="w-9 h-9" style={{color: "#334155",}} />
+              <FontAwesomeIcon icon={faHeartSolid} className="w-7 h-7" style={{color: "#334155",}} />
             }
             {isValidating &&
               <header className="w-40 pt-2 text-lg">...</header>
             }
           </button>
           {!isValidating &&
-            <header className="pt-0.5 text-2xl text-slate-400">{states[3] + like}</header>
+            <header className="pt-0.5 text-xl text-slate-400">{states[3] + like}</header>
           }
-          
         </>
       )
     }
     else if (!firstrender) {
       return (
         <>
-          <button className="flex justify-self-left w-9 h-9" onClick={toggleLike}>
+          <button className="flex justify-self-left w-7 h-7" onClick={toggleLike}>
             {!liked ? 
-              <FontAwesomeIcon icon={faHeart} className="w-9 h-9" style={{color: "#334155",}} />
+              <FontAwesomeIcon icon={faHeart} className="w-7 h-7" style={{color: "#334155",}} />
               :
-              <FontAwesomeIcon icon={faHeartSolid} className="w-9 h-9" style={{color: "#334155",}} />
+              <FontAwesomeIcon icon={faHeartSolid} className="w-7 h-7" style={{color: "#334155",}} />
             }
           </button>
-          <header className="pt-0.5 text-2xl text-slate-400">{states[3] + like}</header>
+          <header className="pt-0.5 text-xl text-slate-400">{states[3] + like}</header>
         </>
       )
     }
     else {
       return (
         <>
-          <button className="flex justify-self-left w-9 h-9" onClick={toggleModal}>
-            <FontAwesomeIcon icon={faHeart} className="w-9 h-9" style={{color: "#334155",}} />
+          <button className="flex justify-self-left w-7 h-7" onClick={toggleModal}>
+            <FontAwesomeIcon icon={faHeart} className="w-7 h-7" style={{color: "#334155",}} />
           </button>
-          <header className="pt-0.5 text-2xl text-slate-400">{states[3] + like}</header>
+          <header className="pt-0.5 text-xl text-slate-400">{states[3] + like}</header>
           {modalon &&
             <div className="fixed inset-0 flex items-center justify-center bg-gray-600/50">
               <div className="max-w-xs w-full px-2 py-2 grid grid-cols-1 grid-flow-row auto-rows-min gap-2 bg-white rounded-lg">

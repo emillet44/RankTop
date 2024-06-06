@@ -2,8 +2,11 @@
 
 import { prisma } from "@/lib/prisma";
 
-//This server action loads different types of posts from the database, either 50, or the first 50 results of a search. Soon there will be functions to load categories, subcategories,
-//by likes, or by views
+//This server action loads different types of posts from the database, either 20(its still 4 for testing), or the first 50 results of a search. Soon there will be functions to load
+//categories, subcategories, by likes, or by views.
+//Soon means now. LoadBatchCat will load posts by their category, and if the category is custom(c added to the start of the category name), the search parameters are relaxed to try
+//to increase discovery for users. Category "None" from the UI corresponds to a blank category in the db(to save space). LoadBatch loads posts by a metric(currently likes and views),
+//and a time range, which is calculated with a switch corresponding to the options from the select box. 
 
 export async function LoadAll() {
   const aposts = await prisma.posts.findMany({
@@ -13,22 +16,124 @@ export async function LoadAll() {
   });
   return aposts;
 }
-export async function LoadBatch(batch: number) {
+export async function LoadBatch(batch: number, type: string, date: string) {
+  const now = new Date();
+  let startdate;
+  switch (date) {
+    case "Today":
+      startdate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      break;
+    case "This Week":
+      startdate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      break;
+    case "This Month":
+      startdate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      break;
+    case "This Year":
+      startdate = new Date(now.getTime() - 365 * 30 * 24 * 60 * 60 * 1000);
+      break;
+    default:
+      startdate = new Date(0);
+  }
 
-  const bposts = await prisma.posts.findMany({
-    skip: 3*batch,
-    take: 3,
-    include: {
-      metadata: true,
-    },
-  });
-  return bposts;
+  if (type == "Most Viewed") {
+    const bposts = await prisma.posts.findMany({
+      skip: 4 * batch,
+      take: 4,
+      orderBy: [
+        {
+          metadata: {
+            views: 'desc',
+          },
+        },
+      ],
+      where: {
+        metadata: {
+          date: {
+            gte: startdate,
+          },
+        },
+      },
+      include: {
+        metadata: true,
+      },
+    });
+    return bposts;
+  }
+  else if (type == "Most Liked") {
+    const bposts = await prisma.posts.findMany({
+      skip: 4 * batch,
+      take: 4,
+      orderBy: [
+        {
+          metadata: {
+            likes: 'desc',
+          },
+        },
+      ],
+      where: {
+        metadata: {
+          date: {
+            gte: startdate,
+          },
+        },
+      },
+      include: {
+        metadata: true,
+      },
+    });
+    return bposts;
+  }
+}
+export async function LoadBatchCat(batch: number, category: string) {
+  if (category == "None") {
+    const bposts = await prisma.posts.findMany({
+      skip: 4 * batch,
+      take: 4,
+      where: {
+        category: "",
+      },
+      include: {
+        metadata: true,
+      },
+    });
+    return bposts;
+  }
+  else if (category.charAt(0) == "c") {
+    const bposts = await prisma.posts.findMany({
+      skip: 4 * batch,
+      take: 4,
+      where: {
+        category: {
+          contains: category.substring(1),
+          mode: 'insensitive',
+        },
+      },
+      include: {
+        metadata: true,
+      },
+    });
+    return bposts;
+  }
+  else {
+    const bposts = await prisma.posts.findMany({
+      skip: 4 * batch,
+      take: 4,
+      where: {
+        category: category,
+      },
+      include: {
+        metadata: true,
+      },
+    });
+    return bposts;
+  }
 }
 export async function LoadResults(search: string) {
   const rposts = await prisma.posts.findMany({
     take: 50,
-    where: { 
-      title: { contains: search, mode: 'insensitive' } 
+    where: {
+      title: { contains: search, mode: 'insensitive' }
     },
     include: {
       metadata: true,

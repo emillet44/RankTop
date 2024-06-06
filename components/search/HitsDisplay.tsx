@@ -7,7 +7,6 @@ export function CustomHits(props: UseHitsProps) {
   
   return (
     <>
-      
         {hits?.map((list: any) => (
           <div key={list.id}>
             <Link href={`/post/${list.id}`}>
@@ -23,8 +22,6 @@ export function CustomHits(props: UseHitsProps) {
             </Link>
           </div>
         ))}
-        
-      
     </>
   )
 }

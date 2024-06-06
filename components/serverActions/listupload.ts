@@ -42,7 +42,7 @@ export async function newList(formData: FormData) {
         rank4: formDataObj.r4,
         rank5: formDataObj.r5,
         description: formDataObj.description,
-        category: "",
+        category: formDataObj.category,
         author: { connect: {id: authorid}},
         metadata: {
           create: {
@@ -80,7 +80,7 @@ export async function newList(formData: FormData) {
         rank4: formDataObj.r4,
         rank5: formDataObj.r5,
         description: formDataObj.description,
-        category: "",
+        category: formDataObj.category,
         metadata: {
           create:{}
         }

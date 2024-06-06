@@ -14,6 +14,7 @@ import { runReport } from "./pageview";
 // }
 
 export async function UpdatePostViews() {
+  console.log("Updating views")
   const allposts = await prisma.posts.findMany();
 
   const viewdata: Record<string, number> = {};
@@ -24,7 +25,6 @@ export async function UpdatePostViews() {
   }
 
   try {
-    // Create a transaction to batch the updates
     await prisma.$transaction(
       Object.entries(viewdata).map(([postId, postviews]) =>
         prisma.posts.update({
@@ -40,6 +40,7 @@ export async function UpdatePostViews() {
       )
     );
   } finally {
+    console.log("Views updated");
     await prisma.$disconnect();
   }
 }

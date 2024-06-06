@@ -1,7 +1,7 @@
 import { Header } from "../components/headers/Header"
 import { Footer } from "@/components/Footer";
 import { AlgoliaUpdate } from "@/components/search/AlgoliaUpdate";
-import { LoadBatch } from "@/components/serverActions/loadposts";
+import { LoadBatchCat } from "@/components/serverActions/loadposts";
 import { Metadata } from 'next'
 import PostList from "@/components/PostList";
 import { UpdatePostViews } from "@/components/serverActions/batchviews";
@@ -21,12 +21,12 @@ export default async function Home() {
   //AlgoliaUpdate();
   //UpdatePostViews();
 
-  const starter = await LoadBatch(0);
+  const starter = await LoadBatchCat(0, "None");
 
   return (
     <>
       <Header />
-      <div className="flex justify-center pt-[52px] pb-10 px-6 min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+      <div className="flex justify-center pt-[100px] md:pt-[52px] pb-10 px-6 min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
         <div className="grid grid-cols-1 w-full max-w-2xl">
           <div className="grid grid-cols-1 justify-items-center auto-rows-min">
             <PostList starter={starter} />

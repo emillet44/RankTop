@@ -4,26 +4,31 @@ export default function Loading() {
 
   return (
     <>
-      <div className="flex justify-center pt-14 pb-2 lg:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
+      <div className="fixed w-screen flex justify-center pt-14 pb-2 md:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
         <div className="grid grid-flow-col min-w-[330px] h-9 justify-center">
-          <button className="absolute left-2 top-3 text-4xl/7 text-offwhite">RankTop</button>
-          <input placeholder="Search" className="w-[330px] h-9 py-2 bg-transparent outline outline-2 outline-slate-700 rounded-md indent-1" />
+          <button disabled className="absolute left-2 top-3 text-4xl/7 text-offwhite">RankTop</button>
+          <input placeholder="Search" disabled className="w-[330px] h-9 py-2 bg-transparent outline outline-2 outline-slate-700 rounded-md indent-1 placeholder-offwhite" />
         </div>
       </div>
 
-      <div className="flex justify-center pb-10 px-6 min-h-[calc(100vh-116px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
-        <div className="grid grid-cols-1 w-full max-w-2xl">
-          <ul className="flex pt-6 pb-8 justify-center border-x border-b border-slate-700">
-            <li className="mr-2">
-              <header className="text-3xl hover:text-offwhite hover:border-b-2 border-white text-slate-400">Verified</header>
-            </li>
-            <li className="mr-2">
-              <header className="text-3xl hover:text-offwhite hover:border-b-2 border-white text-slate-400">Unverified</header>
-            </li>
-            <li className="mr-2">
-              <header className="text-3xl hover:text-offwhite hover:border-b-2 border-white text-slate-400">All</header>
-            </li>
-          </ul>
+      <div className="flex justify-center pt-[100px] md:pt-[52px] pb-10 px-6 min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+        <div className="grid grid-cols-1 w-full max-w-2xl h-screen border-x border-b border-slate-700">
+          <div className="grid grid-cols-1 justify-items-center auto-rows-min">
+            <div className="border-b p-8 w-full border-slate-700">
+              <div className="flex flex-row space-y-3">
+                <label className="text-xl text-slate-400 pr-1 flex pt-4">Loading</label>
+                <select className="p-2 pr-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-transparent opacity-100" disabled>
+                  <option className="text-black">Most Viewed</option>
+                </select>
+              </div>
+              <div className="flex flex-row space-y-3">
+                <label className="text-xl text-slate-400 pr-1 flex pt-4">Loading...</label>
+                <select className="p-2 pr-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-transparent opacity-100" disabled>
+                  <option className="text-black">Science & Nature</option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 'use client'
 
 import algoliasearch from "algoliasearch";
-import { InstantSearch, PoweredBy, SearchBox, SortBy, useInstantSearch } from "react-instantsearch"
+import { Configure, InstantSearch, PoweredBy, SearchBox, useInstantSearch } from "react-instantsearch"
 import { CustomHits } from "./HitsDisplay";
 import { useRouter } from "next/navigation"
 import { useState } from "react";
@@ -51,6 +51,7 @@ export function Search() {
           </div>
         </div>
       </EmptyQueryBoundary>
+      <Configure hitsPerPage={4} />
     </InstantSearch>
   )
 }

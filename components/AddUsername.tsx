@@ -90,7 +90,7 @@ export function AddUsername({ type } : { type:string }) {
           <div className="outline outline-slate-700 bg-slate-900 rounded-lg w-64 p-4 text-base">
             <div className="grid grid-cols-1 gap-2 grid-flow-row auto-rows-auto">
               <label className="text-slate-400">Username</label>
-              <input name="username" id="username" value={inputValue} onChange={checkChars} className="outline outline-2 outline-slate-700 rounded-sm bg-transparent text-offwhite" maxLength={24}></input>
+              <input name="username" id="username" value={inputValue} onChange={checkChars} className="outline outline-2 outline-slate-700 rounded-sm bg-transparent text-offwhite" maxLength={16}></input>
               <div className="flex justify-end">
                 <button type="submit" onClick={checkUnique} disabled={disabled} className="outline outline-2 outline-slate-700 rounded-sm w-20 disabled:invisible text-slate-400">Continue</button>
               </div>

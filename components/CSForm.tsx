@@ -28,17 +28,20 @@ import { signIn } from "next-auth/react"
 //previewed, the preview url and file have to be stored), and the HTML element ids are used as indices to correctly update each index in the array. An array of null values was also
 //added so that the other two arrays can be cleared easily. superUpdateImage may seem very similar to updateImage however it was necessary to prevent a data race in the updating of
 //two React state array indices. Both indices are updated in one function now, which is important to ensure the drag and drop functionality works properly.
-//Added a loading screen using the submitted state to confirm a post has been submitted/to prevent resubmission
+//Added a loading screen using the submitted state to confirm a post has been submitted/to prevent resubmission. Added a category select to the top right with a custom option, saved
+//in a state variable and tacked onto the formdata.
 
-export function CSForm({signedin} : {signedin: boolean}) {
+export function CSForm({ signedin }: { signedin: boolean }) {
 
   const [selected, setSelected] = useState("");
+  const [category, setCategory] = useState("");
   const [desctoggle, setDesc] = useState("");
   const [image, setImage] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [lockcat, setLockCat] = useState("");
 
-  const[files, setFiles] = useState<Array<File | null>>(Array(5).fill(null));
-  const[urls, setUrls] = useState<Array<string | null>>(Array(5).fill(null));
+  const [files, setFiles] = useState<Array<File | null>>(Array(5).fill(null));
+  const [urls, setUrls] = useState<Array<string | null>>(Array(5).fill(null));
   const clearedlist = [null, null, null, null, null];
 
   const [modalon, setModal] = useState(false);
@@ -101,6 +104,13 @@ export function CSForm({signedin} : {signedin: boolean}) {
     setSelected(e.target.value);
   };
 
+  const getCategory = (e: any) => {
+    setCategory(e.target.value);
+    if (lockcat != "") {
+      setLockCat("");
+    }
+  }
+
   const toggleDesc = (e: any) => {
     e.preventDefault();
     if (e.target.textContent == "Add Description") {
@@ -133,6 +143,14 @@ export function CSForm({signedin} : {signedin: boolean}) {
     if (files[4] !== null) {
       formData.append("img5", new Blob([files[4]], { type: files[4].type }));
     }
+
+    if(lockcat != "") {
+      formData.append("category", lockcat);
+    }
+    else if(category != "None") {
+      formData.append("category", category);
+    }
+
     newList(formData).then((result) => {
       router.push(`/post/${result}`);
     });
@@ -145,7 +163,6 @@ export function CSForm({signedin} : {signedin: boolean}) {
     }
     else {
       e.target.textContent = "Remove Images";
-
       setFiles(clearedlist);
       setUrls(clearedlist);
     }
@@ -160,7 +177,7 @@ export function CSForm({signedin} : {signedin: boolean}) {
 
   const removeImg = (e: any, imgnum: number) => {
     e.preventDefault();
-    updateImage(imgnum-1, null, null);
+    updateImage(imgnum - 1, null, null);
   }
 
   function dragstartHandler(e: any) {
@@ -176,9 +193,9 @@ export function CSForm({signedin} : {signedin: boolean}) {
     e.preventDefault();
     const url = e.dataTransfer.getData("text/uri-list");
     const imgid = e.dataTransfer.getData("text/plain");
-    if (e.target.src != url) { 
+    if (e.target.src != url) {
       const test = files[e.target.id];
-      
+
       superUpdateImage(parseInt(e.target.id), files[parseInt(imgid)], url, parseInt(imgid), test, e.target.src);
 
     }
@@ -189,14 +206,55 @@ export function CSForm({signedin} : {signedin: boolean}) {
     setModal(!modalon);
   }
 
-  if(!submitted) {
+  const lockCategory = (e: any) => {
+    e.preventDefault();
+    setLockCat(e.target.closest('div').querySelector('input').value);
+  }
+
+  if (!submitted) {
     return (
-      <div className="min-h-[calc(100vh-64px)] pt-14 bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
-        <form id="newpost" onSubmit={subHandler} className="flex justify-center pt-12 px-6 pb-16">
+      <div className="min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+        <form id="newpost" onSubmit={subHandler} className="flex justify-center pt-[130px] md:pt-[82px] px-6 pb-10">
           <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 w-full max-w-2xl">
-            <header className="text-3xl justify-self-left text-slate-400">New Post</header>
-            <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 p-8 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5">
-              <input name="title" placeholder="Title" className="text-4xl text-slate-400 outline-none bg-transparent placeholder:text-slate-400" required />
+            <div className="flex justify-between">
+              <header className="text-3xl justify-self-left text-slate-400 self-end">New Post</header>
+              <div className="flex sm:flex-row flex-col space-y-3">
+                <label className="text-xl text-slate-400 pr-1 flex pt-4">Category:</label>
+                <select onChange={getCategory} className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
+                  <option className="text-black">None</option>
+                  <option className="text-black">Gaming</option>
+                  <option className="text-black">Music</option>
+                  <option className="text-black">Movies</option>
+                  <option className="text-black">TV Shows</option>
+                  <option className="text-black">Tech</option>
+                  <option className="text-black">Sports</option>
+                  <option className="text-black">Memes</option>
+                  <option className="text-black">Fashion</option>
+                  <option className="text-black">Food & Drink</option>
+                  <option className="text-black">Celebrities</option>
+                  <option className="text-black">Lifestyle</option>
+                  <option className="text-black">Books</option>
+                  <option className="text-black">Science & Nature</option>
+                  <option className="text-black">Education</option>
+                  <option className="text-black">Custom</option>
+                </select>
+                {category == "Custom" &&
+                  <>
+                    {!lockcat &&
+                      <div className=" pl-2 flex items-center space-x-2">
+                        <input maxLength={16} className="text-xl text-slate-400 outline-none border-b border-slate-400 bg-transparent placeholder:text-slate-400 w-32 md:w-48"></input>
+                        <button onClick={lockCategory} className="outline outline-2 outline-slate-700 rounded-md p-1 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add</button>
+                      </div>
+                    }
+                    {lockcat &&
+                      <label className="pl-2 flex items-center text-xl text-slate-400">{lockcat}</label>
+                    }
+                  </>
+                }
+              </div>
+            </div>
+            <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-2 sm:gap-4 p-4 sm:p-6 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5">
+              <input name="title" placeholder="Title" className="text-2xl text-slate-400 outline-none bg-transparent placeholder:text-slate-400" required maxLength={40} />
               <div className="flex items-center">
                 <label className="text-xl text-slate-400 pr-2">1.</label>
                 <input name="r1" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent flex-1" required />
@@ -235,7 +293,7 @@ export function CSForm({signedin} : {signedin: boolean}) {
                         <input id="0" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
                       </div>
                     </div>
-  
+
                   }
                   {urls[0] != null &&
                     <div>
@@ -255,7 +313,7 @@ export function CSForm({signedin} : {signedin: boolean}) {
                         <input id="1" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
                       </div>
                     </div>
-  
+
                   }
                   {urls[1] != null &&
                     <div>
@@ -277,7 +335,7 @@ export function CSForm({signedin} : {signedin: boolean}) {
                             <input id="2" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
                           </div>
                         </div>
-  
+
                       }
                       {urls[2] != null &&
                         <div>
@@ -301,7 +359,7 @@ export function CSForm({signedin} : {signedin: boolean}) {
                             <input id="3" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
                           </div>
                         </div>
-  
+
                       }
                       {urls[3] != null &&
                         <div>
@@ -325,7 +383,7 @@ export function CSForm({signedin} : {signedin: boolean}) {
                             <input id="4" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
                           </div>
                         </div>
-  
+
                       }
                       {urls[4] != null &&
                         <div>
@@ -357,7 +415,7 @@ export function CSForm({signedin} : {signedin: boolean}) {
                 <button onClick={toggleImages} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Images</button>
               }
               <button onClick={toggleDesc} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Description</button>
-              <select onChange={getInput} className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
+              <select onChange={getInput} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
                 <option value="2" className="text-black">2 Ranks</option>
                 <option value="3" className="text-black">3 Ranks</option>
                 <option value="4" className="text-black">4 Ranks</option>
@@ -383,9 +441,9 @@ export function CSForm({signedin} : {signedin: boolean}) {
   }
   else {
     return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-64px)] pt-14 bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
-      <header className="text-slate-400 text-3xl">Redirecting to your post now!</header>   
-    </div>
+      <div className="flex items-center justify-center min-h-[calc(100vh-64px)] pt-14 bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+        <header className="text-slate-400 text-3xl">Redirecting to your post now!</header>
+      </div>
     )
-  }  
+  }
 }

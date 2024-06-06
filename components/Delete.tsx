@@ -25,7 +25,7 @@ export function Delete({id} : {id: string}) {
 
   return (
     <>
-      <button onClick={toggleModal} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Delete Post</button>
+      <button onClick={toggleModal} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400 h-10 whitespace-nowrap">Delete</button>
       {modalon &&
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="max-w-xs w-full px-2 py-2 grid grid-cols-1 grid-flow-row auto-rows-min gap-2 bg-white rounded-lg">

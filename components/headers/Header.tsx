@@ -17,10 +17,10 @@ export async function Header() {
   const states: any[] = await SignState();
 
   return (
-    <div className="fixed w-screen flex justify-center pt-14 pb-2 lg:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
+    <div className="fixed w-screen flex justify-center pt-14 pb-2 md:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
       <div className="grid grid-flow-col min-w-[330px] h-9 justify-center">
         <Link href="/">
-          <button className="absolute left-2 top-3 text-4xl/7 text-offwhite opacity-100">RankTop</button>
+          <button className="absolute left-2 top-3 text-4xl/7 text-offwhite">RankTop</button>
         </Link>
         <Search />
 

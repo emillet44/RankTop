@@ -52,7 +52,7 @@ export async function runReport(pathname: string) {
   });
 
   response.rows.forEach((row: { dimensionValues: any[]; metricValues: any[]; }) => {
-    views = row.metricValues[0].value;
+    views = Number(row.metricValues[0].value);
   });
 
   return views;
