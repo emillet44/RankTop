@@ -29,6 +29,7 @@ export async function editList(formData: FormData, id: string) {
       rank4: formDataObj.r4,
       rank5: formDataObj.r5,
       description: formDataObj.description,
+      category: formDataObj.category,
     }
   })
   revalidatePath(`/post/${id}`);

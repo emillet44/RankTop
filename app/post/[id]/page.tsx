@@ -77,7 +77,7 @@ export default async function Post({ params }: { params: { id: string } }) {
         <div className="flex justify-center px-6 pb-10 min-h-[calc(100vh-64px)] pt-[141px] lg:pt-[94px] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
           <div className="grid grid-cols-1 grid-flow-row auto-rows-min w-full max-w-2xl h-4/5">
             <div className="max-w-2xl w-full flex justify-between items-end">
-              <header className="text-2xl text-ellipsis overflow-hidden capitalize text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">Top 10 Champions in League of Legends</header>
+              <header className="text-2xl text-ellipsis overflow-hidden capitalize text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">{post.title}</header>
               <div className="flex space-x-4 pb-4">
                 {!yours && !editable &&
                   <Delete id={params.id} />

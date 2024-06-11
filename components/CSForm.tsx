@@ -34,7 +34,7 @@ import { signIn } from "next-auth/react"
 export function CSForm({ signedin }: { signedin: boolean }) {
 
   const [selected, setSelected] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState("None");
   const [desctoggle, setDesc] = useState("");
   const [image, setImage] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -147,8 +147,11 @@ export function CSForm({ signedin }: { signedin: boolean }) {
     if(lockcat != "") {
       formData.append("category", lockcat);
     }
-    else if(category != "None") {
+    else if(category != "None" && category != "Custom") {
       formData.append("category", category);
+    }
+    else {
+      formData.append("category", "");
     }
 
     newList(formData).then((result) => {
