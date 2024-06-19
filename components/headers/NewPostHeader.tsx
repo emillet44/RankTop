@@ -21,7 +21,7 @@ export async function Header() {
         <Search />
         {states[0] &&
           <div className="absolute right-2 top-1 gap-2">
-            <ProfileMenu username={states[1]} />
+            <ProfileMenu username={states[1]} userid={states[2]} />
           </div>
         }
         {!states[0] &&
