@@ -10,7 +10,9 @@ import { signOut } from 'next-auth/react';
 //button or clicking anywhere outside the drawer. drawerRef is a reference to the div that contains the drawer, which is used to determine in combination with buttonRef to determine
 //all potential locations that the user can click to exit the drawer(basically not the button or the drawer[not the button because it already has it's own toggle function]).
 
-export function ProfileButton({ username }: { username: string }) {
+let compress: boolean = false;
+
+export function ProfileMenu({ username, userid }: { username: string, userid: string }) {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement | null>(null);
@@ -35,14 +37,17 @@ export function ProfileButton({ username }: { username: string }) {
 
   return (
     <>
-      <button ref={buttonRef} onClick={toggleMenu} className="flex items-center gap-2 hover:outline outline-2 py-2 px-2 rounded-sm outline-offwhite">
+      <button ref={buttonRef} onClick={toggleMenu} className="flex min-w-0 items-center gap-1 hover:outline outline-2 p-1 rounded-sm outline-offwhite">
         <Image src={profilepic} alt={"pfp"} width={30} height={30} />
-        <label className="text-offwhite">{username}</label>
+        <label className="text-offwhite truncate">{username}</label>
       </button>
       {menuOpen &&
         <div ref={drawerRef} className="fixed flex flex-col top-16 right-3 w-56 outline outline-slate-700 bg-slate-900 rounded-lg text-offwhite py-1">
           {username === "" &&
-            <AddUsername type="menu" />
+            <AddUsername userid={userid} />
+          }
+          {username.length > 100 &&
+            <label>{username}</label>
           }
           <button onClick={() => signOut({ callbackUrl: "/" })} className="text-left hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Log Out</button>
         </div>

@@ -4,12 +4,8 @@ import { faHeart as faHeartSolid } from "@fortawesome/free-solid-svg-icons";
 import { faCircleXmark, faHeart } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { signIn } from "next-auth/react"
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ChangeLikes } from "./serverActions/changelikes";
-import { Likes } from "./serverActions/changelikes";
-import useSWR from "swr";
-
-let states: any[];
 
 //The function starts by initializing state variables, and then it uses the useSWR hook to fetch data from the Likes function under /serverActions/changelikes. useSWR is required 
 //as server actions cannot be called by client components in Nextjs. With the useSWR data, the states array is populated. If the states array has been populated, if 
@@ -24,109 +20,84 @@ let states: any[];
 //revalidating the like data. States this component can handle: 1.User is not signed in and tries to like a post. 2.User is signed in and refreshes the page. 3.User had previously 
 //liked the post and revisits the post 4.User likes/unlikes a post, leaves the post, and revisits the post before the server cache is updated 5.User tries to lag the site by spamming 
 //like button.
+//To add some clarity on how the whole server/client thing works, bc this guy ^ is dumb and doesn't know what he's talking about: There are three types of components in NextJS. Server
+//actions/functions, server components, and client components. NextJS states that you cannot call a server action on the first render, as it will create a fetch waterfall(not sure how
+//but it do). Async + server actions are used in some areas of this project within a client component because it's AFTER the first render. 
+//Turns out I could've used prop drilling here the whole time, so I just fixed this component and made it drastically shorter. Plus a new throttle on the speed at which users can spam
+//the button set to 1 second, plus no extra delay from useSWR. Plus 2 people can like the same post now, because that was completely screwed up before(replaced unique identifier from
+//postid to joint postid + userid).
 
-export function AddLike(props: any) {
+export function AddLike({ postid, likes, userliked, userid }: { postid: string, likes: number, userliked: boolean, userid: string | null }) {
 
-  const [liked, setLiked] = useState(false);
-  const [firstrender, setFirstRender] = useState(true);
-  const [count, addCount] = useState(0);
-  const [like, setLike] = useState(0);
+  const count = useRef(0);
+  const [liked, setLiked] = useState(userliked);
+  const [quicklike, setQuickLike] = useState(0);
   const [modalon, setModal] = useState(false);
-
-  const postId = props.postId;
-
-  const fetcher = (postId: string) => Likes(postId);
-  const { data, isValidating } = useSWR(postId, fetcher, {
-    revalidateOnFocus: false
-  });
-
-  if (data !== undefined) {
-    states = data;
-  }
+  const [pause, setPause] = useState(false);
 
   const toggleModal = () => {
     setModal(!modalon);
   }
 
-  const toggleLike = () => {
-
-    if (firstrender) {
-      setFirstRender(false);
-      setLiked(states[2]);
+  const toggleLike = async () => {
+    if(pause) {
+      return;
     }
-    if (count < 6) {
-      if (!states[2]) {
-        setLiked(true);
-        setLike(like + 1);
-        addCount(count + 1);
-        ChangeLikes(postId, true, states[1]);
-        states[2] = true;
+    count.current = count.current + 1;
+    setPause(true);
+
+    if(count.current <= 6) {
+      if(liked) {
+        setLiked(false);
+        setQuickLike(quicklike - 1);
+        await ChangeLikes(postid, false, userid!);
       }
       else {
-        setLiked(false);
-        setLike(like - 1);
-        addCount(count + 1);
-        ChangeLikes(postId, false, states[1]);
-        states[2] = false;
+        setLiked(true);
+        setQuickLike(quicklike + 1);
+        await ChangeLikes(postid, true, userid!);
       }
     }
-  }
 
-  if (states) {
-    if (firstrender && states[0]) {
-      return (
-        <>
-          <button className="flex justify-self-left w-7 h-7" onClick={toggleLike}>
-            {!states[2] && !isValidating &&
-              <FontAwesomeIcon icon={faHeart} className="w-7 h-7" style={{color: "#334155",}} />
-            }
-            {states[2] && !isValidating &&
-              <FontAwesomeIcon icon={faHeartSolid} className="w-7 h-7" style={{color: "#334155",}} />
-            }
-            {isValidating &&
-              <header className="w-40 pt-2 text-lg">...</header>
-            }
-          </button>
-          {!isValidating &&
-            <header className="pt-0.5 text-xl text-slate-400">{states[3] + like}</header>
+    setTimeout(() => {
+      setPause(false);
+    }, 1000);
+  };
+
+  if (userid) {
+    return (
+      <>
+        <button className="flex justify-self-left w-7 h-7" onClick={toggleLike}>
+          {!liked &&
+            <FontAwesomeIcon icon={faHeart} className="w-7 h-7" style={{ color: "#334155", }} />
           }
-        </>
-      )
-    }
-    else if (!firstrender) {
-      return (
-        <>
-          <button className="flex justify-self-left w-7 h-7" onClick={toggleLike}>
-            {!liked ? 
-              <FontAwesomeIcon icon={faHeart} className="w-7 h-7" style={{color: "#334155",}} />
-              :
-              <FontAwesomeIcon icon={faHeartSolid} className="w-7 h-7" style={{color: "#334155",}} />
-            }
-          </button>
-          <header className="pt-0.5 text-xl text-slate-400">{states[3] + like}</header>
-        </>
-      )
-    }
-    else {
-      return (
-        <>
-          <button className="flex justify-self-left w-7 h-7" onClick={toggleModal}>
-            <FontAwesomeIcon icon={faHeart} className="w-7 h-7" style={{color: "#334155",}} />
-          </button>
-          <header className="pt-0.5 text-xl text-slate-400">{states[3] + like}</header>
-          {modalon &&
-            <div className="fixed inset-0 flex items-center justify-center bg-gray-600/50">
-              <div className="max-w-xs w-full px-2 py-2 grid grid-cols-1 grid-flow-row auto-rows-min gap-2 bg-white rounded-lg">
-                <button onClick={toggleModal} className="flex justify-self-end justify-center">
-                  <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
-                </button>
-                <h1 className="text-3xl justify-self-center pb-2 z-50">Sign in to like posts</h1>
-                <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postId}` })} className="px-4 py-2 w-24 justify-self-end bg-green-500 text-white rounded-full">Sign In</button>
-              </div>
+          {liked &&
+            <FontAwesomeIcon icon={faHeartSolid} className="w-7 h-7" style={{ color: "#334155", }} />
+          }
+        </button>
+        <header className="pt-0.5 text-xl text-slate-400">{likes + quicklike}</header>
+      </>
+    )
+  }
+  else {
+    return (
+      <>
+        <button className="flex justify-self-left w-7 h-7" onClick={toggleModal}>
+          <FontAwesomeIcon icon={faHeart} className="w-7 h-7" style={{ color: "#334155", }} />
+        </button>
+        <header className="pt-0.5 text-xl text-slate-400">{likes}</header>
+        {modalon &&
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-600/50">
+            <div className="max-w-xs w-full px-2 py-2 grid grid-cols-1 grid-flow-row auto-rows-min gap-2 bg-white rounded-lg">
+              <button onClick={toggleModal} className="flex justify-self-end justify-center">
+                <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
+              </button>
+              <h1 className="text-3xl justify-self-center pb-2 z-50">Sign in to like posts</h1>
+              <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postid}` })} className="px-4 py-2 w-24 justify-self-end bg-green-500 text-white rounded-full">Sign In</button>
             </div>
-          }
-        </>
-      )
-    }
+          </div>
+        }
+      </>
+    )
   }
 }

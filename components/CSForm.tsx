@@ -31,7 +31,7 @@ import { signIn } from "next-auth/react"
 //Added a loading screen using the submitted state to confirm a post has been submitted/to prevent resubmission. Added a category select to the top right with a custom option, saved
 //in a state variable and tacked onto the formdata.
 
-export function CSForm({ signedin }: { signedin: boolean }) {
+export function CSForm({ signedin, username, userid }: { signedin: boolean, username: string, userid: string }) {
 
   const [selected, setSelected] = useState("");
   const [category, setCategory] = useState("None");
@@ -154,6 +154,9 @@ export function CSForm({ signedin }: { signedin: boolean }) {
       formData.append("category", "");
     }
 
+    formData.append("username", username);
+    formData.append("userid", userid);
+
     newList(formData).then((result) => {
       router.push(`/post/${result}`);
     });
@@ -223,7 +226,7 @@ export function CSForm({ signedin }: { signedin: boolean }) {
               <header className="text-3xl justify-self-left text-slate-400 self-end">New Post</header>
               <div className="flex sm:flex-row flex-col space-y-3">
                 <label className="text-xl text-slate-400 pr-1 flex pt-4">Category:</label>
-                <select onChange={getCategory} className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
+                <select onChange={getCategory} className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400 overflow-auto">
                   <option className="text-black">None</option>
                   <option className="text-black">Gaming</option>
                   <option className="text-black">Music</option>
@@ -410,7 +413,7 @@ export function CSForm({ signedin }: { signedin: boolean }) {
                 <textarea name="description" className="w-full max-w-2xl max-h-96 h-44 outline focus:outline-4 outline-slate-700 rounded-xl p-5 text-slate-400 bg-slate-50 bg-opacity-5" required />
               </div>
             }
-            <div className="max-w-2xl w-full h-10 flex flex-wrap justify-end space-x-5 gap-y-5">
+            <div className="max-w-2xl w-full flex flex-wrap justify-end space-x-5 gap-y-5">
               {!signedin &&
                 <button type="button" onClick={toggleModal} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Images</button>
               }

@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 //is called which adds the username to the database and silently refreshes the page(similar to ctrl + r but the page never goes blank) to display the username.
 //The previous format of AddUsername with a small floating form has now been changed to a modal centered on the screen, to avoid any scaling issues.
 
-export function AddUsername({ type } : { type:string }) {
+export function AddUsername({ userid } : { userid: string }) {
 
   const [formopen, setFormOpen] = useState(Boolean);
   const [confirmopen, setConfirmation] = useState(Boolean);
@@ -72,19 +72,20 @@ export function AddUsername({ type } : { type:string }) {
   }
 
   const newUsername = (e: any) => {
-    CreateUsername(inputValue).then((result) => {
-      router.refresh();
+    CreateUsername(inputValue, userid).then((result) => {
+      if(result) {
+        router.refresh();
+      }
+      else {
+        setConfirmation(false);
+        setNotunique(true);
+      }
     });
   }
 
   return (
     <>
-      {type == "menu" &&
-        <button onClick={toggleForm} className="outline-none peer text-left text-offwhite hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Add Username</button>
-      }
-      {type == "header" &&
-        <button onClick={toggleForm} className="hover:outline outline-2 py-2 sm:px-2 rounded-sm peer text-offwhite">Add Username</button>
-      }
+      <button onClick={toggleForm} className="outline-none peer text-left text-offwhite hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Add Username</button>
       {formopen && !confirmopen && !notunique &&
         <div onClick={toggleForm} id="parent" className="z-50 fixed top-0 right-0 flex w-screen h-screen items-center justify-center bg-gray-600/50">
           <div className="outline outline-slate-700 bg-slate-900 rounded-lg w-64 p-4 text-base">

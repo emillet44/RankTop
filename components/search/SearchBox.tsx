@@ -35,7 +35,7 @@ export function Search() {
       <SearchBox placeholder="Search" classNames={{
         root: 'z-20 outline outline-2 outline-slate-700 rounded-md',
         form: '',
-        input: 'w-[330px] h-9 bg-transparent outline-none indent-1 text-offwhite placeholder-offwhite',
+        input: 'w-[300px] h-9 bg-transparent outline-none indent-1 text-offwhite placeholder-offwhite',
         reset: '',
         submitIcon: 'hidden',
         resetIcon: 'hidden',

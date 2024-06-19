@@ -8,77 +8,104 @@ import { getServerSession } from "next-auth";
 //It can both add or remove likes depending on the add parameter. The likes function first loads the user email, the uses it to find the user record
 //in the database. It then uses the user id to check whether the user has liked the post or not, then it uses the post id parameter it recieved to
 //find how many likes the post has already.
-export async function ChangeLikes(identifier: string, add: boolean, userid: string) {
+export async function ChangeLikes(postid: string, add: boolean, userid: string) {
+  
+  if (add) {
 
-  if(add) {
-    const post = await prisma.posts.update({
-      where: { id: identifier },
-      data: { 
-        metadata: {
-          update: {
-            likes: { increment: 1 }
-          }
-        } 
-      }
-    });
-    
-    if (userid !== null) {
-      const userlike = await prisma.likes.create({
-        data:{ 
-          postId: identifier,
-          user: { connect: {id: userid} } 
-        }
+    await prisma.$transaction(async (prisma) => {
+      const userlike = await prisma.likes.upsert({
+        where: {
+          userId_postId: {
+            userId: userid,
+            postId: postid,
+          },
+        },
+        update: {},
+        create: {
+          postId: postid,
+          user: { connect: { id: userid } },
+        },
       });
-    }
-  }
-  else {
-    const post = await prisma.posts.update({
-      where: { id: identifier },
-      data: { 
-        metadata: {
-          update: {
-            likes: { decrement: 1 }
-          }
-        } 
-      }
+      await prisma.posts.update({
+        where: { id: postid },
+        data: {
+          metadata: {
+            update: {
+              likes: { increment: 1 },
+            },
+          },
+        },
+      });
     });
-    if (userid !== null) {
+  } 
+  else {
+
+    await prisma.$transaction(async (prisma) => {
       const removelike = await prisma.likes.delete({
-        where: { userId: userid, postId: identifier }
-      })
-    }
+        where: {
+          userId_postId: {
+            userId: userid,
+            postId: postid,
+          },
+        },
+      });
+      await prisma.posts.update({
+        where: { id: postid },
+        data: {
+          metadata: {
+            update: {
+              likes: { decrement: 1 },
+            },
+          },
+        },
+      });
+    });
   }
 }
 
-let states: any[] = ["", "", false, 0];
-export async function Likes(id: string) {
+export async function ChangeCLikes(commentid: string, add: boolean, userid: string) {
+  
+  if (add) {
 
-  const session = await getServerSession(authOptions);
-  const email = session?.user?.email;
-  states[0] = email;
-  let userid: string = "";
-
-  if (email !== null && email !== undefined) {
-
-    const user = await prisma.user.findUnique({
-      where: { email: email }
+    await prisma.$transaction(async (prisma) => {
+      const comlike = await prisma.comment_Likes.upsert({
+        where: {
+          userId_commentId: {
+            userId: userid,
+            commentId: commentid,
+          },
+        },
+        update: {},
+        create: {
+          commentId: commentid,
+          user: { connect: { id: userid } },
+        },
+      });
+      await prisma.comments.update({
+        where: { id: commentid },
+        data: {
+          likes: { increment: 1 }
+        },
+      });
     });
-    if(user?.id !== undefined) {
-      userid = user?.id;
-      states[1] = userid;
-    }
+  } 
+  else {
+    
+    await prisma.$transaction(async (prisma) => {
+      const comlike = await prisma.comment_Likes.delete({
+        where: {
+          userId_commentId: {
+            userId: userid,
+            commentId: commentid,
+          },
+        },
+      })
+      await prisma.comments.update({
+        where: { id: commentid },
+        data: {
+          likes: { decrement: 1 }
+        },
+      });
+    });
   }
-  const likes = await prisma.likes.findUnique({
-    where: { userId: userid, postId: id }
-  });
-  const liked = likes !== null;
-  states[2] = liked;
-
-  const post = await prisma.posts.findUnique({
-    where: { id: id },
-    include: { metadata: true }
-  });
-  states[3] = post?.metadata?.likes;
-
-  return states;
 }

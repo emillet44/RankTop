@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { SignState } from "../serverActions/signinstate"
 import { Search } from "../search/SearchBox"
-import { ProfileButton } from "../ProfileButton";
+import { ProfileMenu } from "../ProfileMenu";
 import { CompressedMenu } from "../CompressedMenu";
 
 
@@ -25,16 +25,12 @@ export async function Header() {
         <Search />
 
         {states[0] &&
-          <>
-            <CompressedMenu username={states[1]}/>
-            <div className="absolute flex-row right-2 top-1 gap-2 items-center hidden sm:flex">
-              <Link href="/newpost">
-                <button className="hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">New Post</button>
-              </Link>
-              <ProfileButton username={states[1]} />
-            </div>
-          </>
-
+          <div className="w-[calc(100vw-160px)] md:min-w-[230px] md:w-[calc(50vw-170px)] absolute justify-end flex-row right-2 2xl:right-4 top-1 gap-2 items-center flex">
+            <Link href="/newpost">
+              <button className="hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite whitespace-nowrap">New Post</button>
+            </Link>
+            <ProfileMenu username={states[1]} userid={states[2]} />
+          </div>
         }
         {!states[0] &&
           <>

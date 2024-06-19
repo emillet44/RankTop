@@ -18,20 +18,21 @@ model Posts {
   rank4       String?
   rank5       String?
   authorId    String?
+  username    String?
   description String?
   category    String
   comments    Comments[]
   author      User?           @relation(fields: [authorId], references: [id])
-  metadata    Post_Metadata? 
+  metadata    Post_Metadata?
 }
 
 model Post_Metadata {
-  post_id  String   @id @map("post_id") @unique
+  postId   String
   images   Boolean  @default(false)
   likes    Int      @default(0)
   views    Int      @default(0)
   date     DateTime @default(now())
-  post     Posts    @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  post     Posts    @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model Account {
@@ -71,7 +72,9 @@ model User {
   image         String?
   accounts      Account[]
   comments      Comments[]
+  replies       Replies[]
   likes         Likes[]
+  clikes        Comment_Likes[]
   posts         Posts[]
   reports       Reports[]
   sessions      Session[]
@@ -86,8 +89,18 @@ model Reports {
 
 model Likes {
   userId String
-  postId String @unique
+  postId String
   user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([userId, postId])
+}
+
+model Comment_Likes {
+  userId    String
+  commentId String
+  user      User   @relation(fields: [userId], references: [id])
+
+  @@unique([userId, commentId])
 }
 
 model VerificationToken {
@@ -100,10 +113,24 @@ model VerificationToken {
 }
 
 model Comments {
-  id     String @id @default(cuid())
-  text   String
-  postId String
-  userId String
-  post   Posts  @relation(fields: [postId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  id       String    @id @default(cuid())
+  text     String
+  likes    Int       @default(0)
+  date     DateTime  @default(now())
+  replies  Replies[] 
+  username String?
+  postId   String
+  userId   String
+  post     Posts     @relation(fields: [postId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
+}
+
+model Replies {
+  id        String   @id @default(cuid())
+  commentId String
+  reply     String
+  username  String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  comment   Comments @relation(fields: [commentId], references: [id])
 }

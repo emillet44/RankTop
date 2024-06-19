@@ -14,7 +14,7 @@ export default async function NewPost() {
   return (
     <>
       <Header />
-      <CSForm signedin={states[0]}/>
+      <CSForm signedin={states[0]} username={states[1]} userid={states[2]}/>
       <Footer />
     </>
   )

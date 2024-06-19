@@ -1,9 +1,7 @@
 import Link from "next/link"
-import { Logout } from "../Logout";
 import { SignState } from "../serverActions/signinstate";
-import { AddUsername } from "../AddUsername";
 import { Search } from "../search/SearchBox";
-import { ProfileButton } from "../ProfileButton";
+import { ProfileMenu } from "../ProfileMenu";
 
 
 //This header is used by the /newpost page. It only exists to hide the "New Post" button whenever the user is already on the "New Post" page. Like every 
@@ -23,7 +21,7 @@ export async function Header() {
         <Search />
         {states[0] &&
           <div className="absolute right-2 top-1 gap-2">
-            <ProfileButton username={states[1]} />
+            <ProfileMenu username={states[1]} />
           </div>
         }
         {!states[0] &&
