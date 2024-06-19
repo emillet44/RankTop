@@ -45,7 +45,7 @@ export default async function Post({ params }: { params: { id: string } }) {
     const now = new Date();
 
     const metadata = await prisma.post_Metadata.findUnique({
-      where: { post_id: post.id },
+      where: { postId: post.id },
     });
     const liked = await prisma.likes.findUnique({
       where: {
