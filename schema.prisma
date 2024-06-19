@@ -27,7 +27,7 @@ model Posts {
 }
 
 model Post_Metadata {
-  postId   String
+  postId   String   @unique
   images   Boolean  @default(false)
   likes    Int      @default(0)
   views    Int      @default(0)
