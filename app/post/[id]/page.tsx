@@ -94,10 +94,10 @@ export default async function Post({ params }: { params: { id: string } }) {
               <div className="max-w-2xl w-full flex justify-between items-end">
                 <header className="text-2xl text-ellipsis overflow-hidden capitalize text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">{post.title}</header>
                 <div className="flex space-x-4 pb-4">
-                  {!yours && !editable &&
+                  {yours && !editable &&
                     <Delete id={params.id} />
                   }
-                  {!yours && editable &&
+                  {yours && editable &&
                     <>
                       <button className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400 h-10 whitespace-nowrap">
                         <Link href={`/edit/${params.id}`}>Edit</Link>
