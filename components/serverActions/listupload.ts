@@ -21,7 +21,7 @@ export async function newList(formData: FormData) {
   const data = JSON.stringify(Object.fromEntries(formData));
   const formDataObj = JSON.parse(data);
 
-  if(formDataObj.userid !== null) {
+  if(formDataObj.userid != "") {
     const List = await prisma.posts.create({
       data: {
         title: formDataObj.title,

@@ -1,27 +1,74 @@
 'use client'
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react"
 import { newComment } from "./serverActions/commentupload";
+import { AddCommentLike }  from "./AddCommentLike"
 import Image from 'next/image'
 import profilepic from '../pfp.png'
+import { LoadBatch } from "./serverActions/loadcomments";
 
 //This function will be used to add comments to a post, however currently they are not stored anywhere and are only displayed client side for the user to see, until they refresh the
 //page.
 
-interface Comment {
-  id: string;
-  text: string;
-  likes: number;
-  date: Date;
-  postId: string;
-  userId: string;
-}
+export function AddComment({ userid, postid, username, comments }: { userid: string | null, postid: string, username: string | null | undefined, comments: any }) {
 
-export function AddComment({ userid, postid, username, comments }: { userid: string | null, postid: string, username: string | null | undefined, comments: Comment[] }) {
-
-  const [submittedcoms, setSubmittedComs] = useState<Comment[]>(comments);
+  const [submittedcoms, setSubmittedComs] = useState(comments);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [end, setEnd] = useState(false);
+  const batch = useRef(0);
+  const observerRef = useRef<HTMLDivElement | null>(null);
+  const observer = useRef<IntersectionObserver | null>(null);
+
+  const addComments = async (type: string) => {
+    try {
+      const comments = await LoadBatch(batch.current, type);
+      if (comments) {
+        setSubmittedComs([...submittedcoms, comments]);
+
+        if (comments.length === 0) {
+          setEnd(true);
+        }
+      }
+      else {
+        throw ("Comment couldn't be read.");
+      }
+
+    } catch (error) {
+      console.error("Error loading more comments:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (observer.current) {
+      observer.current.disconnect();
+    }
+    observer.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loading && !end) {
+          setLoading(true);
+          batch.current += 1;
+          addComments("liked");
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentObserver = observer.current;
+
+    if (observerRef.current) {
+      currentObserver.observe(observerRef.current);
+    }
+
+    return () => {
+      if (observer.current) {
+        observer.current.disconnect();
+      }
+    };
+  }, [loading, end]);
 
   const handleChange = () => {
     if (textareaRef.current) {
@@ -72,8 +119,7 @@ export function AddComment({ userid, postid, username, comments }: { userid: str
           <button onClick={subHandler} className="self-end outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400 peer-placeholder-shown:hidden">Submit</button>
         </div>
       }
-
-      {submittedcoms.map((com) => (
+      {submittedcoms.map((com: any) => (
         <div key={com.id} className="flex flex-col pt-2">
           <div className="flex flex-row gap-1 items-center">
             <div className="items-center flex flex-row space-x-1">
@@ -84,10 +130,12 @@ export function AddComment({ userid, postid, username, comments }: { userid: str
           </div>
           <p className="text-xl text-slate-400">{com.text}</p>
           <div className="flex flex-row gap-2">
+            <AddCommentLike commentid={com.id} postid={postid} userid={userid} likes={com.likes} />
             <button className="text-sm text-slate-400">Reply</button>
           </div>
         </div>
       ))}
+      <div ref={observerRef} className="h-[1px]" />
     </div>
   )
 }

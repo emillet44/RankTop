@@ -1,8 +1,7 @@
 'use server'
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/auth";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
+
 
 //This server action has a function to update likes on the database, which updates the post first, then it adds the postId to the users liked posts.
 //It can both add or remove likes depending on the add parameter. The likes function first loads the user email, the uses it to find the user record
@@ -63,7 +62,7 @@ export async function ChangeLikes(postid: string, add: boolean, userid: string) 
   }
 }
 
-export async function ChangeCLikes(commentid: string, add: boolean, userid: string) {
+export async function ChangeCommentLikes(commentid: string, add: boolean, userid: string) {
   
   if (add) {
 
