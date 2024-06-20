@@ -12,5 +12,10 @@ export async function newComment(userid: string, postid: string, username: strin
       username: username || null,
     }
   });
-  return comment;
+
+  const updcomment = {
+    ...comment,
+    userliked: false,
+  };
+  return updcomment;
 }

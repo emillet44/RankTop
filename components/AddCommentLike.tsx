@@ -7,44 +7,49 @@ import { signIn } from "next-auth/react"
 import { useRef, useState } from "react";
 import { ChangeCommentLikes } from "./serverActions/changelikes";
 
-export function AddCommentLike({ commentid, postid, userid, likes }: { commentid: string, postid: string, userid: string | null, likes: number }) {
+export function AddCommentLike({ commentid, postid, userid, likes, isliked }: { commentid: string, postid: string, userid: string, likes: number, isliked: boolean }) {
 
-  const count = useRef(0);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(isliked);
+  const reallike = useRef(isliked);
   const [quicklike, setQuickLike] = useState(0);
   const [modalon, setModal] = useState(false);
-  const [pause, setPause] = useState(false);
+  const pause = useRef(false);
 
   const toggleModal = () => {
     setModal(!modalon);
   }
 
   const toggleLike = async () => {
-    if (pause) {
-      return;
-    }
-    count.current = count.current + 1;
-    setPause(true);
 
-    if (count.current <= 6) {
-      if (liked) {
-        setLiked(false);
-        setQuickLike(quicklike - 1);
+    if (liked) {
+      setLiked(false);
+      setQuickLike(quicklike - 1);
+      if (!pause.current && reallike.current == true) {
+        pause.current = true;
         await ChangeCommentLikes(commentid, false, userid!);
-      }
-      else {
-        setLiked(true);
-        setQuickLike(quicklike + 1);
-        await ChangeCommentLikes(commentid, true, userid!);
+        reallike.current = false;
+
+        setTimeout(() => {
+          pause.current = false;
+        }, 5000);
       }
     }
+    else {
+      setLiked(true);
+      setQuickLike(quicklike + 1);
+      if (!pause.current && reallike.current == false) {
+        pause.current = true;
+        await ChangeCommentLikes(commentid, true, userid!);
+        reallike.current = true;
 
-    setTimeout(() => {
-      setPause(false);
-    }, 1000);
+        setTimeout(() => {
+          pause.current = false;
+        }, 5000);
+      }
+    }
   };
 
-  if (userid) {
+  if (userid != "") {
     return (
       <>
         <button className="flex justify-self-left w-7 h-7" onClick={toggleLike}>

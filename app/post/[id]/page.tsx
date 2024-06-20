@@ -55,11 +55,6 @@ export default async function Post({ params }: { params: { id: string } }) {
         },
       }
     }) != null;
-    const comments = await prisma.comments.findMany({
-      where: {
-        postId: params.id,
-      },
-    });
 
     const yours = (post?.username == states[1]) || (states[1] === "Cinnamon");
     const views = await runReport(`/post/${params.id}`);
@@ -69,7 +64,7 @@ export default async function Post({ params }: { params: { id: string } }) {
       let date: string;
       const diff = now.getTime() - metadata.date.getTime();
       const minutes = Math.floor(diff / 60000);
-      const hours = Math.floor(diff / 1440000);
+      const hours = Math.floor(diff / 3600000);
       if (diff / 1000 < 60) {
         date = "Seconds ago";
       }
@@ -142,7 +137,7 @@ export default async function Post({ params }: { params: { id: string } }) {
                   <p className="w-full max-w-2xl outline outline-slate-700 rounded-md p-5 row-start-2 break-words text-slate-400">{post.description}</p>
                 </div>
               }
-              <AddComment userid={states[2]} postid={params.id} username={post.username} comments={comments} />
+              <AddComment userid={states[2]} postid={params.id} username={post.username} />
             </div>
           </div>
           <Footer />
