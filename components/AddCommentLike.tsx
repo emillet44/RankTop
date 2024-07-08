@@ -52,23 +52,23 @@ export function AddCommentLike({ commentid, postid, userid, likes, isliked }: { 
   if (userid != "") {
     return (
       <>
-        <button className="flex justify-self-left w-7 h-7" onClick={toggleLike}>
+        <button className="flex justify-self-left w-6 h-6" onClick={toggleLike}>
           {!liked &&
-            <FontAwesomeIcon icon={faHeart} className="w-7 h-7" style={{ color: "#334155", }} />
+            <FontAwesomeIcon icon={faHeart} className="w-6 h-6" style={{ color: "#334155", }} />
           }
           {liked &&
-            <FontAwesomeIcon icon={faHeartSolid} className="w-7 h-7" style={{ color: "#334155", }} />
+            <FontAwesomeIcon icon={faHeartSolid} className="w-6 h-6" style={{ color: "#334155", }} />
           }
         </button>
-        <header className="pt-0.5 text-xl text-slate-400">{likes + quicklike}</header>
+        <header className="pt-0.5 text-slate-400">{likes + quicklike}</header>
       </>
     )
   }
   else {
     return (
       <>
-        <button className="flex justify-self-left w-7 h-7" onClick={toggleModal}>
-          <FontAwesomeIcon icon={faHeart} className="w-7 h-7" style={{ color: "#334155", }} />
+        <button className="flex justify-self-left w-6 h-6" onClick={toggleModal}>
+          <FontAwesomeIcon icon={faHeart} className="w-6 h-6" style={{ color: "#334155", }} />
         </button>
         <header className="pt-0.5 text-xl text-slate-400">{likes}</header>
         {modalon &&

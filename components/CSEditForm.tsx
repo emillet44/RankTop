@@ -10,7 +10,7 @@ import { editList } from "./serverActions/listedit";
 //user is redirected to the edited post. Refer to CSForm for info on other functionalities of this page.
 
 export function CSEditForm({ id, post, startranks }: { id: string, post: any, startranks: number }) {
-  const statcats = ["None", "Gaming", "Music", "Movies", "TV Shows", "Tech", "Sports", "Memes", "Fashion", "Food & Drink", "Celebrities", "Lifestyle", "Books", "Science & Nature", "Education"];
+  const statcats = ["", "Gaming", "Music", "Movies", "TV Shows", "Tech", "Sports", "Memes", "Fashion", "Food & Drink", "Celebrities", "Lifestyle", "Books", "Science & Nature", "Education"];
   const [selected, setSelected] = useState(startranks.toString());
   const [desctoggle, setDesc] = useState("");
   const [category, setCategory] = useState(statcats.includes(post.category) ? post.category : "Custom");

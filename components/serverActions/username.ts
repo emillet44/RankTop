@@ -56,15 +56,6 @@ export async function CreateUsername(username: string, userid: string) {
             username: username,
           },
         });
-        await prisma.replies.updateMany({
-          where: {
-            userId: userid,
-            username: null,
-          },
-          data: {
-            username: username,
-          },
-        });
       });
       
     } catch (error) {

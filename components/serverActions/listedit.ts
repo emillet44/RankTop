@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { prisma } from "@/lib/prisma"
+import { metadata } from '@/app/layout';
 
 //This server action will update a post given its unique id and new post data. Due to the nature of the formData object however, optional values that
 //will potentially be left empty by the user upon submitting must be set to null, hence the 4 ternary operators for each of the 4 optional data fields. 
@@ -30,6 +31,11 @@ export async function editList(formData: FormData, id: string) {
       rank5: formDataObj.r5,
       description: formDataObj.description,
       category: formDataObj.category,
+      metadata: {
+        update: {
+          date: new Date()
+        }
+      }
     }
   })
   revalidatePath(`/post/${id}`);

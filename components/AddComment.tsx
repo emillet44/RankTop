@@ -2,16 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react"
-import { newComment } from "./serverActions/commentupload";
+import { newComment, newReply } from "./serverActions/commentupload";
 import { AddCommentLike } from "./AddCommentLike"
 import Image from 'next/image'
 import profilepic from '../pfp.png'
-import { LoadBatch } from "./serverActions/loadcomments";
-import { faCircleXmark } from "@fortawesome/free-solid-svg-icons";
+import { LoadBatch, LoadReplies } from "./serverActions/loadcomments";
+import { faAngleDown, faAngleUp, faCircleXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-//This function will be used to add comments to a post, however currently they are not stored anywhere and are only displayed client side for the user to see, until they refresh the
-//page.
+//This function handles everything client side related to comments. Starting with state: comments stores an array of type Comment(defined by interface), modal toggles the sign in
+//modal, loading stalls the intersection observer from loading more comments while they are being fetched, end is to display different text when all comments have been loaded(prevents
+//extra fetch calls too), pause is for rl, replies stores an record of comments with the parent id as the index, openReplies stores the T/F state for all comments to determine whether
+//to display replies for a comment or not(DOM manip used originally, however it's apparently not React if there isn't a trillion state variables), openReplyInputs is the same as the
+//previous var, but for opening reply inputs, batch determines how many comments have already been loaded, observerRef is for the observer to detect when the user has scrolled to the
+//bottom of the comment list, observer is similar to observerRef(not exactly sure what it's for), commentInput is to store the value in the comment span, and replyInputs stores the
+//
 
 interface Comment {
   userliked: boolean;
@@ -19,36 +24,40 @@ interface Comment {
   text: string;
   likes: number;
   date: Date;
+  replies: number;
+  username: string | null;
   postId: string;
   userId: string;
 }
 
 export function AddComment({ userid, postid, username }: { userid: string, postid: string, username: string | null | undefined }) {
 
-  const [submittedcoms, setSubmittedComs] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [modalon, setModal] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [loading, setLoading] = useState(false);
   const [end, setEnd] = useState(false);
   const [pause, setPause] = useState(false);
+  const [replies, setReplies] = useState<{ [key: string]: Comment[] }>({});
+  const [openReplies, setOpenReplies] = useState<{ [key: string]: boolean }>({});
+  const [activeReplyInput, setActiveReplyInput] = useState<string | null>(null);
+
   const batch = useRef(0);
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
+  const commentInput = useRef<HTMLSpanElement>(null);
+  const replyInput = useRef<HTMLSpanElement>(null);
 
   const addComments = async (type: string) => {
     try {
-      const comments: Comment[] = await LoadBatch(batch.current, type, userid);
-      if (comments) {
-        setSubmittedComs([...submittedcoms, ...comments]);
-
-        if (comments.length === 0) {
-          setEnd(true);
-        }
+      setLoading(true);
+      const newcomments: Comment[] = await LoadBatch(batch.current, type, userid, postid);
+      if (newcomments.length > 0) {
+        setComments(prevComments => [...prevComments, ...newcomments]);
+        batch.current += 1;
       }
       else {
-        throw ("Comment couldn't be read.");
+        setEnd(true);
       }
-
     } catch (error) {
       console.error("Error loading more comments:", error);
     } finally {
@@ -57,98 +66,102 @@ export function AddComment({ userid, postid, username }: { userid: string, posti
   }
 
   useEffect(() => {
-    if (observer.current) {
-      observer.current.disconnect();
-    }
-    observer.current = new IntersectionObserver(
+    const currentObserver = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !loading && !end) {
-          setLoading(true);
+          //Change type later when sorting comments is implemented
           addComments("liked");
-          batch.current += 1;
         }
       },
       { threshold: 0.1 }
     );
 
-    const currentObserver = observer.current;
+    observer.current = currentObserver;
 
     if (observerRef.current) {
       currentObserver.observe(observerRef.current);
     }
 
-    return () => {
-      if (observer.current) {
-        observer.current.disconnect();
-      }
-    };
+    return () => currentObserver.disconnect();
   }, [loading, end]);
 
-  const handleChange = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-    }
-  };
+  const toggleModal = () => setModal(!modalon);
 
-  const toggleModal = () => {
-    setModal(!modalon);
+  const toggleReply = (commentid: string) => {
+    setActiveReplyInput(prevId => prevId === commentid ? null : commentid);
+  }
+
+  const showReplies = async (commentid: string) => {
+    setOpenReplies(prev => ({ ...prev, [commentid]: !prev[commentid] }));
+    if (!replies[commentid]) {
+      try {
+        const loadreplies: Comment[] = await LoadReplies(commentid, userid);
+        setReplies(prev => ({ ...prev, [commentid]: loadreplies }));
+      } catch (error) {
+        console.error("Error loading replies:", error);
+      }
+    }
   }
 
   const dateCalc = (comdate: any) => {
     const now = new Date();
-    let date: string;
     const diff = now.getTime() - comdate.getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
-    if (diff / 1000 < 60) {
-      date = "Seconds ago";
-    }
-    else if (minutes < 60) {
-      date = `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
-    }
-    else if (hours < 24) {
-      date = `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-    }
-    else {
-      const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-      date = comdate.toLocaleDateString('en-US', options);
-    }
-    return date;
+    if (diff / 1000 < 60) return "Seconds ago";
+    if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+    return comdate.toLocaleDateString('en-US', options);
   }
 
-  const subHandler = async () => {
-    if (textareaRef.current && userid) {
-      if (textareaRef.current.value.trim() !== "") {
-        const newcom = await newComment(userid, postid, username, textareaRef.current.value);
+  const commentSubmit = async () => {
+    if (userid && commentInput.current && commentInput.current.textContent?.trim() !== "") {
+      const newCom = await newComment(userid, postid, username, commentInput.current.textContent!);
+      setComments(prev => [newCom, ...prev]);
+      commentInput.current.textContent = "";
+    }
+  }
 
-        setSubmittedComs([newcom, ...submittedcoms]);
-        textareaRef.current.value = "";
+  const replySubmit = async (commentid: string) => {
+
+    if (replyInput.current && replyInput.current.textContent?.trim() !== "") {
+      const newRep = await newReply(userid, postid, commentid, username, replyInput.current.textContent!);
+      if (newRep) {
+        setReplies(prev => ({
+          ...prev,
+          [commentid]: [newRep, ...(prev[commentid] || [])]
+        }));
+        replyInput.current.textContent = "";
+        setOpenReplies(prev => ({ ...prev, [commentid]: true }));
+        setActiveReplyInput(null);
       }
     }
   }
 
-  const test = () => {
-    if(!pause) {
+  const handlePause = () => {
+    if (!pause) {
       setPause(true);
-      setTimeout(() => {
-        setPause(false);
-      }, 200);
+      setTimeout(() => setPause(false), 200);
     }
   }
 
   return (
     <div>
       <header className="text-3xl text-slate-400 justify-self-left">Comments</header>
-      <div className="flex flex-col space-y-2">
+      <div className="grid">
         {userid != "" &&
           <>
-            <textarea rows={1} ref={textareaRef} onChange={handleChange} id="comment" placeholder="Add a comment..." className="bg-transparent peer text-xl text-slate-400 outline-none border-b border-slate-400 min-w-full inline-block row-start-1 col-start-1 peer resize-none overflow-hidden" />
-            <button onClick={subHandler} className="self-end outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400 peer-placeholder-shown:hidden">Submit</button>
+            <span ref={commentInput} contentEditable className="row-start-1 col-start-1 max-w-[672px] peer text-slate-400 outline-none border-b border-slate-400 min-w-full inline-block" />
+            <label className="row-start-1 col-start-1 peer-[&:not(:empty)]:invisible text-slate-400 pointer-events-none">Add a comment...</label>
+            <button onClick={commentSubmit} className="flex justify-self-end max-w-min outline outline-2 outline-slate-700 rounded-md p-2 mt-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400 peer-[&:empty]:hidden">Submit</button>
           </>
         }
         {userid == "" &&
-          <textarea rows={1} onFocus={toggleModal} readOnly placeholder="Add a comment..." className="bg-transparent peer text-xl text-slate-400 outline-none border-b border-slate-400 min-w-full inline-block row-start-1 col-start-1 peer resize-none overflow-hidden" />
+          <>
+            <span onFocus={toggleModal} className="row-start-1 col-start-1 max-w-[672px] peer text-slate-400 outline-none border-b border-slate-400 min-w-full inline-block" />
+            <label className="row-start-1 col-start-1 peer-[&:not(:empty)]:invisible text-slate-400 pointer-events-none">Add a comment...</label>
+          </>
         }
       </div>
       {modalon &&
@@ -162,26 +175,69 @@ export function AddComment({ userid, postid, username }: { userid: string, posti
           </div>
         </div>
       }
-      {submittedcoms.length !== 0 &&
-        <>
-          {submittedcoms.map((com) => (
-            <div key={com.id} className="flex flex-col pt-3">
-              <div className="flex flex-row gap-1 items-center">
-                <div className="items-center flex flex-row space-x-1">
-                  <Image src={profilepic} alt={"pfp"} width={30} height={30} />
-                  <header className="text-slate-400">{username || "Guest"}</header>
-                </div>
-                <p key={com.id} className="text-md text-slate-400 before:content-['\00B7']">{" " + dateCalc(com.date)}</p>
-              </div>
-              <p className="text-xl text-slate-400">{com.text}</p>
-              <div onClick={test} className={`flex flex-row gap-2 ${pause ? 'pointer-events-none' : ''}`}>
-                <AddCommentLike commentid={com.id} postid={postid} userid={userid} likes={com.likes} isliked={com.userliked} />
-                <button className="text-sm text-slate-400">Reply</button>
-              </div>
+
+      {comments.map((com) => (
+        <div key={com.id} className="flex flex-col pt-3">
+          <div className="flex flex-row gap-1 items-center">
+            <div className="items-center flex flex-row space-x-1">
+              <Image src={profilepic} alt={"pfp"} width={30} height={30} />
+              <header className="text-slate-400">{com.username || "Guest"}</header>
             </div>
-          ))}
-        </>
-      }
+            <p key={com.id} className="text-md text-slate-400 before:content-['\00B7']">{" " + dateCalc(com.date)}</p>
+          </div>
+          <p className="text-slate-400">{com.text}</p>
+          <div onClick={handlePause} className={`flex flex-row space-x-4 ${pause ? 'pointer-events-none' : ''}`}>
+            <div className="flex space-x-1 items-center">
+              <AddCommentLike commentid={com.id} postid={postid} userid={userid} likes={com.likes} isliked={com.userliked} />
+            </div>
+            <button onClick={() => toggleReply(com.id)} className="text-sm text-slate-400">Reply</button>
+          </div>
+          {activeReplyInput === com.id &&
+            <div className="grid grid-cols-2">
+              <span ref={replyInput} contentEditable className="row-start-1 col-start-1 col-span-2 max-w-[672px] peer text-slate-400 outline-none border-b border-slate-400 min-w-full inline-block" />
+              <label className="row-start-1 col-start-1 col-span-2 peer-[&:not(:empty)]:invisible text-slate-400 pointer-events-none">Add a reply...</label>
+              <button onClick={() => toggleReply(com.id)} className="row-start-2 col-start-2 flex justify-self-end mr-20 max-w-min outline outline-2 outline-slate-700 rounded-md p-2 mt-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Cancel</button>
+              <button onClick={() => replySubmit(com.id)} className="row-start-2 col-start-2 flex justify-self-end max-w-min outline outline-2 outline-slate-700 rounded-md p-2 mt-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400 peer-[&:empty]:disabled">Submit</button>
+            </div>
+          }
+          {(replies[com.id]?.length > 0 || com.replies > 0) &&
+            <button onClick={() => showReplies(com.id)} className="flex outline-none text-slate-400 self-start">
+              {com.replies} Replies
+              <FontAwesomeIcon icon={openReplies[com.id] ? faAngleUp : faAngleDown} style={{ color: "#94a3b8" }} className="mt-1.5 ml-1" />
+            </button>
+          }
+          {openReplies[com.id] && replies[com.id] &&
+            <div className="pl-6">
+              {replies[com.id].map((reply) => (
+                <div key={reply.id} className="flex flex-col pt-3">
+                  <div className="flex flex-row gap-1 items-center">
+                    <div className="items-center flex flex-row space-x-1">
+                      <Image src={profilepic} alt={"pfp"} width={30} height={30} />
+                      <header className="text-slate-400">{reply.username || "Guest"}</header>
+                    </div>
+                    <p key={reply.id} className="text-md text-slate-400 before:content-['\00B7']">{" " + dateCalc(reply.date)}</p>
+                  </div>
+                  <p className="text-slate-400">{reply.text}</p>
+                  <div onClick={handlePause} className={`flex flex-row gap-4 ${pause ? 'pointer-events-none' : ''}`}>
+                    <div className="flex space-x-1 items-center">
+                      <AddCommentLike commentid={reply.id} postid={postid} userid={userid} likes={reply.likes} isliked={reply.userliked} />
+                    </div>
+                    <button onClick={() => toggleReply(reply.id)} className="text-sm text-slate-400">Reply</button>
+                  </div>
+                  {activeReplyInput === reply.id &&
+                    <div className="grid grid-cols-2">
+                      <span ref={replyInput} contentEditable className="row-start-1 col-start-1 col-span-2 max-w-[672px] peer text-slate-400 outline-none border-b border-slate-400 min-w-full inline-block">@{reply.username}&nbsp;</span>
+                      <label className="row-start-1 col-start-1 col-span-2 peer-[&:not(:empty)]:invisible text-slate-400 pointer-events-none">Add a reply...</label>
+                      <button onClick={() => toggleReply(reply.id)} className="row-start-2 col-start-2 flex justify-self-end mr-20 max-w-min outline outline-2 outline-slate-700 rounded-md p-2 mt-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Cancel</button>
+                      <button onClick={() => replySubmit(com.id)} className="row-start-2 col-start-2 flex justify-self-end max-w-min outline outline-2 outline-slate-700 rounded-md p-2 mt-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400 peer-[&:empty]:hidden">Submit</button>
+                    </div>
+                  }
+                </div>
+              ))}
+            </div>
+          }
+        </div>
+      ))}
       <div ref={observerRef} className="h-[1px]" />
       {loading &&
         <header className="text-offwhite pt-3">Loading more comments...</header>

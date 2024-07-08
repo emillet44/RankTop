@@ -87,7 +87,7 @@ export default async function Post({ params }: { params: { id: string } }) {
           <div className="flex justify-center px-6 pb-10 min-h-[calc(100vh-64px)] pt-[141px] lg:pt-[94px] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
             <div className="grid grid-cols-1 grid-flow-row auto-rows-min w-full max-w-2xl h-4/5">
               <div className="max-w-2xl w-full flex justify-between items-end">
-                <header className="text-2xl text-ellipsis overflow-hidden capitalize text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">{post.title}</header>
+                <header className="text-2xl text-ellipsis overflow-hidden text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">{post.title}</header>
                 <div className="flex space-x-4 pb-4">
                   {yours && !editable &&
                     <Delete id={params.id} />
@@ -137,7 +137,7 @@ export default async function Post({ params }: { params: { id: string } }) {
                   <p className="w-full max-w-2xl outline outline-slate-700 rounded-md p-5 row-start-2 break-words text-slate-400">{post.description}</p>
                 </div>
               }
-              <AddComment userid={states[2]} postid={params.id} username={post.username} />
+              <AddComment userid={states[2]} postid={params.id} username={states[1]} />
             </div>
           </div>
           <Footer />

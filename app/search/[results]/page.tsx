@@ -25,13 +25,13 @@ export default async function Results({ params }: { params: { results: string } 
             <Link href={`/post/${list.id}`}>
               <button className="h-44 w-full">
                 <div className="h-44 text-left">
-                  <header className="capitalize text-2xl line-clamp-2 text-slate-400">{list.title}</header>
+                  <header className="text-2xl line-clamp-2 text-slate-400">{list.title}</header>
                   <ul className="list-inside list-decimal text-slate-400">
-                    <li className="capitalize truncate text-slate-400">{list.rank1}</li>
-                    <li className="capitalize">{list.rank2}</li>
-                    <li className="capitalize empty:hidden truncate text-slate-400">{list.rank3}</li>
-                    <li className="capitalize empty:hidden truncate text-slate-400">{list.rank4}</li>
-                    <li className="capitalize empty:hidden truncate text-slate-400">{list.rank5}</li>
+                    <li className="truncate text-slate-400">{list.rank1}</li>
+                    <li className="truncate text-slate-400">{list.rank2}</li>
+                    <li className="empty:hidden truncate text-slate-400">{list.rank3}</li>
+                    <li className="empty:hidden truncate text-slate-400">{list.rank4}</li>
+                    <li className="empty:hidden truncate text-slate-400">{list.rank5}</li>
                   </ul>
                 </div>
               </button>

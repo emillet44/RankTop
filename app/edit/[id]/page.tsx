@@ -24,8 +24,8 @@ export default async function Post({ params }: { params: { id: string } }) {
     })
   };
 
-  const yours = (author?.username == states[1]) || (states[1] == "Cinnamon");
-  if (!yours && post !== null) {
+  const yours = (author?.username === states[1]) || (states[1] === "Cinnamon");
+  if (yours && post !== null) {
     if(post.rank5 != null) {
       startranks = 5;
     }

@@ -6,7 +6,6 @@ datasource db {
   provider          = "postgresql"
   url               = env("POSTGRES_PRISMA_URL")
   directUrl         = env("POSTGRES_URL_NON_POOLING")
-  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model Posts {
@@ -72,7 +71,6 @@ model User {
   image         String?
   accounts      Account[]
   comments      Comments[]
-  replies       Replies[]
   likes         Likes[]
   clikes        Comment_Likes[]
   posts         Posts[]
@@ -117,20 +115,11 @@ model Comments {
   text     String
   likes    Int       @default(0)
   date     DateTime  @default(now())
-  replies  Replies[] 
+  replies  Int       @default(0)
+  parentId String?
   username String?
   postId   String
   userId   String
   post     Posts     @relation(fields: [postId], references: [id])
   user     User      @relation(fields: [userId], references: [id])
-}
-
-model Replies {
-  id        String   @id @default(cuid())
-  commentId String
-  reply     String
-  username  String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  comment   Comments @relation(fields: [commentId], references: [id])
 }

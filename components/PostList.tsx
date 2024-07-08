@@ -169,7 +169,7 @@ export default function PostsList({ starter }: { starter: any }) {
           </select>
         </div>
         {sort == "Category" &&
-          <div className="flex flex-row space-y-3">
+          <div className={`flex ${category === 'Custom' ? 'flex-wrap' : 'flex-row'} space-y-3`}>
             <label className="text-xl text-slate-400 pr-1 flex pt-4">Category:</label>
             <select onChange={loadCategory} className="w-[165px] p-2 pr-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
               <option className="text-black">None</option>
@@ -193,7 +193,7 @@ export default function PostsList({ starter }: { starter: any }) {
               <>
                 {!lockcat &&
                   <div className=" pl-2 flex items-center space-x-2">
-                    <input maxLength={16} className="text-xl text-slate-400 outline-none border-b border-slate-400 bg-transparent placeholder:text-slate-400 w-32 md:w-48"></input>
+                    <input maxLength={16} className="text-xl text-slate-400 outline-none border-b border-slate-400 bg-transparent placeholder:text-slate-400 w-48" />
                     <button onClick={lockCategory} className="outline outline-2 outline-slate-700 rounded-md p-1 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Search</button>
                   </div>
                 }
@@ -205,9 +205,9 @@ export default function PostsList({ starter }: { starter: any }) {
           </div>
         }
         {sort != "Category" &&
-          <div className="flex sm:flex-row flex-col space-y-3">
+          <div className="flex flex-row space-y-3">
             <label className="text-xl text-slate-400 pr-1 flex pt-4">Date:</label>
-            <select onChange={loadDate} className="p-2 pr-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
+            <select onChange={loadDate} className="w-[119px] p-2 pr-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
               <option className="text-black">Today</option>
               <option className="text-black">This Week</option>
               <option className="text-black">This Month</option>
@@ -221,18 +221,18 @@ export default function PostsList({ starter }: { starter: any }) {
             <Link href={`/post/${list.id}`} className="w-full" key={list.id}>
               {list.metadata?.images &&
                 <div className="py-8 border-x border-b border-slate-700">
-                  <header className="pl-8 capitalize text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
+                  <header className="pl-8 text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
                   <ListCarousel ranks={[list.rank1, list.rank2, list.rank3, list.rank4, list.rank5]} postid={list.id} />
                 </div>
               }
               {!list.metadata?.images &&
                 <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8 border-x border-b border-slate-700">
-                  <header className="capitalize text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
-                  <li className="capitalize truncate text-xl text-slate-400">{list.rank1}</li>
-                  <li className="capitalize truncate text-xl text-slate-400">{list.rank2}</li>
-                  <li className="capitalize empty:hidden truncate text-xl text-slate-400">{list.rank3}</li>
-                  <li className="capitalize empty:hidden truncate text-xl text-slate-400">{list.rank4}</li>
-                  <li className="capitalize empty:hidden truncate text-xl text-slate-400">{list.rank5}</li>
+                  <header className="text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
+                  <li className="truncate text-xl text-slate-400">{list.rank1}</li>
+                  <li className="truncate text-xl text-slate-400">{list.rank2}</li>
+                  <li className="empty:hidden truncate text-xl text-slate-400">{list.rank3}</li>
+                  <li className="empty:hidden truncate text-xl text-slate-400">{list.rank4}</li>
+                  <li className="empty:hidden truncate text-xl text-slate-400">{list.rank5}</li>
                 </ul>
               }
             </Link>
