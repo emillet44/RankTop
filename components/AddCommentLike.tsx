@@ -7,6 +7,8 @@ import { signIn } from "next-auth/react"
 import { useRef, useState } from "react";
 import { ChangeCommentLikes } from "./serverActions/changelikes";
 
+//Almost the same as AddLike but with a method to prevent errors from simultaneous database updates
+
 export function AddCommentLike({ commentid, postid, userid, likes, isliked }: { commentid: string, postid: string, userid: string, likes: number, isliked: boolean }) {
 
   const [liked, setLiked] = useState(isliked);

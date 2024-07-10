@@ -4,10 +4,11 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/api/auth/[...nextauth]/auth";
 import { prisma } from "@/lib/prisma";
 
-let userid: any = null;
+//Server action for submitting reports, either with a user id or without if the user isn't signed in
 
 export async function newReport(formData: FormData) {
 
+  let userid: any = null;
   const data = JSON.stringify(Object.fromEntries(formData));
   const formDataObj = JSON.parse(data);
 

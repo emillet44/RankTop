@@ -13,10 +13,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 //This function handles everything client side related to comments. Starting with state: comments stores an array of type Comment(defined by interface), modal toggles the sign in
 //modal, loading stalls the intersection observer from loading more comments while they are being fetched, end is to display different text when all comments have been loaded(prevents
 //extra fetch calls too), pause is for rl, replies stores an record of comments with the parent id as the index, openReplies stores the T/F state for all comments to determine whether
-//to display replies for a comment or not(DOM manip used originally, however it's apparently not React if there isn't a trillion state variables), openReplyInputs is the same as the
-//previous var, but for opening reply inputs, batch determines how many comments have already been loaded, observerRef is for the observer to detect when the user has scrolled to the
-//bottom of the comment list, observer is similar to observerRef(not exactly sure what it's for), commentInput is to store the value in the comment span, and replyInputs stores the
-//
+//to display replies for a comment or not(DOM manip used originally, however it's apparently not React if there isn't a trillion state variables), activeReplyInput is the same as the
+//previous var, but for opening a reply input, batch determines how many comments have already been loaded, observerRef is for the observer to detect when the user has scrolled to the
+//bottom of the comment list, observer is similar to observerRef(not exactly sure what it's for), commentInput is to store the value in the comment span, and replyInput stores the
+//input in the specified reply span(only one open at a time). Now for functions, addComments is very similar to addPosts in PostList(used for batch loading), the useEffect hook contains
+//the intersection observer, toggleModal is the sign in prompt, toggleReply opens the reply input, showReplies shows the replies for a comment, dateCalc is used for timestamps, 
+//commentSubmit and replySubmit are self explanatory.
 
 interface Comment {
   userliked: boolean;

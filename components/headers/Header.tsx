@@ -14,10 +14,11 @@ import { CompressedMenu } from "../CompressedMenu";
 
 export async function Header() {
 
+  //NEED to force revalidate here, there's an issue with the wrong username being stored.
   const states: any[] = await SignState();
 
   return (
-    <div className="fixed w-screen flex justify-center pt-14 pb-2 md:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
+    <div className="fixed w-screen flex justify-center pt-14 pb-2 md:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80% z-10">
       <div className="grid grid-flow-col min-w-[330px] h-9 justify-center">
         <Link href="/">
           <button className="absolute left-2 top-3 text-4xl/7 text-offwhite">RankTop</button>
@@ -29,7 +30,9 @@ export async function Header() {
             <Link href="/newpost">
               <button className="hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite whitespace-nowrap">New Post</button>
             </Link>
+            <div className="z-50">
             <ProfileMenu username={states[1]} userid={states[2]} />
+            </div>
           </div>
         }
         {!states[0] &&

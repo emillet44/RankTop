@@ -10,8 +10,6 @@ import { signOut } from 'next-auth/react';
 //button or clicking anywhere outside the drawer. drawerRef is a reference to the div that contains the drawer, which is used to determine in combination with buttonRef to determine
 //all potential locations that the user can click to exit the drawer(basically not the button or the drawer[not the button because it already has it's own toggle function]).
 
-let compress: boolean = false;
-
 export function ProfileMenu({ username, userid }: { username: string, userid: string }) {
 
   const [menuOpen, setMenuOpen] = useState(false);

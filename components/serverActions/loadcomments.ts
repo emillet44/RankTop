@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 
+//Server action to load comments, then load an extra condition "userliked" to determine whether the user liked a comment or not
+
 export async function LoadBatch(batch: number, type: string, userid: string, postid: string) {
   const comments = await prisma.comments.findMany({
     skip: 5 * batch,

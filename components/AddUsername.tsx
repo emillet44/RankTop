@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 //is called which adds the username to the database and silently refreshes the page(similar to ctrl + r but the page never goes blank) to display the username.
 //The previous format of AddUsername with a small floating form has now been changed to a modal centered on the screen, to avoid any scaling issues.
 
-export function AddUsername({ userid } : { userid: string }) {
+export function AddUsername({ userid }: { userid: string }) {
 
   const [formopen, setFormOpen] = useState(Boolean);
   const [confirmopen, setConfirmation] = useState(Boolean);
@@ -73,7 +73,7 @@ export function AddUsername({ userid } : { userid: string }) {
 
   const newUsername = (e: any) => {
     CreateUsername(inputValue, userid).then((result) => {
-      if(result) {
+      if (result) {
         router.refresh();
       }
       else {
@@ -86,40 +86,34 @@ export function AddUsername({ userid } : { userid: string }) {
   return (
     <>
       <button onClick={toggleForm} className="outline-none peer text-left text-offwhite hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Add Username</button>
-      {formopen && !confirmopen && !notunique &&
+      {formopen &&
         <div onClick={toggleForm} id="parent" className="z-50 fixed top-0 right-0 flex w-screen h-screen items-center justify-center bg-gray-600/50">
           <div className="outline outline-slate-700 bg-slate-900 rounded-lg w-64 p-4 text-base">
-            <div className="grid grid-cols-1 gap-2 grid-flow-row auto-rows-auto">
-              <label className="text-slate-400">Username</label>
-              <input name="username" id="username" value={inputValue} onChange={checkChars} className="outline outline-2 outline-slate-700 rounded-sm bg-transparent text-offwhite" maxLength={16}></input>
-              <div className="flex justify-end">
-                <button type="submit" onClick={checkUnique} disabled={disabled} className="outline outline-2 outline-slate-700 rounded-sm w-20 disabled:invisible text-slate-400">Continue</button>
+            {!confirmopen && !notunique &&
+              <div className="grid grid-cols-1 gap-2 grid-flow-row auto-rows-auto">
+                <label className="text-slate-400">Username</label>
+                <input name="username" id="username" value={inputValue} onChange={checkChars} className="outline outline-2 outline-slate-700 rounded-sm bg-transparent text-offwhite" maxLength={16}></input>
+                <div className="flex justify-end">
+                  <button type="submit" onClick={checkUnique} disabled={disabled} className="outline outline-2 outline-slate-700 rounded-sm w-20 disabled:invisible text-slate-400">Continue</button>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      }
-      {notunique &&
-        <div onClick={toggleForm} id="parent" className="fixed top-0 right-0 flex w-screen h-screen items-center justify-center bg-gray-600/50">
-          <div className="outline outline-slate-700 bg-slate-900 rounded-lg w-64 p-4 text-base">
-            <div className="grid grid-cols-1 gap-2 grid-flow-row auto-rows-auto">
-              <label>Username Taken</label>
-              <button value="uniqueback" onClick={back} className="outline outline-2 rounded-sm w-24">Try Another</button>
-            </div>
-          </div>
-        </div>
-      }
-      {confirmopen &&
-        <div onClick={toggleForm} id="parent" className="fixed top-0 right-0 flex w-screen h-screen items-center justify-center bg-gray-600/50">
-          <div className="outline outline-slate-700 bg-slate-900 rounded-lg w-64 p-4 text-base">
-            <div className="grid grid-cols-2 gap-2 grid-flow-row auto-rows-auto">
-              <label className="text-slate-400">{inputValue}</label>
-              <label className="col-span-2 text-slate-400">This will be your permanent username. Are you sure?</label>
-              <button onClick={back} className="outline outline-2 outline-slate-700 rounded-sm w-16 text-slate-400">Back</button>
-              <div className="col-start-2 flex justify-end">
-                <button onClick={newUsername} className="outline outline-2 outline-slate-700 rounded-sm w-16 text-slate-400">Submit</button>
+            }
+            {notunique &&
+              <div className="grid grid-cols-1 gap-2 grid-flow-row auto-rows-auto">
+                <label>Username Taken</label>
+                <button value="uniqueback" onClick={back} className="outline outline-2 rounded-sm w-24">Try Another</button>
               </div>
-            </div>
+            }
+            {confirmopen &&
+              <div className="grid grid-cols-2 gap-2 grid-flow-row auto-rows-auto">
+                <label className="text-slate-400">{inputValue}</label>
+                <label className="col-span-2 text-slate-400">This will be your permanent username. Are you sure?</label>
+                <button onClick={back} className="outline outline-2 outline-slate-700 rounded-sm w-16 text-slate-400">Back</button>
+                <div className="col-start-2 flex justify-end">
+                  <button onClick={newUsername} className="outline outline-2 outline-slate-700 rounded-sm w-16 text-slate-400">Submit</button>
+                </div>
+              </div>
+            }
           </div>
         </div>
       }

@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/prisma"
 
+//Server action for uploading comments and replies, and it adds an extra field "userliked" to match the interface defined in AddComment(used for display purposes)
+
 export async function newComment(userid: string, postid: string, username: string | null | undefined, text: string) {
 
   const comment = await prisma.comments.create({
