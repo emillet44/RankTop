@@ -305,7 +305,7 @@ export function CSForm({ signedin, username, userid }: { signedin: boolean, user
                     <div>
                       <label>1.</label>
                       <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
-                        <Image id="0" draggable onDragStart={dragstartHandler} src={urls[0]} alt="Image 1" width={200} height={200}></Image>
+                        <Image id="0" draggable onDragStart={dragstartHandler} quality={1} src={urls[0]} alt="Image 1" width={200} height={200} />
                         <button id="0" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 1)}>
                           <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
                         </button>
@@ -325,7 +325,7 @@ export function CSForm({ signedin, username, userid }: { signedin: boolean, user
                     <div>
                       <label>2.</label>
                       <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
-                        <Image id="1" draggable onDragStart={dragstartHandler} src={urls[1]} alt="Image 2" width={200} height={200}></Image>
+                        <Image id="1" draggable onDragStart={dragstartHandler} quality={1} src={urls[1]} alt="Image 2" width={200} height={200} />
                         <button id="1" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 2)}>
                           <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
                         </button>
@@ -347,7 +347,7 @@ export function CSForm({ signedin, username, userid }: { signedin: boolean, user
                         <div>
                           <label>3.</label>
                           <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
-                            <Image id="2" draggable onDragStart={dragstartHandler} src={urls[2]} alt="Image 3" width={200} height={200}></Image>
+                            <Image id="2" draggable onDragStart={dragstartHandler} quality={1} src={urls[2]} alt="Image 3" width={200} height={200} />
                             <button id="2" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 3)}>
                               <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
                             </button>
@@ -371,7 +371,7 @@ export function CSForm({ signedin, username, userid }: { signedin: boolean, user
                         <div>
                           <label>4.</label>
                           <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
-                            <Image id="3" draggable onDragStart={dragstartHandler} src={urls[3]} alt="Image 4" width={200} height={200}></Image>
+                            <Image id="3" draggable onDragStart={dragstartHandler} quality={1} src={urls[3]} alt="Image 4" width={200} height={200} />
                             <button id="3" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 4)}>
                               <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
                             </button>
@@ -395,7 +395,7 @@ export function CSForm({ signedin, username, userid }: { signedin: boolean, user
                         <div>
                           <label>5.</label>
                           <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
-                            <Image id="4" draggable onDragStart={dragstartHandler} src={urls[4]} alt="Image 5" width={200} height={200}></Image>
+                            <Image id="4" draggable onDragStart={dragstartHandler} quality={1} src={urls[4]} alt="Image 5" width={200} height={200} />
                             <button id="4" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 5)}>
                               <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
                             </button>

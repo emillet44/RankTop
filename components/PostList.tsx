@@ -159,7 +159,7 @@ export default function PostsList({ starter }: { starter: any }) {
 
   return (
     <>
-      <div className="border-x border-b p-8 w-full border-slate-700">
+      <div className="sm:border-x border-b p-8 w-full border-slate-700">
         <div className="flex flex-row space-y-3">
           <label className="text-xl text-slate-400 pr-1 flex pt-4">Sort by:</label>
           <select onChange={loadSort} className="w-[133px] p-2 pr-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
@@ -217,12 +217,12 @@ export default function PostsList({ starter }: { starter: any }) {
           </div>
         }
           </div>
-      {posts?.map((list: any) => (
+      {posts?.map((list: any, index: number) => (
             <Link href={`/post/${list.id}`} className="w-full" key={list.id}>
               {list.metadata?.images &&
-                <div className="py-8 border-x border-b border-slate-700">
+                <div className="py-8 sm:border-x border-b border-slate-700">
                   <header className="pl-8 text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
-                  <ListCarousel ranks={[list.rank1, list.rank2, list.rank3, list.rank4, list.rank5]} postid={list.id} />
+                  <ListCarousel ranks={[list.rank1, list.rank2, list.rank3, list.rank4, list.rank5]} postid={list.id} firstimage={index === 0} />
                 </div>
               }
               {!list.metadata?.images &&

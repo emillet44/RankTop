@@ -104,7 +104,7 @@ export default async function Post({ params }: { params: { id: string } }) {
               </div>
               {metadata?.images &&
                 <div className="pt-8 pb-8 rounded-xl outline outline-slate-700">
-                  <ListCarousel ranks={[post.rank1, post.rank2, post.rank3, post.rank4, post.rank5]} postid={params.id} />
+                  <ListCarousel ranks={[post.rank1, post.rank2, post.rank3, post.rank4, post.rank5]} postid={params.id} firstimage={true} />
                 </div>
               }
               {!metadata?.images &&
