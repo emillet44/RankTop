@@ -216,34 +216,34 @@ export default function PostsList({ starter }: { starter: any }) {
             </select>
           </div>
         }
-          </div>
+      </div>
       {posts?.map((list: any, index: number) => (
-            <Link href={`/post/${list.id}`} className="w-full" key={list.id}>
-              {list.metadata?.images &&
-                <div className="py-8 sm:border-x border-b border-slate-700">
-                  <header className="pl-8 text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
-                  <ListCarousel ranks={[list.rank1, list.rank2, list.rank3, list.rank4, list.rank5]} postid={list.id} firstimage={index === 0} />
-                </div>
-              }
-              {!list.metadata?.images &&
-                <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8 border-x border-b border-slate-700">
-                  <header className="text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
-                  <li className="truncate text-xl text-slate-400">{list.rank1}</li>
-                  <li className="truncate text-xl text-slate-400">{list.rank2}</li>
-                  <li className="empty:hidden truncate text-xl text-slate-400">{list.rank3}</li>
-                  <li className="empty:hidden truncate text-xl text-slate-400">{list.rank4}</li>
-                  <li className="empty:hidden truncate text-xl text-slate-400">{list.rank5}</li>
-                </ul>
-              }
-            </Link>
-          ))}
-        <div ref={observerRef} className="h-[1px]" />
-        {loading &&
-          <header className="text-offwhite">Loading more posts...</header>
-        }
-        {end && !loading &&
-          <header className="text-offwhite">No more posts to display!</header>
-        }
-      </>
-      )
+        <Link href={`/post/${list.id}`} className="w-full" key={list.id}>
+          {list.metadata?.images &&
+            <div className="py-8 sm:border-x border-b border-slate-700">
+              <header className="pl-8 text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
+              <ListCarousel ranks={[list.rank1, list.rank2, list.rank3, list.rank4, list.rank5]} postid={list.id} firstimage={index === 0} />
+            </div>
+          }
+          {!list.metadata?.images &&
+            <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8 sm:border-x border-b border-slate-700">
+              <header className="text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
+              <li className="truncate text-xl text-slate-400">{list.rank1}</li>
+              <li className="truncate text-xl text-slate-400">{list.rank2}</li>
+              <li className="empty:hidden truncate text-xl text-slate-400">{list.rank3}</li>
+              <li className="empty:hidden truncate text-xl text-slate-400">{list.rank4}</li>
+              <li className="empty:hidden truncate text-xl text-slate-400">{list.rank5}</li>
+            </ul>
+          }
+        </Link>
+      ))}
+      <div ref={observerRef} className="h-[1px]" />
+      {loading &&
+        <header className="text-offwhite">Loading more posts...</header>
+      }
+      {end && !loading &&
+        <header className="text-offwhite">No more posts to display!</header>
+      }
+    </>
+  )
 }

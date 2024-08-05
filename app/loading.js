@@ -4,14 +4,14 @@ export default function Loading() {
 
   return (
     <>
-      <div className="fixed w-screen flex justify-center pt-14 pb-2 md:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
+      <div className="fixed w-screen flex justify-center pt-14 pb-2 lg:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
         <div className="grid grid-flow-col min-w-[330px] h-9 justify-center">
-          <button disabled className="absolute left-2 top-3 text-4xl/7 text-offwhite">RankTop</button>
-          <input placeholder="Search" disabled className="w-[330px] h-9 py-2 bg-transparent outline outline-2 outline-slate-700 rounded-md indent-1 placeholder-offwhite" />
+          <button disabled className="absolute left-2 top-1.5 text-3xl sm:top-3 sm:text-4xl/7 text-offwhite">RankTop</button>
+          <input placeholder="Search" disabled className="w-[300px] h-9 py-2 bg-transparent outline outline-2 outline-slate-700 rounded-md indent-1 placeholder-offwhite" />
         </div>
       </div>
 
-      <div className="flex justify-center pt-[100px] md:pt-[52px] pb-10 px-6 min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+      <div className="flex justify-center pt-[100px] lg:pt-[52px] pb-10 px-6 min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
         <div className="grid grid-cols-1 w-full max-w-2xl h-screen border-x border-b border-slate-700">
           <div className="grid grid-cols-1 justify-items-center auto-rows-min">
             <div className="border-b p-8 w-full border-slate-700">

@@ -9,6 +9,7 @@ import Link from "next/link";
 
 //This is the menu button for mobile view that, when clicked, will open a right side menu listing three buttons: Add Username, New Post, and Log Out.
 //This thing just kinda obfuscates obvious site functions so for now there's no use. It's still got a cool transition and stuff so maybe it'll be used later.
+//It returns! Since groups are on the header it's getting too cluttered and this seems more clean.
 
 export function CompressedMenu({ username }: { username: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,7 +19,7 @@ export function CompressedMenu({ username }: { username: string }) {
   }
 
   return (
-    <div className="z-30 sm:hidden">
+    <div className="z-30 min-[490px]:hidden">
       <button onClick={openMenu} className="absolute right-2 top-1.5 outline-none py-2 px-2 rounded-sm text-offwhite transition-all">
         <FontAwesomeIcon icon={faBars} className="w-8 h-8" style={{ color: "#FFFFF0" }} />
       </button>
@@ -33,6 +34,9 @@ export function CompressedMenu({ username }: { username: string }) {
           {username != "" &&
             <header className="px-2 py-1">{username}</header>
           }
+          <Link href="/groups">
+            <button className="hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Groups</button>
+          </Link>
           <Link href="/newpost" className="hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">
             <button>New Post</button>
           </Link>

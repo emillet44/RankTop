@@ -9,42 +9,37 @@ export default function Loading() {
     <>
       <div className="fixed w-screen flex justify-center pt-14 pb-2 md:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
         <div className="grid grid-flow-col min-w-[330px] h-9 justify-center">
-          <button disabled className="absolute left-2 top-3 text-4xl/7 text-offwhite">RankTop</button>
-          <input placeholder="Search" disabled className="w-[330px] h-9 py-2 bg-transparent outline outline-2 outline-slate-700 rounded-md indent-1 placeholder-offwhite" />
+          <button disabled className="absolute left-2 top-1.5 text-3xl sm:top-3 sm:text-4xl/7 text-offwhite">RankTop</button>
+          <input placeholder="Search" disabled className="w-[300px] h-9 py-2 bg-transparent outline outline-2 outline-slate-700 rounded-md indent-1 placeholder-offwhite" />
         </div>
       </div>
 
-      <div className="min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+      <div className="min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed text-offwhite">
         <div className="flex justify-center pt-[130px] md:pt-[82px] px-6 pb-10">
-          <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 w-full max-w-2xl">
-            <div className="flex justify-between">
-              <header className="text-3xl justify-self-left text-slate-400 self-end">Loading...</header>
-              <div className="flex sm:flex-row flex-col space-y-3">
-                <label className="text-xl text-slate-400 pr-1 flex pt-4">Loading...</label>
-                <select className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-transparent opacity-100" disabled>
-                  <option>Science & Nature</option>
+          <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-2 sm:gap-4 p-4 sm:p-6 rounded-xl shadow-black shadow-lg bg-slate-500 bg-opacity-20 w-full max-w-2xl">
+            <div className="flex justify-between -mb-2">
+              <header className="text-3xl font-bold">Loading...</header>
+            </div>
+            <div className="outline-none rounded-md p-4 my-4 h-[130px] bg-slate-700 bg-opacity-30">
+
+            </div>
+            <button disabled className="h-9 flex justify-between items-center p-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 w-full text-xl " />
+            <button disabled className="h-9 flex justify-between items-center p-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 w-full text-xl" />
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <div className="flex flex-col space-y-1">
+                <label className="text-xl pr-2 text-transparent">Category:</label>
+                <select disabled className="text-transparent p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 overflow-auto">
+                  <option className="text-black">None</option>
+                </select>
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label className="text-xl text-transparent pr-2">Visibility:</label>
+                <select disabled className="text-transparent p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 text-offwhite">
+                  <option className="text-black">Public</option>
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-2 sm:gap-4 p-4 sm:p-6 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5">
-              <label className="text-2xl text-slate-400 outline-none bg-transparent placeholder:text-slate-400">...</label>
-              <div className="flex items-center">
-                <label className="text-xl text-slate-400 pr-2">...</label>
-                <input className="text-xl outline-none p-2 border-slate-400 bg-transparent flex-1" disabled />
-              </div>
-              <div className="flex items-center">
-                <label className="text-xl text-slate-400 pr-2">...</label>
-                <input className="text-xl outline-none p-2 border-slate-400 bg-transparent flex-1" disabled />
-              </div>
-            </div>
-            <div className="max-w-2xl w-full h-10 flex flex-wrap justify-end space-x-5 gap-y-5">
-              <button className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 bg-opacity-5 text-transparent" disabled>Add Images</button>
-              <button className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 bg-opacity-5 text-transparent" disabled>Add Description</button>
-              <select className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 bg-opacity-5 text-transparent opacity-100" disabled>
-                <option>2 Ranks</option>
-              </select>
-              <button className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 bg-opacity-5 text-transparent" disabled>Submit</button>
-            </div>
+            <button disabled className="h-10 outline-none rounded-md p-2 bg-blue-900 text-offwhite" />
           </div>
         </div>
       </div>

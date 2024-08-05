@@ -21,7 +21,7 @@ export async function newList(formData: FormData) {
   const data = JSON.stringify(Object.fromEntries(formData));
   const formDataObj = JSON.parse(data);
 
-  if(formDataObj.userid != "") {
+  if (formDataObj.userid != "") {
     const List = await prisma.posts.create({
       data: {
         title: formDataObj.title,
@@ -30,10 +30,12 @@ export async function newList(formData: FormData) {
         rank3: formDataObj.r3,
         rank4: formDataObj.r4,
         rank5: formDataObj.r5,
-        description: formDataObj.description,
-        category: formDataObj.category,
+        description: formDataObj.description !== "" ? formDataObj.description : null,
+        category: formDataObj.category === "None" ? "" : formDataObj.category,
         username: formDataObj.username || null,
-        author: { connect: {id: formDataObj.userid}},
+        author: { connect: { id: formDataObj.userid } },
+        group: (formDataObj.visibility !== "Public" && formDataObj.visibility !== "Private") ? { connect: { id: formDataObj.visibility } } : undefined,
+        private: formDataObj.visibility === "Private",
         metadata: {
           create: {
             images: images["img1"] != null || images["img2"] != null || images["img3"] != null || images["img4"] != null || images["img5"] != null
@@ -42,19 +44,19 @@ export async function newList(formData: FormData) {
       }
     })
 
-    if(images["img1"] != null) {
+    if (images["img1"] != null) {
       upload(images["img1"], List.id + "1.png");
     }
-    if(images["img2"] != null) {
+    if (images["img2"] != null) {
       upload(images["img2"], List.id + "2.png");
     }
-    if(images["img3"] != null) {
+    if (images["img3"] != null) {
       upload(images["img3"], List.id + "3.png");
     }
-    if(images["img4"] != null) {
+    if (images["img4"] != null) {
       upload(images["img4"], List.id + "4.png");
     }
-    if(images["img5"] != null) {
+    if (images["img5"] != null) {
       upload(images["img5"], List.id + "5.png");
     }
 
@@ -69,13 +71,14 @@ export async function newList(formData: FormData) {
         rank3: formDataObj.r3,
         rank4: formDataObj.r4,
         rank5: formDataObj.r5,
-        description: formDataObj.description,
-        category: formDataObj.category,
+        description: formDataObj.description !== "" ? formDataObj.description : null,
+        category: formDataObj.category === "None" ? "" : formDataObj.category,
+        private: formDataObj.visibility === "Private",
         metadata: {
-          create:{}
+          create: {}
         }
       }
     })
     return (List.id);
-  }  
+  }
 }

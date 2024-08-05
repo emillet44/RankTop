@@ -6,10 +6,10 @@ export default function Loading() {
 
   return (
     <>
-      <div className="fixed w-screen flex justify-center pt-14 pb-2 md:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
+      <div className="fixed w-screen flex justify-center pt-14 pb-2 lg:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
         <div className="grid grid-flow-col min-w-[330px] h-9 justify-center">
-          <button disabled className="absolute left-2 top-3 text-4xl/7 text-offwhite">RankTop</button>
-          <input placeholder="Search" disabled className="w-[330px] h-9 py-2 bg-transparent outline outline-2 outline-slate-700 rounded-md indent-1 placeholder-offwhite" />
+          <button disabled className="absolute left-2 top-1.5 text-3xl sm:top-3 sm:text-4xl/7 text-offwhite">RankTop</button>
+          <input placeholder="Search" disabled className="w-[300px] h-9 py-2 bg-transparent outline outline-2 outline-slate-700 rounded-md indent-1 placeholder-offwhite" />
         </div>
       </div>
 

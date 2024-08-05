@@ -20,6 +20,9 @@ model Posts {
   username    String?
   description String?
   category    String
+  private     Boolean         @default(false)
+  groupId     String?
+  group       Groups?         @relation(fields: [groupId], references: [id])
   comments    Comments[]
   author      User?           @relation(fields: [authorId], references: [id])
   metadata    Post_Metadata?
@@ -63,11 +66,11 @@ model Session {
 }
 
 model User {
-  id            String     @id @default(cuid())
+  id            String          @id @default(cuid())
   name          String?
-  email         String?    @unique
+  email         String?         @unique
   emailVerified DateTime?
-  username      String?    @unique
+  username      String?         @unique
   image         String?
   accounts      Account[]
   comments      Comments[]
@@ -75,6 +78,8 @@ model User {
   clikes        Comment_Likes[]
   posts         Posts[]
   reports       Reports[]
+  memberGroups  Groups[]        @relation("GroupMembers")
+  adminGroups   Groups[]        @relation("GroupAdmins")
   sessions      Session[]
 }
 
@@ -122,4 +127,15 @@ model Comments {
   userId   String
   post     Posts     @relation(fields: [postId], references: [id])
   user     User      @relation(fields: [userId], references: [id])
+}
+
+model Groups {
+  id         String     @id @default(cuid())
+  name       String
+  password   String?
+  visibility String
+  population Int        @default(1)
+  members    User[]     @relation("GroupMembers")
+  admins     User[]     @relation("GroupAdmins")
+  posts      Posts[]
 }

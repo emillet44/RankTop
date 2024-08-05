@@ -74,13 +74,15 @@ export function AddCommentLike({ commentid, postid, userid, likes, isliked }: { 
         </button>
         <header className="pt-0.5 text-xl text-slate-400">{likes}</header>
         {modalon &&
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-600/50">
-            <div className="max-w-xs w-full px-2 py-2 grid grid-cols-1 grid-flow-row auto-rows-min gap-2 bg-white rounded-lg">
-              <button onClick={toggleModal} className="flex justify-self-end justify-center">
-                <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
-              </button>
-              <h1 className="text-3xl justify-self-center pb-2 z-50">Sign in to like comments</h1>
-              <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postid}` })} className="px-4 py-2 w-24 justify-self-end bg-green-500 text-white rounded-full">Sign In</button>
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-slate-800 rounded-lg p-6 max-w-sm w-full">
+              <div className="flex justify-end">
+                <button onClick={toggleModal}>
+                  <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6 text-slate-400 hover:text-slate-200" />
+                </button>
+              </div>
+              <h2 className="text-2xl text-offwhite font-bold text-center mb-4">Sign in to like comments</h2>
+              <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postid}` })} className="w-full py-2 bg-green-500 hover:bg-green-600 text-white rounded-full transition duration-300">Sign In</button>
             </div>
           </div>
         }

@@ -1,15 +1,15 @@
 'use client'
 
-import { useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { newList } from "./serverActions/listupload"
 import { useRouter } from "next/navigation"
 import Image from 'next/image'
-import { faCircleXmark } from "@fortawesome/free-solid-svg-icons"
+import { faAngleDown, faAngleUp, faCircleXmark } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { signIn } from "next-auth/react"
 
 //This function starts by intializing state variables and the NextJS router. Selected is for the number of ranks, and desctoggle is to enable/disable the description. 
-//The component initially renders with two ranks, and when the select element is changed, getInput is called and the number of ranks is updated based on what was 
+//The component initially renders with two ranks, and when the select element is changed, changeInput is called and the number of ranks is updated based on what was 
 //selected. When the "Add Description" button is clicked, toggleDesc is called, the button is renamed to "Remove Description", and a textarea element becomes visible. 
 //Any inputs that are visible on the screen are required elements, for example if you fill out 2 ranks but there are 5 visible, you will be required to fill out all 
 //5 or lower the ranks back down to 2. When the submit button is clicked, the listupload server action is called, and when it's done, the router will redirect the user
@@ -31,131 +31,119 @@ import { signIn } from "next-auth/react"
 //Added a loading screen using the submitted state to confirm a post has been submitted/to prevent resubmission. Added a category select to the top right with a custom option, saved
 //in a state variable and tacked onto the formdata.
 
-export function CSForm({ signedin, username, userid }: { signedin: boolean, username: string, userid: string }) {
+interface ImageData {
+  file: File | null;
+  url: string | null;
+}
+type Group = {
+  id: string,
+  name: string
+}
 
-  const [selected, setSelected] = useState("");
+
+export function CSForm({ signedin, username, userid, usergroups }: { signedin: boolean, username: string, userid: string, usergroups: any }) {
+
+  const [ranks, setRanks] = useState(2);
   const [category, setCategory] = useState("None");
-  const [desctoggle, setDesc] = useState("");
+  const [desctoggle, setDesc] = useState(false);
+  const descref = useRef<HTMLTextAreaElement | null>(null);
+  const descvalue = useRef("");
   const [image, setImage] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [lockcat, setLockCat] = useState("");
-
-  const [files, setFiles] = useState<Array<File | null>>(Array(5).fill(null));
-  const [urls, setUrls] = useState<Array<string | null>>(Array(5).fill(null));
-  const clearedlist = [null, null, null, null, null];
+  const [visibility, setVisibility] = useState("Public");
 
   const [modalon, setModal] = useState(false);
   const router = useRouter();
 
-  const superUpdateImage = (index1: number, newfile1: File | null, newurl1: string | null, index2: number, newfile2: File | null, newurl2: string | null) => {
-    const updatedFiles = files.map((c, i) => {
-      if (i === index1) {
-        return newfile1;
-      }
-      else if (i === index2) {
-        return newfile2;
-      }
-      else {
-        return c;
-      }
-    })
-    setFiles(updatedFiles);
+  const [imageData, setImageData] = useState<ImageData[]>(Array(5).fill({ file: null, url: null }));
+  const draggedIndex = useRef<number | null>(null);
 
-
-    const updatedUrls = urls.map((c, i) => {
-      if (i === index1) {
-        return newurl1;
+  const updateImageData = (index: number, newData: Partial<ImageData>) => {
+    setImageData(prevData => {
+      const newArray = [...prevData];
+      if (index >= 0 && index < newArray.length) {
+        newArray[index] = { ...newArray[index], ...newData };
       }
-      else if (i === index2) {
-        return newurl2;
-      }
-      else {
-        return c;
-      }
-    })
-    setUrls(updatedUrls);
+      return newArray;
+    });
   }
 
-  const updateImage = (index: number, newfile: File | null, newurl: string | null) => {
-
-    const updatedFiles = files.map((c, i) => {
-      if (i === index) {
-        return newfile;
+  const swapImages = (index1: number, index2: number) => {
+    setImageData(prevData => {
+      const newData = [...prevData];
+      if (index1 >= 0 && index1 < newData.length && index2 >= 0 && index2 < newData.length) {
+        [newData[index1], newData[index2]] = [newData[index2], newData[index1]];
       }
-      else {
-        return c;
-      }
-    })
-    setFiles(updatedFiles);
-
-
-    const updatedUrls = urls.map((c, i) => {
-      if (i === index) {
-        return newurl;
-      }
-      else {
-        return c;
-      }
-    })
-    setUrls(updatedUrls);
+      return newData;
+    });
   }
 
-  const getInput = (e: any) => {
-    setSelected(e.target.value);
-  };
+  const handleDragStart = (e: any, index: number) => {
+    e.dataTransfer.setData('text/plain', index.toString());
+    draggedIndex.current = index;
+  }
 
-  const getCategory = (e: any) => {
-    setCategory(e.target.value);
-    if (lockcat != "") {
-      setLockCat("");
+  const handleDragOver = (e: any) => {
+    e.preventDefault();
+  }
+
+  const handleDrop = (e: any, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex.current !== null && draggedIndex.current !== dropIndex) {
+      swapImages(draggedIndex.current, dropIndex);
     }
+    draggedIndex.current = null;
+  }
+
+  const handleFileChange = (e: any, index: number) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      updateImageData(index, { file, url });
+    }
+  }
+
+  const removeImg = (e: any, index: number) => {
+    e.preventDefault();
+    updateImageData(index, { file: null, url: null });
+  }
+
+  const changeCategory = (e: any) => {
+    setCategory(e.target.value);
   }
 
   const toggleDesc = (e: any) => {
     e.preventDefault();
-    if (e.target.textContent == "Add Description") {
-      e.target.textContent = "Remove Description";
-      setDesc(e.target.textContent);
+    if (desctoggle && descref.current) {
+      descvalue.current = descref.current.value;
     }
-    else {
-      e.target.textContent = "Add Description";
-      setDesc(e.target.textContent);
-    }
+    setDesc(!desctoggle);
   };
 
   const subHandler = (e: any) => {
     e.preventDefault();
     setSubmitted(true);
 
-    const formData = new FormData(e.target);
-    if (files[0] !== null) {
-      formData.append("img1", new Blob([files[0]], { type: files[0].type }));
-    }
-    if (files[1] !== null) {
-      formData.append("img2", new Blob([files[1]], { type: files[1].type }));
-    }
-    if (files[2] !== null) {
-      formData.append("img3", new Blob([files[2]], { type: files[2].type }));
-    }
-    if (files[3] !== null) {
-      formData.append("img4", new Blob([files[3]], { type: files[3].type }));
-    }
-    if (files[4] !== null) {
-      formData.append("img5", new Blob([files[4]], { type: files[4].type }));
-    }
+    const formData = new FormData(e.currentTarget);
 
-    if(lockcat != "") {
-      formData.append("category", lockcat);
-    }
-    else if(category != "None" && category != "Custom") {
-      formData.append("category", category);
+    imageData.forEach((data, index) => {
+      if (data.file !== null) {
+        formData.append(`img${index + 1}`, new Blob([data.file], { type: data.file.type }));
+      }
+    });
+
+    formData.append("category", category);
+
+    if (descref.current !== null) {
+      formData.append("description", descref.current.value);
     }
     else {
-      formData.append("category", "");
+      formData.append("description", descvalue.current);
     }
 
     formData.append("username", username);
     formData.append("userid", userid);
+    formData.append("visibility", visibility);
 
     newList(formData).then((result) => {
       router.push(`/post/${result}`);
@@ -164,47 +152,7 @@ export function CSForm({ signedin, username, userid }: { signedin: boolean, user
 
   const toggleImages = (e: any) => {
     e.preventDefault();
-    if (image) {
-      e.target.textContent = "Add Images";
-    }
-    else {
-      e.target.textContent = "Remove Images";
-      setFiles(clearedlist);
-      setUrls(clearedlist);
-    }
     setImage(!image);
-  }
-
-  const previewImage = (e: any) => {
-    if (e.target.files[0] != undefined) {
-      updateImage(parseInt(e.target.id), e.target.files[0], URL.createObjectURL(e.target.files[0]));
-    }
-  }
-
-  const removeImg = (e: any, imgnum: number) => {
-    e.preventDefault();
-    updateImage(imgnum - 1, null, null);
-  }
-
-  function dragstartHandler(e: any) {
-    e.dataTransfer.setData("text/uri-list", e.target.src);
-    e.dataTransfer.setData("text/plain", e.target.id);
-  }
-
-  function dragoverHandler(e: any) {
-    e.preventDefault();
-  }
-
-  function dropHandler(e: any) {
-    e.preventDefault();
-    const url = e.dataTransfer.getData("text/uri-list");
-    const imgid = e.dataTransfer.getData("text/plain");
-    if (e.target.src != url) {
-      const test = files[e.target.id];
-
-      superUpdateImage(parseInt(e.target.id), files[parseInt(imgid)], url, parseInt(imgid), test, e.target.src);
-
-    }
   }
 
   const toggleModal = (e: any) => {
@@ -212,21 +160,94 @@ export function CSForm({ signedin, username, userid }: { signedin: boolean, user
     setModal(!modalon);
   }
 
-  const lockCategory = (e: any) => {
+  const changeRank = (e: any) => {
     e.preventDefault();
-    setLockCat(e.target.closest('div').querySelector('input').value);
+    if (e.target.textContent == "-") {
+      setRanks(ranks - 1);
+    }
+    else {
+      setRanks(ranks + 1);
+    }
+  }
+
+  const changeVisibility = (e: any) => {
+    setVisibility(e.target.value);
+    console.log(e.target.value);
   }
 
   if (!submitted) {
     return (
-      <div className="min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+      <div className="min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed text-offwhite">
         <form id="newpost" onSubmit={subHandler} className="flex justify-center pt-[130px] md:pt-[82px] px-6 pb-10">
-          <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 w-full max-w-2xl">
-            <div className="flex justify-between">
-              <header className="text-3xl justify-self-left text-slate-400 self-end">New Post</header>
-              <div className="flex sm:flex-row flex-col space-y-3">
-                <label className="text-xl text-slate-400 pr-1 flex pt-4">Category:</label>
-                <select onChange={getCategory} className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400 overflow-auto">
+          <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-2 sm:gap-4 p-4 sm:p-6 rounded-xl shadow-black shadow-lg bg-slate-500 bg-opacity-20 w-full max-w-2xl">
+            <div className="flex justify-between -mb-2">
+              <header className="text-3xl font-bold">New Post</header>
+              <div className="flex flex-row">
+                <label htmlFor="rank" className="text-xl pr-2">Ranks:</label>
+                <div className="flex flex-row outline outline-2 outline-slate-700 rounded-md w-18 h-8 items-center">
+                  <button onClick={changeRank} disabled={ranks === 2} className="text-2xl w-6 bg-slate-50 bg-opacity-5 hover:bg-opacity-10">-</button>
+                  <span className="text-xl w-6 py-1 flex justify-center bg-slate-50 bg-opacity-5">{ranks}</span>
+                  <button onClick={changeRank} disabled={ranks === 5} className="text-2xl w-6 bg-slate-50 bg-opacity-5 hover:bg-opacity-10">+</button>
+                </div>
+              </div>
+            </div>
+            <div className="outline-none rounded-md p-4 my-4 bg-slate-700 bg-opacity-30">
+              <input name="title" placeholder="Title" className="text-2xl font-semibold outline-none w-full bg-transparent placeholder-slate-400" required pattern="\S+" maxLength={40} />
+              {[...Array(ranks)].map((_, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <label className="text-xl">{index + 1}.</label>
+                  <input name={`r${index + 1}`} className="flex-1 text-xl bg-transparent border-b border-transparent outline-none focus:border-blue-500 pb-1 w-11/12" required pattern="\S+" />
+                </div>
+              ))}
+            </div>
+            {!signedin &&
+              <button type="button" onClick={toggleModal} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 ">Add Images</button>
+            }
+            {signedin &&
+              <button onClick={toggleImages} className="flex justify-between items-center p-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 hover:bg-opacity-10 w-full text-xl ">
+                Images
+                <FontAwesomeIcon icon={image ? faAngleUp : faAngleDown} style={{ color: "#ffffff" }} className="h-7 flex pr-2" />
+              </button>
+            }
+            {image && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-slate-700 bg-opacity-30 rounded-md p-4">
+                {[...Array(ranks)].map((_, index) => {
+                  const { url } = imageData[index];
+                  return (
+                    <div key={index} className="space-y-2" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, index)}>
+                      <label className="text-xl">{index + 1}.</label>
+                      {url === null &&
+                        <div className="relative border-2 border-dashed border-slate-500 hover:border-blue-500 rounded-md p-2 h-[100px]">
+                          <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={(e) => handleFileChange(e, index)} />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-slate-400">Click to upload</span>
+                          </div>
+                        </div>
+                      }
+                      {url !== null &&
+                        <div className="group relative border-2 border-slate-500 rounded-md overflow-hidden">
+                          <Image draggable onDragStart={(e) => handleDragStart(e, index)} src={url} alt={`Image ${index + 1}`} width={200} height={200} className="w-full h-auto object-cover" />
+                          <button className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, index)}>
+                            <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <button onClick={toggleDesc} className="flex justify-between items-center p-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 hover:bg-opacity-10 w-full text-xl">
+              Description
+              <FontAwesomeIcon icon={desctoggle ? faAngleUp : faAngleDown} style={{ color: "#ffffff" }} className="h-7 flex pr-2" />
+            </button>
+            {desctoggle &&
+              <textarea placeholder="Post description..." ref={descref} defaultValue={descvalue.current} className="w-full min-h-[100px] max-h-64 bg-slate-700 bg-opacity-30 rounded-md p-3 placeholder-slate-400 outline-none" required />
+            }
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="visibility" className="text-xl pr-2">Category:</label>
+                <select name="category" onChange={changeCategory} className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 hover:bg-opacity-10 overflow-auto">
                   <option className="text-black">None</option>
                   <option className="text-black">Gaming</option>
                   <option className="text-black">Music</option>
@@ -242,203 +263,35 @@ export function CSForm({ signedin, username, userid }: { signedin: boolean, user
                   <option className="text-black">Books</option>
                   <option className="text-black">Science & Nature</option>
                   <option className="text-black">Education</option>
-                  <option className="text-black">Custom</option>
                 </select>
-                {category == "Custom" &&
-                  <>
-                    {!lockcat &&
-                      <div className=" pl-2 flex items-center space-x-2">
-                        <input maxLength={16} className="text-xl text-slate-400 outline-none border-b border-slate-400 bg-transparent placeholder:text-slate-400 w-32 md:w-48"></input>
-                        <button onClick={lockCategory} className="outline outline-2 outline-slate-700 rounded-md p-1 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add</button>
-                      </div>
-                    }
-                    {lockcat &&
-                      <label className="pl-2 flex items-center text-xl text-slate-400">{lockcat}</label>
-                    }
-                  </>
-                }
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="visibility" className="text-xl text-offwhite pr-2">Visibility:</label>
+                <select id="visibility" value={visibility} onChange={changeVisibility} className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 hover:bg-opacity-10 text-offwhite">
+                  <option key="public" className="text-black">Public</option>
+                  <option key="private" className="text-black">Private</option>
+                  {usergroups?.memberGroups.map((group: any) => (
+                    <option value={group.id} key={group.id} className="text-black">{group.name}</option>
+                  ))}
+                  {usergroups?.adminGroups.map((group: any) => (
+                    <option value={group.id} key={group.id} className="text-black">{group.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
-            <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-2 sm:gap-4 p-4 sm:p-6 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5">
-              <input name="title" placeholder="Title" className="text-2xl text-slate-400 outline-none bg-transparent placeholder:text-slate-400" required maxLength={40} />
-              <div className="flex items-center">
-                <label className="text-xl text-slate-400 pr-2">1.</label>
-                <input name="r1" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent flex-1" required />
-              </div>
-              <div className="flex items-center">
-                <label className="text-xl text-slate-400 pr-2">2.</label>
-                <input name="r2" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent flex-1" required />
-              </div>
-              {parseInt(selected) >= 3 &&
-                <div className="flex items-center">
-                  <label className="text-xl text-slate-400 pr-2">3.</label>
-                  <input name="r3" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent flex-1" required />
-                </div>
-              }
-              {parseInt(selected) >= 4 &&
-                <div className="flex items-center">
-                  <label className="text-xl text-slate-400 pr-2">4.</label>
-                  <input name="r4" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent flex-1" required />
-                </div>
-              }
-              {selected === "5" &&
-                <div className="flex items-center">
-                  <label className="text-xl text-slate-400 pr-2">5.</label>
-                  <input name="r5" className="text-xl text-slate-400 outline-none p-2 focus:border-b border-slate-400 w-11/12 bg-transparent flex-1" required />
-                </div>
-              }
-            </div>
-            {image &&
-              <div>
-                <header className="text-3xl justify-self-left pb-6 text-slate-400">Images</header>
-                <div className="w-full max-w-2xl outline outline-slate-700 rounded-xl p-5 text-slate-400 bg-slate-50 bg-opacity-5 flex flex-wrap gap-3">
-                  {urls[0] == null &&
-                    <div>
-                      <label>1.</label>
-                      <div className="outline w-28">
-                        <input id="0" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
-                      </div>
-                    </div>
-
-                  }
-                  {urls[0] != null &&
-                    <div>
-                      <label>1.</label>
-                      <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
-                        <Image id="0" draggable onDragStart={dragstartHandler} quality={1} src={urls[0]} alt="Image 1" width={200} height={200} />
-                        <button id="0" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 1)}>
-                          <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
-                        </button>
-                      </div>
-                    </div>
-                  }
-                  {urls[1] == null &&
-                    <div>
-                      <label>2.</label>
-                      <div className="outline w-28">
-                        <input id="1" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
-                      </div>
-                    </div>
-
-                  }
-                  {urls[1] != null &&
-                    <div>
-                      <label>2.</label>
-                      <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
-                        <Image id="1" draggable onDragStart={dragstartHandler} quality={1} src={urls[1]} alt="Image 2" width={200} height={200} />
-                        <button id="1" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 2)}>
-                          <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
-                        </button>
-                      </div>
-                    </div>
-                  }
-                  {parseInt(selected) >= 3 &&
-                    <>
-                      {urls[2] == null &&
-                        <div>
-                          <label>3.</label>
-                          <div className="outline w-28">
-                            <input id="2" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
-                          </div>
-                        </div>
-
-                      }
-                      {urls[2] != null &&
-                        <div>
-                          <label>3.</label>
-                          <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
-                            <Image id="2" draggable onDragStart={dragstartHandler} quality={1} src={urls[2]} alt="Image 3" width={200} height={200} />
-                            <button id="2" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 3)}>
-                              <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
-                            </button>
-                          </div>
-                        </div>
-                      }
-                    </>
-                  }
-                  {parseInt(selected) >= 4 &&
-                    <>
-                      {urls[3] == null &&
-                        <div>
-                          <label>4.</label>
-                          <div className="outline w-28">
-                            <input id="3" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
-                          </div>
-                        </div>
-
-                      }
-                      {urls[3] != null &&
-                        <div>
-                          <label>4.</label>
-                          <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
-                            <Image id="3" draggable onDragStart={dragstartHandler} quality={1} src={urls[3]} alt="Image 4" width={200} height={200} />
-                            <button id="3" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 4)}>
-                              <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
-                            </button>
-                          </div>
-                        </div>
-                      }
-                    </>
-                  }
-                  {selected === "5" &&
-                    <>
-                      {urls[4] == null &&
-                        <div>
-                          <label>5.</label>
-                          <div className="outline w-28">
-                            <input id="4" type="file" accept="image/*" className="opacity-0" onChange={previewImage} />
-                          </div>
-                        </div>
-
-                      }
-                      {urls[4] != null &&
-                        <div>
-                          <label>5.</label>
-                          <div onDrop={dropHandler} onDragOver={dragoverHandler} className="group relative outline">
-                            <Image id="4" draggable onDragStart={dragstartHandler} quality={1} src={urls[4]} alt="Image 5" width={200} height={200} />
-                            <button id="4" className="invisible group-hover:visible absolute top-1 right-1" onClick={(e) => removeImg(e, 5)}>
-                              <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
-                            </button>
-                          </div>
-                        </div>
-                      }
-                    </>
-                  }
-                </div>
-              </div>
-            }
-            {desctoggle == "Remove Description" &&
-              <div>
-                <header className="text-3xl justify-self-left pb-6 text-slate-400">Description</header>
-                <textarea name="description" className="w-full max-w-2xl max-h-96 h-44 outline focus:outline-4 outline-slate-700 rounded-xl p-5 text-slate-400 bg-slate-50 bg-opacity-5" required />
-              </div>
-            }
-            <div className="max-w-2xl w-full flex flex-wrap justify-end space-x-5 gap-y-5">
-              {!signedin &&
-                <button type="button" onClick={toggleModal} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Images</button>
-              }
-              {signedin &&
-                <button onClick={toggleImages} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Images</button>
-              }
-              <button onClick={toggleDesc} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Add Description</button>
-              <select onChange={getInput} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
-                <option value="2" className="text-black">2 Ranks</option>
-                <option value="3" className="text-black">3 Ranks</option>
-                <option value="4" className="text-black">4 Ranks</option>
-                <option value="5" className="text-black">5 Ranks</option>
-              </select>
-              <button type="submit" className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Submit</button>
-            </div>
+            <button type="submit" className="outline-none rounded-md p-2 bg-blue-900 hover:bg-blue-800 text-offwhite">Submit</button>
           </div>
         </form>
         {modalon &&
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-600/50">
-            <div className="max-w-xs w-full px-2 py-2 grid grid-cols-1 grid-flow-row auto-rows-min gap-2 bg-white rounded-lg">
-              <button onClick={toggleModal} className="flex justify-self-end justify-center">
-                <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
-              </button>
-              <h1 className="text-3xl justify-self-center pb-2 z-50">Sign in to add images to your post</h1>
-              <button onClick={() => signIn(undefined, { callbackUrl: `/newpost` })} className="px-4 py-2 w-24 justify-self-end bg-green-500 text-white rounded-full">Sign In</button>
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-slate-800 rounded-lg p-6 max-w-sm w-full">
+              <div className="flex justify-end">
+                <button onClick={toggleModal}>
+                  <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6 text-slate-400 hover:text-slate-200" />
+                </button>
+              </div>
+              <h2 className="text-2xl font-bold text-center mb-4">Sign in to add images</h2>
+              <button onClick={() => signIn(undefined, { callbackUrl: `/newpost` })} className="w-full py-2 bg-green-500 hover:bg-green-600 text-white rounded-full transition duration-300">Sign In</button>
             </div>
           </div>
         }
@@ -448,7 +301,7 @@ export function CSForm({ signedin, username, userid }: { signedin: boolean, user
   else {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-64px)] pt-14 bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
-        <header className="text-slate-400 text-3xl">Redirecting to your post now!</header>
+        <header className="text-offwhite text-3xl">Redirecting to your post now!</header>
       </div>
     )
   }

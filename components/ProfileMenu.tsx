@@ -34,22 +34,19 @@ export function ProfileMenu({ username, userid }: { username: string, userid: st
   });
 
   return (
-    <>
-      <button ref={buttonRef} onClick={toggleMenu} className="flex min-w-0 items-center gap-1 hover:outline outline-2 p-1 rounded-sm outline-offwhite">
-        <Image src={profilepic} alt={"pfp"} width={30} height={30} />
-        <label className="text-offwhite truncate">{username}</label>
+    <div className="flex-shrink min-w-0 max-w-full z-50">
+      <button ref={buttonRef} onClick={toggleMenu} className="flex items-center gap-1 hover:outline outline-2 p-1 text-sm sm:text-base rounded-sm outline-offwhite w-full">
+        <Image src={profilepic} alt="pfp" width={30} height={30} className="flex-shrink-0" />
+        <span className="text-offwhite truncate min-w-0 flex-grow">{username}</span>
       </button>
       {menuOpen &&
         <div ref={drawerRef} className="fixed flex flex-col top-16 right-3 w-56 outline outline-slate-700 bg-slate-900 rounded-lg text-offwhite py-1">
           {username === "" &&
             <AddUsername userid={userid} />
           }
-          {username.length > 100 &&
-            <label>{username}</label>
-          }
           <button onClick={() => signOut({ callbackUrl: "/" })} className="text-left hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Log Out</button>
         </div>
       }
-    </>
+    </div>
   )
 }

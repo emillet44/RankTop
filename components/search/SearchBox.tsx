@@ -43,7 +43,7 @@ export function Search() {
       <EmptyQueryBoundary fallback={null}>
         <div className="absolute grid grid-cols-1 z-10 outline outline-2 outline-slate-700 empty:outline-none rounded-md pt-10 bg-slate-900 text-offwhite">
           <CustomHits />
-          <Link href={`/search/${search}`} className="w-[330px] hover:bg-slate-800">Search for {search}</Link>
+          <Link href={`/search/${search}`} className="w-[300px] hover:bg-slate-800">Search for {search}</Link>
           <div className="p-1 w-full border-t-2 border-slate-700 flex justify-end">
             <div className="w-36">
               <PoweredBy/>
