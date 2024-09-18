@@ -133,7 +133,10 @@ model Groups {
   id         String     @id @default(cuid())
   name       String
   password   String?
-  visibility String
+  invite     Boolean
+  private    Boolean
+  bannerimg  Boolean    
+  profileimg Boolean    
   population Int        @default(1)
   members    User[]     @relation("GroupMembers")
   admins     User[]     @relation("GroupAdmins")

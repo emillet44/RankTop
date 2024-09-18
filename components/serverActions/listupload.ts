@@ -1,8 +1,6 @@
 'use server'
 
 import { prisma } from "@/lib/prisma"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/app/api/auth/[...nextauth]/auth";
 import { upload } from "./imgupload";
 
 //This server action will fetch any image blobs uploaded by the user based on their urls(already created for generating image previews), and send them to imgupload for uploading.

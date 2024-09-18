@@ -21,18 +21,23 @@ export async function Header() {
         <Search />
         {states[0] &&
           <div className="w-[calc(100vw-140px)] md:min-w-[230px] lg:w-[calc(50vw-160px)] absolute justify-end flex-row right-2 2xl:right-4 lg:top-1 top-[7px] items-center flex">
-          <Link href="/groups">
-            <button className="hover:outline outline-2 p-2 rounded-sm text-sm sm:text-base text-offwhite whitespace-nowrap">Groups</button>
-          </Link>
-          <div className="z-50">
-            <ProfileMenu username={states[1]} userid={states[2]} />
+            <Link href="/groups">
+              <button className="hover:outline outline-2 p-2 rounded-sm text-sm sm:text-base text-offwhite">Groups</button>
+            </Link>
+            <div className="z-50">
+              <ProfileMenu username={states[1]} userid={states[2]} />
+            </div>
           </div>
-        </div>
         }
         {!states[0] &&
-          <Link href="/api/auth/signin">
-            <button className="absolute right-2 top-1.5 hover:outline outline-2 p-2 rounded-sm text-offwhite">Sign In</button>
-          </Link>
+          <div className="absolute right-2 top-1.5 flex flex-row space-x-2">
+            <Link href="/groups">
+              <button className="hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">Groups</button>
+            </Link>
+            <Link href="/api/auth/signin">
+              <button className="hover:outline outline-2 p-2 rounded-sm text-offwhite">Sign In</button>
+            </Link>
+          </div>
         }
       </div>
     </div>

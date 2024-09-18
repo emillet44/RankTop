@@ -33,17 +33,17 @@ export async function Header() {
           </div>
         }
         {!states[0] &&
-          <>
-            <Link href="/api/auth/signin">
-              <button className="absolute right-2 top-1.5 hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">Sign In</button>
-            </Link>
+          <div className="absolute right-2 top-1.5 flex flex-row space-x-2">
             <Link href="/groups">
-              <button className="hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite whitespace-nowrap">Groups</button>
+              <button className="hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">Groups</button>
             </Link>
             <Link href="/newpost">
-              <button className="absolute right-20 top-1.5 hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">New Post</button>
+              <button className="hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">New Post</button>
             </Link>
-          </>
+            <Link href="/api/auth/signin">
+              <button className="hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">Sign In</button>
+            </Link>
+          </div>
         }
       </div>
     </div>

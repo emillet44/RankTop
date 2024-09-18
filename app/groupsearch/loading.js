@@ -18,7 +18,7 @@ export default function Loading() {
               <header className="px-4 py-1.5 rounded-md text-xl font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors duration-200">Create</header>
             </li>
             <li>
-              <header className="px-4 py-1.5 rounded-md text-xl font-medium text-white bg-gray-700">Search</header>
+              <header className="px-4 py-1.5 rounded-md text-xl font-medium text-white bg-gray-700">Join</header>
             </li>
           </ul>
         </div>

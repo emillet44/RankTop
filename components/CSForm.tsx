@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import { newList } from "./serverActions/listupload"
 import { useRouter } from "next/navigation"
 import Image from 'next/image'
@@ -35,22 +35,15 @@ interface ImageData {
   file: File | null;
   url: string | null;
 }
-type Group = {
-  id: string,
-  name: string
-}
-
 
 export function CSForm({ signedin, username, userid, usergroups }: { signedin: boolean, username: string, userid: string, usergroups: any }) {
 
   const [ranks, setRanks] = useState(2);
-  const [category, setCategory] = useState("None");
   const [desctoggle, setDesc] = useState(false);
   const descref = useRef<HTMLTextAreaElement | null>(null);
   const descvalue = useRef("");
   const [image, setImage] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [visibility, setVisibility] = useState("Public");
 
   const [modalon, setModal] = useState(false);
   const router = useRouter();
@@ -108,10 +101,6 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
     updateImageData(index, { file: null, url: null });
   }
 
-  const changeCategory = (e: any) => {
-    setCategory(e.target.value);
-  }
-
   const toggleDesc = (e: any) => {
     e.preventDefault();
     if (desctoggle && descref.current) {
@@ -123,7 +112,6 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
   const subHandler = (e: any) => {
     e.preventDefault();
     setSubmitted(true);
-
     const formData = new FormData(e.currentTarget);
 
     imageData.forEach((data, index) => {
@@ -131,8 +119,6 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
         formData.append(`img${index + 1}`, new Blob([data.file], { type: data.file.type }));
       }
     });
-
-    formData.append("category", category);
 
     if (descref.current !== null) {
       formData.append("description", descref.current.value);
@@ -143,7 +129,6 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
 
     formData.append("username", username);
     formData.append("userid", userid);
-    formData.append("visibility", visibility);
 
     newList(formData).then((result) => {
       router.push(`/post/${result}`);
@@ -170,11 +155,6 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
     }
   }
 
-  const changeVisibility = (e: any) => {
-    setVisibility(e.target.value);
-    console.log(e.target.value);
-  }
-
   if (!submitted) {
     return (
       <div className="min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed text-offwhite">
@@ -183,7 +163,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
             <div className="flex justify-between -mb-2">
               <header className="text-3xl font-bold">New Post</header>
               <div className="flex flex-row">
-                <label htmlFor="rank" className="text-xl pr-2">Ranks:</label>
+                <label htmlFor="rank" className="text-xl font-semibold pr-2">Ranks</label>
                 <div className="flex flex-row outline outline-2 outline-slate-700 rounded-md w-18 h-8 items-center">
                   <button onClick={changeRank} disabled={ranks === 2} className="text-2xl w-6 bg-slate-50 bg-opacity-5 hover:bg-opacity-10">-</button>
                   <span className="text-xl w-6 py-1 flex justify-center bg-slate-50 bg-opacity-5">{ranks}</span>
@@ -192,16 +172,19 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
               </div>
             </div>
             <div className="outline-none rounded-md p-4 my-4 bg-slate-700 bg-opacity-30">
-              <input name="title" placeholder="Title" className="text-2xl font-semibold outline-none w-full bg-transparent placeholder-slate-400" required pattern="\S+" maxLength={40} />
+              <input name="title" placeholder="Title" className="text-2xl font-semibold outline-none w-full bg-transparent placeholder-slate-400" required pattern=".*\S.*" maxLength={40} />
               {[...Array(ranks)].map((_, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <label className="text-xl">{index + 1}.</label>
-                  <input name={`r${index + 1}`} className="flex-1 text-xl bg-transparent border-b border-transparent outline-none focus:border-blue-500 pb-1 w-11/12" required pattern="\S+" />
+                  <input name={`r${index + 1}`} className="flex-1 text-xl bg-transparent border-b border-transparent outline-none focus:border-blue-500 pb-1 w-11/12" required pattern=".*\S.*" />
                 </div>
               ))}
             </div>
             {!signedin &&
-              <button type="button" onClick={toggleModal} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 ">Add Images</button>
+              <button onClick={toggleModal} className="flex justify-between items-center p-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 hover:bg-opacity-10 w-full text-xl ">
+                Images
+                <FontAwesomeIcon icon={image ? faAngleUp : faAngleDown} style={{ color: "#ffffff" }} className="h-7 flex pr-2" />
+              </button>
             }
             {signedin &&
               <button onClick={toggleImages} className="flex justify-between items-center p-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 hover:bg-opacity-10 w-full text-xl ">
@@ -218,7 +201,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                       <label className="text-xl">{index + 1}.</label>
                       {url === null &&
                         <div className="relative border-2 border-dashed border-slate-500 hover:border-blue-500 rounded-md p-2 h-[100px]">
-                          <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={(e) => handleFileChange(e, index)} />
+                          <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 text-[0px] -indent-10 cursor-pointer z-10" onChange={(e) => handleFileChange(e, index)} />
                           <div className="absolute inset-0 flex items-center justify-center">
                             <span className="text-slate-400">Click to upload</span>
                           </div>
@@ -246,36 +229,40 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
             }
             <div className="grid grid-cols-2 gap-4 w-full">
               <div className="flex flex-col space-y-1">
-                <label htmlFor="visibility" className="text-xl pr-2">Category:</label>
-                <select name="category" onChange={changeCategory} className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 hover:bg-opacity-10 overflow-auto">
-                  <option className="text-black">None</option>
-                  <option className="text-black">Gaming</option>
-                  <option className="text-black">Music</option>
-                  <option className="text-black">Movies</option>
-                  <option className="text-black">TV Shows</option>
-                  <option className="text-black">Tech</option>
-                  <option className="text-black">Sports</option>
-                  <option className="text-black">Memes</option>
-                  <option className="text-black">Fashion</option>
-                  <option className="text-black">Food & Drink</option>
-                  <option className="text-black">Celebrities</option>
-                  <option className="text-black">Lifestyle</option>
-                  <option className="text-black">Books</option>
-                  <option className="text-black">Science & Nature</option>
-                  <option className="text-black">Education</option>
+                <label htmlFor="visibility" className="text-xl font-semibold pr-2">Category</label>
+                <select name="category" className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 hover:bg-opacity-10 overflow-auto">
+                  <option className="bg-slate-700 text-offwhite">None</option>
+                  <option className="bg-slate-700 text-offwhite">Gaming</option>
+                  <option className="bg-slate-700 text-offwhite">Music</option>
+                  <option className="bg-slate-700 text-offwhite">Movies</option>
+                  <option className="bg-slate-700 text-offwhite">TV Shows</option>
+                  <option className="bg-slate-700 text-offwhite">Tech</option>
+                  <option className="bg-slate-700 text-offwhite">Sports</option>
+                  <option className="bg-slate-700 text-offwhite">Memes</option>
+                  <option className="bg-slate-700 text-offwhite">Fashion</option>
+                  <option className="bg-slate-700 text-offwhite">Food & Drink</option>
+                  <option className="bg-slate-700 text-offwhite">Celebrities</option>
+                  <option className="bg-slate-700 text-offwhite">Lifestyle</option>
+                  <option className="bg-slate-700 text-offwhite">Books</option>
+                  <option className="bg-slate-700 text-offwhite">Science & Nature</option>
+                  <option className="bg-slate-700 text-offwhite">Education</option>
                 </select>
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="visibility" className="text-xl text-offwhite pr-2">Visibility:</label>
-                <select id="visibility" value={visibility} onChange={changeVisibility} className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 hover:bg-opacity-10 text-offwhite">
-                  <option key="public" className="text-black">Public</option>
-                  <option key="private" className="text-black">Private</option>
-                  {usergroups?.memberGroups.map((group: any) => (
-                    <option value={group.id} key={group.id} className="text-black">{group.name}</option>
-                  ))}
-                  {usergroups?.adminGroups.map((group: any) => (
-                    <option value={group.id} key={group.id} className="text-black">{group.name}</option>
-                  ))}
+                <label htmlFor="visibility" className="text-xl font-semibold text-offwhite pr-2">Visibility</label>
+                <select name="visibility" className="p-2 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 hover:bg-opacity-10 text-offwhite">
+                  <option key="public" className="bg-slate-700 text-offwhite">Public</option>
+                  <option key="private" className="bg-slate-700 text-offwhite">Private</option>
+                  {signedin &&
+                    <>
+                      {usergroups?.memberGroups.map((group: any) => (
+                        <option value={group.id} key={group.id} className="bg-slate-700 text-offwhite">{group.name}</option>
+                      ))}
+                      {usergroups?.adminGroups.map((group: any) => (
+                        <option value={group.id} key={group.id} className="bg-slate-700 text-offwhite">{group.name}</option>
+                      ))}
+                    </>
+                  }
                 </select>
               </div>
             </div>
@@ -291,7 +278,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                 </button>
               </div>
               <h2 className="text-2xl font-bold text-center mb-4">Sign in to add images</h2>
-              <button onClick={() => signIn(undefined, { callbackUrl: `/newpost` })} className="w-full py-2 bg-green-500 hover:bg-green-600 text-white rounded-full transition duration-300">Sign In</button>
+              <button onClick={() => signIn(undefined, { callbackUrl: `/newpost` })} className="w-full py-2 bg-green-500 hover:bg-green-600 text-white rounded-full">Sign In</button>
             </div>
           </div>
         }
