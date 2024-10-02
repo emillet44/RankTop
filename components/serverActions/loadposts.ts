@@ -138,7 +138,21 @@ export async function LoadResults(search: string) {
     include: {
       metadata: true,
     },
-  })
+  });
 
   return rposts;
+}
+export async function LoadUserPosts(batch: number, userid: string) {
+  const uposts = await prisma.posts.findMany({
+    skip: 9 * batch,
+    take: 9,
+    where: {
+      authorId: userid,
+    },
+    include: {
+      metadata: true,
+    },
+  });
+
+  return uposts;
 }

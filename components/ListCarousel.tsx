@@ -48,7 +48,7 @@ export function ListCarousel({ ranks, postid, firstimage }: { ranks: (string | n
         </button>
         <div className="relative h-[341px] bg-black rounded-xl">
           {images && images[index] &&
-            <Image src={images[index]} alt={`Image ${index + 1}`} width={1920} height={1080} priority={firstimage && index === 0} className="object-contain h-full"/>
+            <Image src={images[index]} alt={`Image ${index + 1}`} width={1920} height={1080} priority={firstimage && index === 0} className="object-contain h-full rounded-md"/>
           }
         </div>
         <button onClick={(e) => changeImage(e, "right")} className="w-8 h-8" disabled={ranks[index + 1] == null}>

@@ -61,7 +61,7 @@ export default async function Group({ params }: { params: { id: string } }) {
     return (
       <>
         <Header />
-        <div className="flex justify-center pt-[148px] md:pt-[100px] pb-10 sm:px-6 min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+        <div className="flex justify-center pt-[148px] lg:pt-[100px] pb-10 px-6 min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
           <div className="max-w-4xl w-full flex flex-col items-center">
             {group.bannerimg &&
               <div className=" h-96 mb-4 w-full relative rounded-md">

@@ -5,6 +5,7 @@ import profilepic from '../pfp.png'
 import { useEffect, useRef, useState } from 'react'
 import { AddUsername } from './AddUsername';
 import { signOut } from 'next-auth/react';
+import Link from 'next/link';
 
 //This button displays the username and eventually it will display the profile picture of users(for now its a default image). menuOpen is used to toggle the drawer either through the
 //button or clicking anywhere outside the drawer. drawerRef is a reference to the div that contains the drawer, which is used to determine in combination with buttonRef to determine
@@ -44,6 +45,9 @@ export function ProfileMenu({ username, userid }: { username: string, userid: st
           {username === "" &&
             <AddUsername userid={userid} />
           }
+          <Link href={`/user/${username}`}>
+            <button className="text-left hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1 w-full">Profile</button>
+          </Link>
           <button onClick={() => signOut({ callbackUrl: "/" })} className="text-left hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Log Out</button>
         </div>
       }
