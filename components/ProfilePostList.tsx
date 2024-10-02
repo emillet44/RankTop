@@ -83,8 +83,8 @@ export default function ProfilePostList({ starter, userid, username }: { starter
         </div>
       </div>
       <div className="pt-4 max-w-7xl grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3  gap-4"> {posts?.map((post: any) => (
-        <Link href={`/post/${post.id}`}>
-          <div className="rounded-sm p-5 bg-white shadow-lg shadow-black bg-opacity-5 hover:scale-105" key={post.id}>
+        <Link href={`/post/${post.id}`} key={post.id}>
+          <div className="rounded-sm p-5 bg-white shadow-lg shadow-black bg-opacity-5 hover:scale-105">
             <div className="h-64 max-w-[370px] text-left">
               {post.metadata?.images &&
                 <>
