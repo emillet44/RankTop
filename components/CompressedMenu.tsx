@@ -32,11 +32,14 @@ export function CompressedMenu({ username }: { username: string }) {
         </button>
         <div className="fixed flex flex-col top-0 right-0 h-screen w-64 bg-zinc-950 text-offwhite text-2xl px-3 pt-2 gap-2">
           {username != "" &&
-            <header className="px-2 py-1">{username}</header>
+            <>
+              <header className="px-2 py-1">{username}</header>
+              <Link href={`/user/${username}`}>
+                <button className="hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Profile</button>
+              </Link>
+            </>
           }
-          <Link href={`/user/${username}`}>
-            <button className="hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Profile</button>
-          </Link>
+
           <Link href="/groups">
             <button className="hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Groups</button>
           </Link>
