@@ -17,6 +17,7 @@ const searchClient = algoliasearch('PL301U4XAW', '29040181c146c8aadf2e332b7fe43d
 export function Search() {
 
   const [search, setSearch] = useState("");
+  const [type, setType] = useState("Posts");
   
   const router = useRouter();
 
@@ -26,12 +27,23 @@ export function Search() {
 
   const checkEnter = (e: any) => {
     if (e.key === "Enter") {
-      router.push(`/search/${search}`);
+      router.push(`/search/${type}/${search}`);
     }
   };
 
+  const changeType = (e: any) => {
+    setType(e.target.value);
+    }
+
   return (
-    <InstantSearch searchClient={searchClient} indexName="posts">
+    <>
+    <header>{type}</header>
+    <select onChange={changeType}>
+      <option>Posts</option>
+      <option>Users</option>
+      <option>Groups</option>
+    </select>
+    <InstantSearch searchClient={searchClient} indexName={type}>
       <SearchBox placeholder="Search" classNames={{
         root: 'z-20 outline outline-2 outline-slate-700 rounded-md',
         form: '',
@@ -53,6 +65,8 @@ export function Search() {
       </EmptyQueryBoundary>
       <Configure hitsPerPage={4} />
     </InstantSearch>
+    </>
+    
   )
 }
 
