@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation"
 
 //This is a functional component that receives the id prop from post. It contains a button and confirmation modal, and when 
 //the delete button is clicked the delete server action is called with the post id and the user is redirected to the homepage.
-export function Delete({id} : {id: string}) {
+export function Delete({ id }: { id: string }) {
 
   const [modalon, setModal] = useState(false);
   const router = useRouter();
@@ -25,18 +25,19 @@ export function Delete({id} : {id: string}) {
 
   return (
     <>
+
+
+
       <button onClick={toggleModal} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400 h-10 whitespace-nowrap">Delete</button>
       {modalon &&
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="max-w-xs w-full px-2 py-2 grid grid-cols-1 grid-flow-row auto-rows-min gap-2 bg-white rounded-lg">
-            <button onClick={toggleModal} className="flex justify-self-end justify-center">
-              <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6" />
+          <div className="bg-slate-800 rounded-lg p-1 w-80 flex flex-col items-center">
+            <button onClick={toggleModal} className="flex w-full justify-end">
+              <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6 text-slate-400 hover:text-slate-200" />
             </button>
-            <h1 className="text-3xl justify-self-center pb-2">Delete this post?</h1>
-            <div className="justify-end space-x-2 w-full flex">
-              <button onClick={toggleModal} className="px-4 py-2 w-24 justify-self-end bg-red-500 text-white rounded-full">Cancel</button>
-              <button onClick={subHandler} className="px-4 py-2 w-24 justify-self-end bg-green-500 text-white rounded-full">Delete</button>
-            </div>
+            <h1 className="text-slate-300 text-2xl font-bold text-center mb-4 px-4">Delete this post?</h1>
+            <button onClick={subHandler} className="my-2 w-72 py-2 bg-red-500 hover:bg-red-600 text-white rounded-full">Delete</button>
+
           </div>
         </div>
       }

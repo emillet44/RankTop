@@ -2,14 +2,13 @@
 
 import Link from "next/link"
 import Image from 'next/image';
-import { ListCarousel } from "./ListCarousel"
 import { useEffect, useRef, useState } from "react";
 import { LoadUserPosts } from "./serverActions/loadposts";
-import profilepic from '../pfp.png'
 
-//Add a follows feature, fix top spacing(when header expands the page does not adjust), make sure intersection observer is working properly
 
-export default function ProfilePostList({ starter, userid, username }: { starter: any, userid: string, username: string }) {
+//make sure intersection observer is working properly
+
+export default function ProfilePostList({ starter, profileid }: { starter: any, profileid: string }) {
   const [posts, setPosts] = useState(starter);
   const [loading, setLoading] = useState(false);
   const [end, setEnd] = useState(false);
@@ -19,7 +18,7 @@ export default function ProfilePostList({ starter, userid, username }: { starter
 
   const addPosts = async () => {
     try {
-      const posts = await LoadUserPosts(batch.current, userid);
+      const posts = await LoadUserPosts(batch.current, profileid);
       if (posts) {
         setPosts((prevPosts: any) => [...prevPosts, ...posts]);
 
@@ -68,32 +67,17 @@ export default function ProfilePostList({ starter, userid, username }: { starter
 
   return (
     <>
-      <div className="max-w-7xl w-[370px] lg:w-[840px] xl:w-full flex justify-between items-start border-b border-white pb-2">
-        <div className="flex flex-row items-center outline">
-          <div className="w-16 h-16 mr-2 rounded-full relative flex">
-            <Image src={profilepic} alt="pfp" className="flex-shrink-0 object-fill" />
-          </div>
-          <div className="flex flex-col">
-            <h1 className="text-4xl text-offwhite">{username}</h1>
-            <div className="flex flex-row space-x-4">
-              <h2 className="text-sm text-slate-400 mt-1">0 Followers</h2>
-              <h2 className="text-sm text-slate-400 mt-1">0 Following</h2>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="pt-4 max-w-7xl grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3  gap-4"> {posts?.map((post: any) => (
+      <div className="pt-4 max-w-7xl grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4"> {posts?.map((post: any) => (
         <Link href={`/post/${post.id}`} key={post.id}>
           <div className="rounded-sm p-5 bg-white shadow-lg shadow-black bg-opacity-5 hover:scale-105">
             <div className="h-64 max-w-[370px] text-left">
               {post.metadata?.images &&
                 <>
                   <header className="text-2xl line-clamp-2 text-slate-400 font-semibold truncate text-ellipsis">{post.title}</header>
-                  <h1 className="truncate text-slate-400">{post.rank1}</h1>
+                  <h1 className="truncate text-slate-400">{"1. " + post.rank1}</h1>
                   <div className="bg-black h-52 rounded-md">
                     <Image src={`https://storage.googleapis.com/ranktop-i/${post.id}1.png`} alt={"Image 1"} width={1920} height={1080} className="object-contain h-full rounded-md" />
                   </div>
-
                 </>
               }
               {!post.metadata?.images &&

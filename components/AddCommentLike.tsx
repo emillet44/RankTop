@@ -5,7 +5,7 @@ import { faCircleXmark, faHeart } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { signIn } from "next-auth/react"
 import { useRef, useState } from "react";
-import { ChangeCommentLikes } from "./serverActions/changelikes";
+import { addCommentLike, removeCommentLike } from "./serverActions/changelikes";
 
 //Almost the same as AddLike but with a method to prevent errors from simultaneous database updates
 
@@ -28,7 +28,7 @@ export function AddCommentLike({ commentid, postid, userid, likes, isliked }: { 
       setQuickLike(quicklike - 1);
       if (!pause.current && reallike.current == true) {
         pause.current = true;
-        await ChangeCommentLikes(commentid, false, userid!);
+        await removeCommentLike(commentid, userid!);
         reallike.current = false;
 
         setTimeout(() => {
@@ -41,7 +41,7 @@ export function AddCommentLike({ commentid, postid, userid, likes, isliked }: { 
       setQuickLike(quicklike + 1);
       if (!pause.current && reallike.current == false) {
         pause.current = true;
-        await ChangeCommentLikes(commentid, true, userid!);
+        await addCommentLike(commentid, userid!);
         reallike.current = true;
 
         setTimeout(() => {
@@ -75,14 +75,14 @@ export function AddCommentLike({ commentid, postid, userid, likes, isliked }: { 
         <header className="pt-0.5 text-xl text-slate-400">{likes}</header>
         {modalon &&
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-slate-800 rounded-lg p-6 max-w-sm w-full">
-              <div className="flex justify-end">
+            <div className="bg-slate-800 rounded-lg p-1 w-80 flex flex-col items-center">
+              <div className="flex w-full justify-end">
                 <button onClick={toggleModal}>
                   <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6 text-slate-400 hover:text-slate-200" />
                 </button>
               </div>
-              <h2 className="text-2xl text-offwhite font-bold text-center mb-4">Sign in to like comments</h2>
-              <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postid}` })} className="w-full py-2 bg-green-500 hover:bg-green-600 text-white rounded-full transition duration-300">Sign In</button>
+              <h2 className="text-2xl text-slate-300 font-bold text-center mb-4 px-4">Sign in to like comments</h2>
+              <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postid}` })} className="my-2 w-72 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full">Sign In</button>
             </div>
           </div>
         }

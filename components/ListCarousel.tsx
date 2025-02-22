@@ -41,7 +41,7 @@ export function ListCarousel({ ranks, postid, firstimage }: { ranks: (string | n
 
   return (
     <>
-      <header className="text-xl text-slate-400 outline-none pb-2 pl-8 w-11/12">{ranks[index]}</header>
+      <header className="text-xl text-slate-400 outline-none pb-2 pl-8 w-11/12">{index+1 + ". " + ranks[index]}</header>
       <div className="grid grid-cols-[auto,11fr,auto] auto-rows-auto items-center">
         <button onClick={(e) => changeImage(e, "left")} className="w-8 h-8" disabled={index === 0}>
           <FontAwesomeIcon icon={faChevronLeft} size="2xl" style={{ color: index === 0 ? '#4a5568' : '#fffff0' }} className="pl-0.5"/>

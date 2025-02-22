@@ -161,21 +161,21 @@ export function AddComment({ userid, postid, username }: { userid: string, posti
         }
         {userid == "" &&
           <>
-            <span onFocus={toggleModal} className="row-start-1 col-start-1 max-w-[672px] peer text-slate-400 outline-none border-b border-slate-400 min-w-full inline-block" />
+            <span onClick={toggleModal} className="row-start-1 col-start-1 max-w-[672px] peer text-slate-400 outline-none border-b border-slate-400 min-w-full inline-block" />
             <label className="row-start-1 col-start-1 peer-[&:not(:empty)]:invisible text-slate-400 pointer-events-none">Add a comment...</label>
           </>
         }
       </div>
       {modalon &&
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-slate-800 rounded-lg p-6 max-w-sm w-full">
-            <div className="flex justify-end">
+          <div className="bg-slate-800 rounded-lg p-1 w-80 flex flex-col items-center">
+            <div className="flex w-full justify-end">
               <button onClick={toggleModal}>
                 <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6 text-slate-400 hover:text-slate-200" />
               </button>
             </div>
-            <h2 className="text-2xl text-offwhite font-bold text-center mb-4">Sign in to post comments</h2>
-            <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postid}` })} className="w-full py-2 bg-green-500 hover:bg-green-600 text-white rounded-full transition duration-300">Sign In</button>
+            <h2 className="text-2xl text-slate-300 font-bold text-center mb-4 px-4">Sign in to comment</h2>
+            <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postid}` })} className="my-2 w-72 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full">Sign In</button>
           </div>
         </div>
       }
@@ -194,7 +194,12 @@ export function AddComment({ userid, postid, username }: { userid: string, posti
             <div className="flex space-x-1 items-center">
               <AddCommentLike commentid={com.id} postid={postid} userid={userid} likes={com.likes} isliked={com.userliked} />
             </div>
-            <button onClick={() => toggleReply(com.id)} className="text-sm text-slate-400">Reply</button>
+            {userid != "" &&
+              <button onClick={() => toggleReply(com.id)} className="text-sm text-slate-400">Reply</button>
+            }
+            {userid == "" &&
+              <button onClick={toggleModal} className="text-sm text-slate-400">Reply</button>
+            }
           </div>
           {activeReplyInput === com.id &&
             <div className="grid grid-cols-2">
@@ -226,7 +231,12 @@ export function AddComment({ userid, postid, username }: { userid: string, posti
                     <div className="flex space-x-1 items-center">
                       <AddCommentLike commentid={reply.id} postid={postid} userid={userid} likes={reply.likes} isliked={reply.userliked} />
                     </div>
-                    <button onClick={() => toggleReply(reply.id)} className="text-sm text-slate-400">Reply</button>
+                    {userid != "" &&
+                      <button onClick={() => toggleReply(reply.id)} className="text-sm text-slate-400">Reply</button>
+                    }
+                    {userid == "" &&
+                      <button onClick={toggleModal} className="text-sm text-slate-400">Reply</button>
+                    }
                   </div>
                   {activeReplyInput === reply.id &&
                     <div className="grid grid-cols-2">

@@ -5,7 +5,7 @@ import { faCircleXmark, faHeart } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { signIn } from "next-auth/react"
 import { useRef, useState } from "react";
-import { ChangeLikes } from "./serverActions/changelikes";
+import { addLike, removeLike } from "./serverActions/changelikes";
 
 //The function starts by initializing state variables, and then it uses the useSWR hook to fetch data from the Likes function under /serverActions/changelikes. useSWR is required 
 //as server actions cannot be called by client components in Nextjs. With the useSWR data, the states array is populated. If the states array has been populated, if 
@@ -25,7 +25,8 @@ import { ChangeLikes } from "./serverActions/changelikes";
 //but it do). Async + server actions are used in some areas of this project within a client component because it's AFTER the first render. 
 //Turns out I could've used prop drilling here the whole time, so I just fixed this component and made it drastically shorter. Plus a new throttle on the speed at which users can spam
 //the button set to 1 second, plus no extra delay from useSWR. Plus 2 people can like the same post now, because that was completely screwed up before(replaced unique identifier from
-//postid to joint postid + userid).
+//postid to joint postid + userid). Just revisited this with a foggy memory, do not change the quicklike implementation, incrementing and decrementing it(even though it looks less clear)
+//is much better than setting it to 0 or 1, because it prevents caching issues(when you like and quickly refresh, then try to unlike, quicklike will still be stuck at 1)
 
 export function AddLike({ postid, likes, userliked, userid }: { postid: string, likes: number, userliked: boolean, userid: string | null }) {
 
@@ -50,19 +51,19 @@ export function AddLike({ postid, likes, userliked, userid }: { postid: string, 
       if (liked) {
         setLiked(false);
         setQuickLike(quicklike - 1);
-        await ChangeLikes(postid, false, userid!);
+        await removeLike(postid, userid!);
       }
       else {
         setLiked(true);
         setQuickLike(quicklike + 1);
-        await ChangeLikes(postid, true, userid!);
+        await addLike(postid, userid!);
       }
     }
 
     setTimeout(() => {
       setPause(false);
     }, 1000);
-  };
+  }
 
   if (userid) {
     return (
@@ -88,14 +89,14 @@ export function AddLike({ postid, likes, userliked, userid }: { postid: string, 
         <header className="pt-0.5 text-xl text-slate-400">{likes}</header>
         {modalon &&
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-slate-800 rounded-lg p-6 max-w-sm w-full">
-              <div className="flex justify-end">
+            <div className="bg-slate-800 rounded-lg p-1 w-80 flex flex-col items-center">
+              <div className="flex w-full justify-end">
                 <button onClick={toggleModal}>
                   <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6 text-slate-400 hover:text-slate-200" />
                 </button>
               </div>
-              <h2 className="text-2xl font-bold text-center mb-4">Sign in to like posts</h2>
-              <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postid}` })} className="w-full py-2 bg-green-500 hover:bg-green-600 text-white rounded-full transition duration-300">Sign In</button>
+              <h2 className="text-2xl text-slate-300 font-bold text-center mb-4 px-4">Sign in to like posts</h2>
+              <button onClick={() => signIn(undefined, { callbackUrl: `/post/${postid}` })} className="my-2 w-72 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full">Sign In</button>
             </div>
           </div>
         }

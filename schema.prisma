@@ -66,21 +66,25 @@ model Session {
 }
 
 model User {
-  id            String          @id @default(cuid())
-  name          String?
-  email         String?         @unique
-  emailVerified DateTime?
-  username      String?         @unique
-  image         String?
-  accounts      Account[]
-  comments      Comments[]
-  likes         Likes[]
-  clikes        Comment_Likes[]
-  posts         Posts[]
-  reports       Reports[]
-  memberGroups  Groups[]        @relation("GroupMembers")
-  adminGroups   Groups[]        @relation("GroupAdmins")
-  sessions      Session[]
+  id             String          @id @default(cuid())
+  name           String?
+  email          String?         @unique
+  emailVerified  DateTime?
+  username       String?         @unique
+  image          String?
+  accounts       Account[]
+  comments       Comments[]
+  likes          Likes[]
+  clikes         Comment_Likes[]
+  posts          Posts[]
+  reports        Reports[]
+  memberGroups   Groups[]        @relation("GroupMembers")
+  adminGroups    Groups[]        @relation("GroupAdmins")
+  following      Follow[]        @relation("FollowingRelation")
+  followerCount  Int             @default(0)
+  followingCount Int             @default(0)
+  followers      Follow[]        @relation("FollowerRelation")
+  sessions       Session[]
 }
 
 model Reports {
@@ -141,4 +145,13 @@ model Groups {
   members    User[]     @relation("GroupMembers")
   admins     User[]     @relation("GroupAdmins")
   posts      Posts[]
+}
+
+model Follow {
+  followerId    String
+  followingId   String
+  follower      User   @relation("FollowingRelation", fields: [followerId], references: [id], onDelete: Cascade)
+  following     User   @relation("FollowerRelation", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
 }
