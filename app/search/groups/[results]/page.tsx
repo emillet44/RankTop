@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: { results: string }
 //Uses loadposts server action to load results of the search query, in the same format as they are displayed on the homepage.
 export default async function Results({ params }: { params: { results: string } }) {
 
-  const results = await LoadResults(params.results);
+  const results = await LoadResults(params.results, "groups");
 
   return (
     <>

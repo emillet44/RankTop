@@ -157,6 +157,24 @@ export default function PostsList({ starter }: { starter: any }) {
     addPosts(sort, e.target.value);
   }
 
+  // let postdate: string;
+  // const diff = now.getTime() - metadata.date.getTime();
+  // const minutes = Math.floor(diff / 60000);
+  // const hours = Math.floor(diff / 3600000);
+  // if (diff / 1000 < 60) {
+  //   postdate = "Seconds ago";
+  // }
+  // else if (minutes < 60) {
+  //   postdate = `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+  // }
+  // else if (hours < 24) {
+  //   postdate = `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+  // }
+  // else {
+  //   const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+  //   postdate = metadata.date.toLocaleDateString('en-US', options);
+  // }
+
   return (
     <>
       <div className="sm:border-x border-b p-8 w-full border-slate-700">
@@ -226,14 +244,20 @@ export default function PostsList({ starter }: { starter: any }) {
             </div>
           }
           {!list.metadata?.images &&
-            <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8 sm:border-x border-b border-slate-700">
-              <header className="text-4xl line-clamp-2 leading-tight text-slate-400 font-semibold">{list.title}</header>
-              <li className="truncate text-xl text-slate-400">{list.rank1}</li>
-              <li className="truncate text-xl text-slate-400">{list.rank2}</li>
-              <li className="empty:hidden truncate text-xl text-slate-400">{list.rank3}</li>
-              <li className="empty:hidden truncate text-xl text-slate-400">{list.rank4}</li>
-              <li className="empty:hidden truncate text-xl text-slate-400">{list.rank5}</li>
-            </ul>
+            <div className="sm:border-x border-b border-slate-700">
+              <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8">
+                <header className="text-4xl line-clamp-2 leading-tight text-slate-400 font-semibold">{list.title}</header>
+                <li className="truncate text-xl text-slate-400">{list.rank1}</li>
+                <li className="truncate text-xl text-slate-400">{list.rank2}</li>
+                <li className="empty:hidden truncate text-xl text-slate-400">{list.rank3}</li>
+                <li className="empty:hidden truncate text-xl text-slate-400">{list.rank4}</li>
+                <li className="empty:hidden truncate text-xl text-slate-400">{list.rank5}</li>
+              </ul>
+              <div className="flex flex-row space-x-6 py-4 mx-8 border-t border-slate-100">
+                <label className="text-xl text-slate-400">{list.metadata.likes} likes</label>
+                <label className="text-xl text-slate-400">{list.metadata.views} views</label>
+              </div>
+            </div>
           }
         </Link>
       ))}

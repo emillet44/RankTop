@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 //Soon means now. LoadBatchCat will load posts by their category, and if the category is custom(c added to the start of the category name), the search parameters are relaxed to try
 //to increase discovery for users. Category "None" from the UI corresponds to a blank category in the db(to save space). LoadBatch loads posts by a metric(currently likes and views),
 //and a time range, which is calculated with a switch corresponding to the options from the select box. 
+//LoadResults loads 10 search results of type post, user, or group depending on the type specified during the search
 
 export async function LoadAll() {
   const aposts = await prisma.posts.findMany({
@@ -129,18 +130,37 @@ export async function LoadBatchCat(batch: number, category: string) {
     return bposts;
   }
 }
-export async function LoadResults(search: string) {
-  const rposts = await prisma.posts.findMany({
-    take: 50,
-    where: {
-      title: { contains: search, mode: 'insensitive' }
-    },
-    include: {
-      metadata: true,
-    },
-  });
+export async function LoadResults(search: string, type: string) {
 
-  return rposts;
+  switch (type) {
+    case "Posts":
+      const posts = await prisma.posts.findMany({
+        take: 10,
+        where: {
+          title: { contains: search, mode: 'insensitive' }
+        },
+        include: {
+          metadata: true,
+        },
+      });
+      return posts;
+    case "Users":
+      const users = await prisma.user.findMany({
+        take: 10,
+        where: {
+          username: { contains: search, mode: 'insensitive' }
+        }
+      });
+      return users;
+    default:
+      const groups = await prisma.groups.findMany({
+        take: 10,
+        where: {
+          name: { contains: search, mode: 'insensitive' }
+        }
+      });
+      return groups;
+  }
 }
 export async function LoadUserPosts(batch: number, userid: string) {
   const uposts = await prisma.posts.findMany({
