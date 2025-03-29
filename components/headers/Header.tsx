@@ -20,7 +20,7 @@ export async function Header() {
           <button className="absolute left-2 top-1.5 text-3xl sm:top-3 sm:text-4xl/7 text-offwhite">RankTop</button>
         </Link>
         <Search />
-        <CompressedMenu username={states[1]} />
+        <CompressedMenu signedin={states[0]} username={states[1]} />
         {states[0] &&
           <div className="w-[calc(100vw-160px)] md:min-w-[230px] lg:w-[calc(50vw-160px)] absolute justify-end flex-row right-2 2xl:right-4 lg:top-1 top-[7px] items-center flex max-[490px]:hidden">
             <Link href="/groups">
@@ -33,7 +33,7 @@ export async function Header() {
           </div>
         }
         {!states[0] &&
-          <div className="absolute right-2 top-1.5 flex flex-row space-x-2">
+          <div className="absolute right-2 top-1.5 flex flex-row space-x-2 max-[490px]:hidden">
             <Link href="/groups">
               <button className="hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">Groups</button>
             </Link>

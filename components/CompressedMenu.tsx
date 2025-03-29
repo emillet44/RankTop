@@ -11,7 +11,7 @@ import Link from "next/link";
 //This thing just kinda obfuscates obvious site functions so for now there's no use. It's still got a cool transition and stuff so maybe it'll be used later.
 //It returns! Since groups are on the header it's getting too cluttered and this seems more clean.
 
-export function CompressedMenu({ username }: { username: string }) {
+export function CompressedMenu({ username, signedin }: { username: string, signedin: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const openMenu = () => {
@@ -40,16 +40,25 @@ export function CompressedMenu({ username }: { username: string }) {
             </>
           }
 
-          <Link href="/groups">
-            <button className="hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Groups</button>
+          <Link href="/groups" className="hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">
+            <button>Groups</button>
           </Link>
           <Link href="/newpost" className="hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">
             <button>New Post</button>
           </Link>
-          {username == "" &&
-            <AddUsername userid={""} />
+          {signedin &&
+            <>
+              {username == "" &&
+                <AddUsername userid={""} />
+              }
+              <button onClick={() => signOut({ callbackUrl: "/" })} className="text-left hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Log Out</button>
+            </>
           }
-          <button onClick={() => signOut({ callbackUrl: "/" })} className="text-left hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Log Out</button>
+          {!signedin &&
+            <Link href="/api/auth/signin" className="hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">
+            <button>Sign In</button>
+          </Link>
+          }
         </div>
       </div>
     </div>

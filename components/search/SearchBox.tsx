@@ -12,6 +12,9 @@ import Link from "next/link";
 //CSS. The hits display shows results as buttons with the title and two ranks, and they are aligned and formatted with a div in this file. On click of the
 //result or the "Search for" button, users are redirected to a dynamic search result.
 
+//For next time: Make the search box a little wider and format it better, then work on the script to update
+//Algolia.
+
 const searchClient = algoliasearch('PL301U4XAW', '29040181c146c8aadf2e332b7fe43db9');
 
 export function Search() {
@@ -36,37 +39,45 @@ export function Search() {
     }
 
   return (
-    <>
-    <header>{type}</header>
-    <select onChange={changeType}>
-      <option>Posts</option>
-      <option>Users</option>
-      <option>Groups</option>
-    </select>
+    <div className="outline outline-2 outline-slate-700 rounded-md flex flex-row w-[300px]">
+
+  <select 
+    onChange={changeType} 
+    className="h-9 bg-transparent text-offwhite text-sm outline-none"
+  >
+    <option className="bg-slate-900 text-offwhite">Posts</option>
+    <option className="bg-slate-900 text-offwhite">Users</option>
+    <option className="bg-slate-900 text-offwhite">Groups</option>
+  </select>
+
+  <div className="flex-grow">
     <InstantSearch searchClient={searchClient} indexName={type}>
       <SearchBox placeholder="Search" classNames={{
-        root: 'z-20 outline outline-2 outline-slate-700 rounded-md',
+        root: '',
         form: '',
-        input: 'w-[300px] h-9 bg-transparent outline-none indent-1 text-offwhite placeholder-offwhite',
+        input: 'w-full h-9 bg-transparent outline-none indent-2 text-offwhite placeholder-offwhite',
         reset: '',
         submitIcon: 'hidden',
         resetIcon: 'hidden',
       }} onInput={saveQuery} onKeyDown={checkEnter} />
-      <EmptyQueryBoundary fallback={null}>
-        <div className="absolute grid grid-cols-1 z-10 outline outline-2 outline-slate-700 empty:outline-none rounded-md pt-10 bg-slate-900 text-offwhite">
-          <CustomHits />
-          <Link href={`/search/${search}`} className="w-[300px] hover:bg-slate-800">Search for {search}</Link>
-          <div className="p-1 w-full border-t-2 border-slate-700 flex justify-end">
-            <div className="w-36">
-              <PoweredBy/>
+
+      <div className="relative">
+        <EmptyQueryBoundary fallback={null}>
+          <div className="absolute grid grid-cols-1 z-10 outline outline-2 outline-slate-700 empty:outline-none rounded-md bg-slate-900 text-offwhite">
+            <CustomHits />
+            <Link href={`/search/${search}`} className="block max-w-full w-[300px] hover:bg-slate-800">Search for {search}</Link>
+            <div className="p-1 w-full border-t-2 border-slate-700 flex justify-end">
+              <div className="w-36">
+                <PoweredBy/>
+              </div>
             </div>
           </div>
-        </div>
-      </EmptyQueryBoundary>
-      <Configure hitsPerPage={4} />
+        </EmptyQueryBoundary>
+      </div>
     </InstantSearch>
-    </>
-    
+  </div>
+</div>
+
   )
 }
 

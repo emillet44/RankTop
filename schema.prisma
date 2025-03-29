@@ -3,13 +3,13 @@ generator client {
 }
 
 datasource db {
-  provider          = "postgresql"
-  url               = env("POSTGRES_PRISMA_URL")
-  directUrl         = env("POSTGRES_URL_NON_POOLING")
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model Posts {
-  id          String          @id @default(cuid())
+  id          String         @id @default(cuid())
   title       String
   rank1       String
   rank2       String
@@ -20,21 +20,21 @@ model Posts {
   username    String?
   description String?
   category    String
-  private     Boolean         @default(false)
   groupId     String?
-  group       Groups?         @relation(fields: [groupId], references: [id])
+  private     Boolean        @default(false)
   comments    Comments[]
-  author      User?           @relation(fields: [authorId], references: [id])
   metadata    Post_Metadata?
+  author      User?          @relation(fields: [authorId], references: [id])
+  group       Groups?        @relation(fields: [groupId], references: [id])
 }
 
 model Post_Metadata {
-  postId   String   @unique
-  images   Boolean  @default(false)
-  likes    Int      @default(0)
-  views    Int      @default(0)
-  date     DateTime @default(now())
-  post     Posts    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String   @unique
+  images Boolean  @default(false)
+  likes  Int      @default(0)
+  views  Int      @default(0)
+  date   DateTime @default(now())
+  post   Posts    @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model Account {
@@ -72,25 +72,25 @@ model User {
   emailVerified  DateTime?
   username       String?         @unique
   image          String?
-  accounts       Account[]
-  comments       Comments[]
-  likes          Likes[]
-  clikes         Comment_Likes[]
-  posts          Posts[]
-  reports        Reports[]
-  memberGroups   Groups[]        @relation("GroupMembers")
-  adminGroups    Groups[]        @relation("GroupAdmins")
-  following      Follow[]        @relation("FollowingRelation")
   followerCount  Int             @default(0)
   followingCount Int             @default(0)
+  accounts       Account[]
+  clikes         Comment_Likes[]
+  comments       Comments[]
+  following      Follow[]        @relation("FollowingRelation")
   followers      Follow[]        @relation("FollowerRelation")
+  likes          Likes[]
+  posts          Posts[]
+  reports        Reports[]
   sessions       Session[]
+  adminGroups    Groups[]        @relation("GroupAdmins")
+  memberGroups   Groups[]        @relation("GroupMembers")
 }
 
 model Reports {
   userId   String?
   report   String
-  reportID String @id @default(cuid())
+  reportID String  @id @default(cuid())
   user     User?   @relation(fields: [userId], references: [id])
 }
 
@@ -120,38 +120,38 @@ model VerificationToken {
 }
 
 model Comments {
-  id       String    @id @default(cuid())
+  id       String   @id @default(cuid())
   text     String
-  likes    Int       @default(0)
-  date     DateTime  @default(now())
-  replies  Int       @default(0)
+  likes    Int      @default(0)
+  date     DateTime @default(now())
   parentId String?
   username String?
   postId   String
   userId   String
-  post     Posts     @relation(fields: [postId], references: [id])
-  user     User      @relation(fields: [userId], references: [id])
+  replies  Int      @default(0)
+  post     Posts    @relation(fields: [postId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
 }
 
 model Groups {
-  id         String     @id @default(cuid())
+  id         String  @id @default(cuid())
   name       String
   password   String?
+  population Int     @default(1)
   invite     Boolean
   private    Boolean
-  bannerimg  Boolean    
-  profileimg Boolean    
-  population Int        @default(1)
-  members    User[]     @relation("GroupMembers")
-  admins     User[]     @relation("GroupAdmins")
+  bannerimg  Boolean
+  profileimg Boolean
   posts      Posts[]
+  admins     User[]  @relation("GroupAdmins")
+  members    User[]  @relation("GroupMembers")
 }
 
 model Follow {
-  followerId    String
-  followingId   String
-  follower      User   @relation("FollowingRelation", fields: [followerId], references: [id], onDelete: Cascade)
-  following     User   @relation("FollowerRelation", fields: [followingId], references: [id], onDelete: Cascade)
+  followerId  String
+  followingId String
+  follower    User   @relation("FollowingRelation", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User   @relation("FollowerRelation", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
 }
