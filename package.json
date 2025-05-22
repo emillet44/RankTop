@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "postinstall": "prisma generate",
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start -p 8080",
     "deploy": "npm run build && gcloud app deploy",
@@ -27,11 +27,11 @@
     "dependencies": "^0.0.1",
     "eslint": "8.43.0",
     "eslint-config-next": "13.4.7",
-    "next": "^14.0.1",
+    "next": "^15.3.2",
     "next-auth": "^4.22.3",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-instantsearch": "^7.0.1",
+    "react-instantsearch": "^7.15.5",
     "swr": "^2.2.0",
     "typescript": "5.1.3"
   },

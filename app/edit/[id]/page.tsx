@@ -9,7 +9,8 @@ import { notFound } from "next/navigation";
 //edit the post. If not the default 404 page will appear. If allowed, the post will be passed as a prop to the edit post form. The function now also counts the number
 //of ranks to send to CSEditForm so it can populate the correct number of ranks(will be alot easier when array of ranks is used).
 
-export default async function Post({ params }: { params: { id: string } }) {
+export default async function Post(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
 
   let author;
   let startranks = 2;
@@ -22,7 +23,7 @@ export default async function Post({ params }: { params: { id: string } }) {
     author = await prisma.user.findUnique({
       where: { id: post?.authorId }
     })
-  };
+  }
 
   const yours = (author?.username === states[1]) || (states[1] === "Cinnamon");
   if (yours && post !== null) {

@@ -9,7 +9,8 @@ import Image from 'next/image';
 import { AddFollow } from "@/components/AddFollow";
 
 
-export default async function Profile({ params }: { params: { username: string } }) {
+export default async function Profile(props: { params: Promise<{ username: string }> }) {
+  const params = await props.params;
 
   const profileid = await prisma.user.findUnique({
     where: {
@@ -26,14 +27,14 @@ export default async function Profile({ params }: { params: { username: string }
 
     const posts = await LoadUserPosts(0, profileid.id);
     const states = await SignState();
-    const following = await prisma.follow.findUnique({
+    const following = (await prisma.follow.findUnique({
       where: {
         followerId_followingId: {
           followerId: states[2],
           followingId: profileid.id,
         },
       }
-    }) != null;
+    })) != null;
     return (
       <>
         <Header />

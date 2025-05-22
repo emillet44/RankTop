@@ -74,6 +74,7 @@ model User {
   image          String?
   followerCount  Int             @default(0)
   followingCount Int             @default(0)
+  joindate       DateTime        @default(now())
   accounts       Account[]
   clikes         Comment_Likes[]
   comments       Comments[]
@@ -134,17 +135,18 @@ model Comments {
 }
 
 model Groups {
-  id         String  @id @default(cuid())
+  id         String   @id @default(cuid())
   name       String
   password   String?
-  population Int     @default(1)
+  population Int      @default(1)
   invite     Boolean
   private    Boolean
   bannerimg  Boolean
   profileimg Boolean
+  date       DateTime @default(now())
   posts      Posts[]
-  admins     User[]  @relation("GroupAdmins")
-  members    User[]  @relation("GroupMembers")
+  admins     User[]   @relation("GroupAdmins")
+  members    User[]   @relation("GroupMembers")
 }
 
 model Follow {
@@ -154,4 +156,11 @@ model Follow {
   following   User   @relation("FollowerRelation", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
+}
+
+model AlgoliaMetadata {
+  id             String   @id @default("last-update")
+  lastPost DateTime @default(now())
+  lastGroup DateTime @default(now())
+  lastUser  DateTime @default(now())
 }

@@ -8,7 +8,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 
-export default async function Group({ params }: { params: { id: string } }) {
+export default async function Group(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const group = await prisma.groups.findUnique({
     where: {
       id: params.id

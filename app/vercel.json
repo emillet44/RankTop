@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/algolia-update",
+      "schedule": "0 */24 * * *"
+    },
+    {
+      "path": "/api/views-update",
+      "schedule": "0 */24 * * *"
+    }
+  ]
+}

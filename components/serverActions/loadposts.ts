@@ -130,37 +130,37 @@ export async function LoadBatchCat(batch: number, category: string) {
     return bposts;
   }
 }
-export async function LoadResults(search: string, type: string) {
+export async function LoadPostResults(search: string) {
 
-  switch (type) {
-    case "Posts":
-      const posts = await prisma.posts.findMany({
-        take: 10,
-        where: {
-          title: { contains: search, mode: 'insensitive' }
-        },
-        include: {
-          metadata: true,
-        },
-      });
-      return posts;
-    case "Users":
-      const users = await prisma.user.findMany({
-        take: 10,
-        where: {
-          username: { contains: search, mode: 'insensitive' }
-        }
-      });
-      return users;
-    default:
-      const groups = await prisma.groups.findMany({
-        take: 10,
-        where: {
-          name: { contains: search, mode: 'insensitive' }
-        }
-      });
-      return groups;
-  }
+
+  const posts = await prisma.posts.findMany({
+    take: 10,
+    where: {
+      title: { contains: search, mode: 'insensitive' }
+    },
+    include: {
+      metadata: true,
+    },
+  });
+  return posts;
+}
+export async function LoadUserResults(search: string) {
+  const users = await prisma.user.findMany({
+    take: 10,
+    where: {
+      username: { contains: search, mode: 'insensitive' }
+    }
+  });
+  return users;
+}
+export async function LoadGroupResults(search: string) {
+  const groups = await prisma.groups.findMany({
+    take: 10,
+    where: {
+      name: { contains: search, mode: 'insensitive' }
+    }
+  });
+  return groups;
 }
 export async function LoadUserPosts(batch: number, userid: string) {
   const uposts = await prisma.posts.findMany({

@@ -1,19 +1,21 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/headers/Header";
-import { LoadResults } from "@/components/serverActions/loadposts";
+import { LoadPostResults } from "@/components/serverActions/loadposts";
 import Link from "next/link";
 
 //Title is set to the search results for: result for hopefully better SEO, also just more descriptive
-export async function generateMetadata({ params }: { params: { results: string } }) {
+export async function generateMetadata(props: { params: Promise<{ results: string }> }) {
+  const params = await props.params;
   return {
     title: 'Search results for: ' + params.results
   }
 }
 
-//Uses loadposts server action to load results of the search query, in the same format as they are displayed on the homepage.
-export default async function Results({ params }: { params: { results: string } }) {
+//Uses loadposts server action to load results of the search query, displayed in grid format.
+export default async function Results(props: { params: Promise<{ results: string }> }) {
+  const params = await props.params;
 
-  const results = await LoadResults(params.results, "posts");
+  const results = await LoadPostResults(params.results);
 
   return (
     <>

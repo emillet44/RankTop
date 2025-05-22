@@ -12,7 +12,8 @@ import Image from 'next/image'
 import profilepic from '../../../pfp.png'
 
 //Title is set to post title for better SEO
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const post = await prisma.posts.findUnique({
     where: { id: params.id },
   });
@@ -33,7 +34,8 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 //render "Description" if there is a description or not. 
 //Posts with images are now a part of this page, with a separate format. The post is rendered using the ListCarousel component that cycles through each rank/image
 //with the left/right chevron. The title is fixed to the top, outside the post outline. 
-export default async function Post({ params }: { params: { id: string } }) {
+export default async function Post(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
 
   const post = await prisma.posts.findUnique({
     where: { id: params.id },
@@ -47,14 +49,14 @@ export default async function Post({ params }: { params: { id: string } }) {
     const metadata = await prisma.post_Metadata.findUnique({
       where: { postId: post.id },
     });
-    const liked = await prisma.likes.findUnique({
+    const liked = (await prisma.likes.findUnique({
       where: {
         userId_postId: {
           userId: states[2],
           postId: params.id,
         },
       }
-    }) != null;
+    })) != null;
 
     const yours = (post?.username == states[1]) || (states[1] === "Cinnamon");
     const views = await runReport(`/post/${params.id}`);
