@@ -8,7 +8,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 
+//This page displays the group, and also a join button that conditionally renders on a valid userid that isn't already in the group. Since this page can be reached by the search bar 
+//now which doesn't enforce sign in, a user can now make it here without signing in, so a lazy but efficient approach has been added to assume the user is "in the group" by default,
+//so even if a signed out user arrives they will not see the join button. States[0] stores the signed in state which allows this to work. It really needs to be changed to something
+//more descriptive at some point but right now the states array is extremely useful.
+
 export default async function Group(props: { params: Promise<{ id: string }> }) {
+  let useringroup = true;
   const params = await props.params;
   const group = await prisma.groups.findUnique({
     where: {
@@ -33,31 +39,32 @@ export default async function Group(props: { params: Promise<{ id: string }> }) 
         metadata: true
       }
     });
-    const user = await prisma.user.findUnique({
-      where: {
-        id: states[2]
-      },
-      select: {
-        memberGroups: {
-          where: {
-            id: group?.id
-          },
-          select: {
-            id: true
-          }
+    if (states[0]) {
+      const user = await prisma.user.findUnique({
+        where: {
+          id: states[2]
         },
-        adminGroups: {
-          where: {
-            id: group?.id
+        select: {
+          memberGroups: {
+            where: {
+              id: group?.id
+            },
+            select: {
+              id: true
+            }
           },
-          select: {
-            id: true
+          adminGroups: {
+            where: {
+              id: group?.id
+            },
+            select: {
+              id: true
+            }
           }
         }
-      }
-    });
-
-    const useringroup = !!user && (user.memberGroups.length > 0 || user.adminGroups.length > 0);
+      });
+      useringroup = !!user && (user.memberGroups.length > 0 || user.adminGroups.length > 0);
+    }
 
     return (
       <>
@@ -81,11 +88,11 @@ export default async function Group(props: { params: Promise<{ id: string }> }) 
                 </div>
                 <div className="flex flex-col">
                   <h1 className="text-4xl text-offwhite">{group.name}</h1>
-                  <h2 className="text-sm text-slate-400 mt-1">Public • {group.population} {group.population === 1 ? "member" : "members"}</h2>
+                  <h2 className="text-sm text-slate-400 mt-1">Public • {group.population} {group.population === 1 ? "member" : "members"} • {group.password !== null ? "Password protected" : ""}</h2>
                 </div>
               </div>
               {!useringroup &&
-                <JoinGroup userid={states[2]} groupid={group.id} />
+                <JoinGroup userid={states[2]} groupid={group.id} priv={group.private} haspass={group.password !== null} />
               }
             </div>
             <div className="grid grid-cols-1 w-full max-w-2xl justify-items-center auto-rows-min">

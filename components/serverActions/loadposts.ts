@@ -157,7 +157,8 @@ export async function LoadGroupResults(search: string) {
   const groups = await prisma.groups.findMany({
     take: 10,
     where: {
-      name: { contains: search, mode: 'insensitive' }
+      name: { contains: search, mode: 'insensitive' },
+      private: false,
     }
   });
   return groups;

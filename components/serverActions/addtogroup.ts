@@ -17,6 +17,38 @@ export async function AddToGroup(userid: string, groupid: string) {
   return updatedGroup;
 }
 
+export async function AddToGroupPass(userid: string, groupid: string, password: string) {
+  try {
+    const group = await prisma.groups.findUnique({
+      where: { id: groupid },
+      select: { password: true }
+    });
+    if (!group) {
+      return { success: false, error: 'Group not found' };
+    }
+    if (group.password !== password) {
+      return { success: false, error: 'Incorrect password' };
+    }
+
+    const updatedGroup = await prisma.groups.update({
+      where: { id: groupid },
+      data: {
+        members: {
+          connect: { id: userid }
+        },
+        population: {
+          increment: 1
+        }
+      },
+    });
+    
+    return { success: true, group: updatedGroup };
+  } catch (error) {
+    console.error('Error joining group:', error);
+    return { success: false, error: 'Failed to join group' };
+  }
+}
+
 export async function FindGroup(formData: FormData) {
 
   const data = JSON.stringify(Object.fromEntries(formData));

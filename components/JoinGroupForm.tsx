@@ -76,7 +76,10 @@ export function JoinGroupForm({ signedin, userid }: { signedin: boolean, userid:
                   <header className="text-xl text-center">Wow! Multiple groups have this exact name and password. If the group is public, please use the search bar to locate and join the group, otherwise please send a report through site feedback for it to be resolved.</header>
                 }
                 {message === "member" &&
+                <>
                   <header className="text-xl text-center">You are already a member or admin of this group</header>
+                  <button onClick={resetForm} className="w-full py-2 px-4 bg-gray-700 hover:bg-gray-600 text-lg font-semibold rounded-md">Back</button>
+                </>
                 }
                 {message.includes("success") &&
                   <>
