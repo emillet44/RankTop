@@ -157,23 +157,23 @@ export default function PostsList({ starter }: { starter: any }) {
     addPosts(sort, e.target.value);
   }
 
-  // let postdate: string;
-  // const diff = now.getTime() - metadata.date.getTime();
-  // const minutes = Math.floor(diff / 60000);
-  // const hours = Math.floor(diff / 3600000);
-  // if (diff / 1000 < 60) {
-  //   postdate = "Seconds ago";
-  // }
-  // else if (minutes < 60) {
-  //   postdate = `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
-  // }
-  // else if (hours < 24) {
-  //   postdate = `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-  // }
-  // else {
-  //   const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-  //   postdate = metadata.date.toLocaleDateString('en-US', options);
-  // }
+  const getPostDate = (postDate: Date): string => {
+    const now = new Date();
+    const diff = now.getTime() - postDate.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+
+    if (diff / 1000 < 60) {
+      return "Seconds ago";
+    } else if (minutes < 60) {
+      return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    } else if (hours < 24) {
+      return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    } else {
+      const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+      return postDate.toLocaleDateString('en-US', options);
+    }
+  }
 
   return (
     <>
@@ -238,9 +238,16 @@ export default function PostsList({ starter }: { starter: any }) {
       {posts?.map((list: any, index: number) => (
         <Link href={`/post/${list.id}`} className="w-full" key={list.id}>
           {list.metadata?.images &&
-            <div className="py-8 sm:border-x border-b border-slate-700">
+            <div className="pt-8 pb-4 sm:border-x border-b border-slate-700">
               <header className="pl-8 text-4xl line-clamp-2 leading-tight text-slate-400 font-semibold">{list.title}</header>
               <ListCarousel ranks={[list.rank1, list.rank2, list.rank3, list.rank4, list.rank5]} postid={list.id} firstimage={index === 0} />
+              <div className="flex flex-row justify-between items-center border-t border-slate-100 pt-4 mx-8 mt-8">
+                <div>
+                  <label className="text-xl text-slate-400">{list.metadata.likes} likes</label>
+                  <label className="ml-6 text-xl text-slate-400">{list.metadata.views} views</label>
+                </div>
+                <label className="text-xl text-slate-400">{getPostDate(new Date(list.metadata.date))}</label>
+              </div>
             </div>
           }
           {!list.metadata?.images &&
@@ -253,9 +260,12 @@ export default function PostsList({ starter }: { starter: any }) {
                 <li className="empty:hidden truncate text-xl text-slate-400">{list.rank4}</li>
                 <li className="empty:hidden truncate text-xl text-slate-400">{list.rank5}</li>
               </ul>
-              <div className="flex flex-row space-x-6 py-4 mx-8 border-t border-slate-100">
-                <label className="text-xl text-slate-400">{list.metadata.likes} likes</label>
-                <label className="text-xl text-slate-400">{list.metadata.views} views</label>
+              <div className="flex flex-row justify-between items-center border-t border-slate-100 py-4 mx-8">
+                <div>
+                  <label className="text-xl text-slate-400">{list.metadata.likes} likes</label>
+                  <label className="ml-6 text-xl text-slate-400">{list.metadata.views} views</label>
+                </div>
+                <label className="text-xl text-slate-400">{getPostDate(new Date(list.metadata.date))}</label>
               </div>
             </div>
           }

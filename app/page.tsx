@@ -1,6 +1,6 @@
 import { Header } from "../components/headers/Header";
 import { Footer } from "@/components/Footer";
-import { AlgoliaUpdate } from "@/components/search/AlgoliaUpdate";
+import { UpdatePostViews } from "@/components/serverActions/batchviews";
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -8,6 +8,7 @@ export const metadata: Metadata = {
 }
 
 export default function Home() {
+  // UpdatePostViews();
   return (
     <>
       <Header />

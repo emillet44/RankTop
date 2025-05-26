@@ -18,10 +18,10 @@ export default async function CreateGroup() {
               <Link href="/groups" className="px-4 py-2 rounded-md text-xl font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors duration-200">My Groups</Link>
             </li>
             <li>
-              <Link href="/newgroup" aria-current="page" className="px-4 py-2 rounded-md text-xl font-medium text-white bg-gray-700">Create</Link>
+              <Link href="/groups/new" aria-current="page" className="px-4 py-2 rounded-md text-xl font-medium text-white bg-gray-700">Create</Link>
             </li>
             <li>
-              <Link href="/groupsearch" className="px-4 py-2 rounded-md text-xl font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors duration-200">Join</Link>
+              <Link href="/groups/search" className="px-4 py-2 rounded-md text-xl font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors duration-200">Join</Link>
             </li>
           </ul>
         </div>

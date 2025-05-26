@@ -18,10 +18,10 @@ export default async function SearchGroups() {
               <Link href="/groups" className="px-4 py-2 rounded-md text-xl font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors duration-200">My Groups</Link>
             </li>
             <li>
-              <Link href="/newgroup" className="px-4 py-2 rounded-md text-xl font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors duration-200">Create</Link>
+              <Link href="/groups/new" className="px-4 py-2 rounded-md text-xl font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors duration-200">Create</Link>
             </li>
             <li>
-              <Link href="/groupsearch" aria-current="page" className="px-4 py-2 rounded-md text-xl font-medium text-white bg-gray-700">Join</Link>
+              <Link href="/groups/search" aria-current="page" className="px-4 py-2 rounded-md text-xl font-medium text-white bg-gray-700">Join</Link>
             </li>
           </ul>
         </div>

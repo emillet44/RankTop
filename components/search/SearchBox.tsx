@@ -49,7 +49,7 @@ export function Search() {
       }
       <div className="h-9 bg-transparent text-offwhite text-sm flex items-center px-2 border-r-2 border-slate-700 z-10 relative cursor-default" onClick={() => setIsOpen(!isOpen)}>
         <span>{type}</span>
-        <FontAwesomeIcon icon={faChevronDown} className="ml-2 text-offwhite" />
+        <FontAwesomeIcon icon={faChevronDown} className="ml-2 text-offwhite w-[14px]" />
         {isOpen &&
         <>
           <div className="absolute top-full left-0 z-20 mt-0.5 bg-slate-900 rounded-md outline outline-2 outline-slate-700">
