@@ -9,6 +9,7 @@ import profilepic from '../pfp.png'
 import { LoadBatch, LoadReplies } from "./serverActions/loadcomments";
 import { faAngleDown, faAngleUp, faCircleXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Link from "next/link";
 
 //This function handles everything client side related to comments. Starting with state: comments stores an array of type Comment(defined by interface), modal toggles the sign in
 //modal, loading stalls the intersection observer from loading more comments while they are being fetched, end is to display different text when all comments have been loaded(prevents
@@ -183,10 +184,18 @@ export function AddComment({ userid, postid, username }: { userid: string, posti
       {comments.map((com) => (
         <div key={com.id} className="flex flex-col pt-3">
           <div className="flex flex-row gap-1 items-center">
-            <div className="items-center flex flex-row space-x-1">
-              <Image src={profilepic} alt={"pfp"} width={30} height={30} />
-              <header className="text-slate-400">{com.username || "Guest"}</header>
-            </div>
+            {com.username &&
+                    <Link href={`/user/${com.username}`} className="items-center flex flex-row space-x-1 w-fit">
+                      <Image src={profilepic} alt={"pfp"} width={30} height={30} />
+                      <header className="text-slate-400">{com.username}</header>
+                    </Link>
+                  }
+                  {com.username === null &&
+                    <div className="items-center flex flex-row space-x-1">
+                      <Image src={profilepic} alt={"pfp"} width={30} height={30} />
+                      <header className="text-slate-400">Guest</header>
+                    </div>
+                  }
             <p key={com.id} className="text-md text-slate-400 before:content-['\00B7']">{" " + dateCalc(com.date)}</p>
           </div>
           <p className="text-slate-400">{com.text}</p>
@@ -220,10 +229,18 @@ export function AddComment({ userid, postid, username }: { userid: string, posti
               {replies[com.id].map((reply) => (
                 <div key={reply.id} className="flex flex-col pt-3">
                   <div className="flex flex-row gap-1 items-center">
-                    <div className="items-center flex flex-row space-x-1">
-                      <Image src={profilepic} alt={"pfp"} width={30} height={30} />
-                      <header className="text-slate-400">{reply.username || "Guest"}</header>
-                    </div>
+                    {reply.username &&
+                      <Link href={`/user/${reply.username}`} className="items-center flex flex-row space-x-1 w-fit">
+                        <Image src={profilepic} alt={"pfp"} width={30} height={30} />
+                        <header className="text-slate-400">{reply.username}</header>
+                      </Link>
+                    }
+                    {reply.username === null &&
+                      <div className="items-center flex flex-row space-x-1">
+                        <Image src={profilepic} alt={"pfp"} width={30} height={30} />
+                        <header className="text-slate-400">Guest</header>
+                      </div>
+                    }
                     <p key={reply.id} className="text-md text-slate-400 before:content-['\00B7']">{" " + dateCalc(reply.date)}</p>
                   </div>
                   <p className="text-slate-400">{reply.text}</p>

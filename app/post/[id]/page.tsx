@@ -10,21 +10,76 @@ import { AddComment } from "@/components/AddComment";
 import { ListCarousel } from "@/components/ListCarousel";
 import Image from 'next/image'
 import profilepic from '../../../pfp.png'
+import { Metadata } from "next";
+import Head from 'next/head';
+import { ShareButton } from "@/components/ShareButton";
 
-//Title is set to post title for better SEO
-export async function generateMetadata(props: { params: Promise<{ id: string }> }) {
+// Enhanced metadata generation for SEO and social sharing
+export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const params = await props.params;
   const post = await prisma.posts.findUnique({
     where: { id: params.id },
   });
-  if (post !== null) {
+
+  if (post === null) {
     return {
-      title: post.title
-    }
+      title: "Post not found",
+      description: "This post does not exist or has been deleted.",
+    };
   }
+
+  const metadata = await prisma.post_Metadata.findUnique({
+    where: { postId: post.id },
+  });
+
+  // Create a description from the post content
+  const ranks = [post.rank1, post.rank2, post.rank3].filter(Boolean).slice(0, 3);
+  const rankDescription = `Top ${ranks.length}: ${ranks.join(', ')}`;
+  const description = post.description ? post.description.slice(0, 155) + (post.description.length > 155 ? '...' : '') : rankDescription;
+  const canonicalUrl = `https://ranktop.net/post/${params.id}`;
+  
+  // Generate OpenGraph image URL with proper parameters
+  const ogImageUrl = `https://ranktop.net/api/og?title=${encodeURIComponent(post.title)}&description=${encodeURIComponent(post.description || '')}&ranks=${encodeURIComponent(ranks.join(','))}`;
+
   return {
-    title: "Post not found"
-  }
+    title: post.title,
+    description: description,
+    // Open Graph tags for Facebook, Discord, etc.
+    openGraph: {
+      title: post.title,
+      description: description,
+      url: canonicalUrl,
+      siteName: 'RankTop',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+      locale: 'en_US',
+      type: 'article',
+      publishedTime: metadata?.date.toISOString(),
+      authors: post.username ? [post.username] : undefined,
+    },
+    // Twitter Card tags
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: description,
+      images: [ogImageUrl],
+      creator: post.username ? `@${post.username}` : undefined,
+      site: '@ranktop', // Replace with your Twitter handle
+    },
+
+    // Additional metadata
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    
+    // Schema.org structured data will be added via JSON-LD in the component
+  };
 }
 
 //This is a dynamic page that displays posts when users click on them from homepage, unverified, or all, or after they submit a post. 
@@ -81,9 +136,50 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
         date = metadata.date.toLocaleDateString('en-US', options);
       }
 
+const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": post.title,
+        "description": post.description || `Top ranking: ${post.rank1}`,
+        "author": {
+          "@type": "Person",
+          "name": post.username || "Guest"
+        },
+        "datePublished": metadata.date.toISOString(),
+        "dateModified": metadata.date.toISOString(),
+        "publisher": {
+          "@type": "Organization",
+          "name": "RankTop",
+          "logo": {
+            "@type": "ImageObject",
+            "url": `https://ranktop.net/logo.png`
+          }
+        },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": `https://ranktop.net/post/${params.id}`
+        },
+        "image": metadata?.images 
+          ? `https://ranktop.net/api/og/post/${params.id}`
+          : `https://ranktop.net/api/og/post/${params.id}`,
+        "interactionStatistic": [
+          {
+            "@type": "InteractionCounter",
+            "interactionType": "https://schema.org/LikeAction",
+            "userInteractionCount": metadata.likes
+          },
+          {
+            "@type": "InteractionCounter", 
+            "interactionType": "https://schema.org/ViewAction",
+            "userInteractionCount": views
+          }
+        ]
+      };
 
       return (
         <>
+        <Head> <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+          </Head>
           <Header />
 
           <div className="flex justify-center px-6 pb-10 min-h-[calc(100vh-64px)] pt-[141px] lg:pt-[94px] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
@@ -91,6 +187,7 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
               <div className="max-w-2xl w-full flex justify-between items-end">
                 <header className="text-2xl text-ellipsis overflow-hidden text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">{post.title}</header>
                 <div className="flex space-x-4 pb-4">
+                  <ShareButton postId={params.id} postTitle={post.title} postDescription={post.description} postRanks={[post.rank1, post.rank2, post.rank3, post.rank4, post.rank5]} />
                   {yours && !editable &&
                     <Delete id={params.id} />
                   }
@@ -120,10 +217,18 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
               }
               <div className="flex justify-between py-4">
                 <div className="flex flex-col space-y-3">
-                  <div className="items-center flex flex-row space-x-1">
-                    <Image src={profilepic} alt={"pfp"} width={30} height={30} />
-                    <header className="text-slate-400">{post.username || "Guest"}</header>
-                  </div>
+                  {post.username &&
+                    <Link href={`/user/${post.username}`} className="items-center flex flex-row space-x-1 w-fit">
+                      <Image src={profilepic} alt={"pfp"} width={30} height={30} />
+                      <header className="text-slate-400">{post.username}</header>
+                    </Link>
+                  }
+                  {post.username === null &&
+                    <div className="items-center flex flex-row space-x-1">
+                      <Image src={profilepic} alt={"pfp"} width={30} height={30} />
+                      <header className="text-slate-400">Guest</header>
+                    </div>
+                  }
                   <div className="flex flex-row space-x-4">
                     <div className="flex space-x-1 items-center">
                       <AddLike postid={params.id} likes={metadata.likes} userliked={liked} userid={states[2]} />
