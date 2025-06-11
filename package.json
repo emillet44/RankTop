@@ -29,6 +29,7 @@
     "eslint-config-next": "13.4.7",
     "next": "^15.3.2",
     "next-auth": "^4.22.3",
+    "ngrok": "^5.0.0-beta.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-instantsearch": "^7.15.5",

@@ -14,7 +14,12 @@ import { Metadata } from "next";
 import Head from 'next/head';
 import { ShareButton } from "@/components/ShareButton";
 
-// Enhanced metadata generation for SEO and social sharing
+/*This may be the new most complex component since there's so many components now attached to it, just look above this line. Anyways this is a top to bottom explanation of what's going
+on. The first function is for metadata, which sets a title, description based on the number of ranks, and its canonical url. Then an opengraph image preview is generated for different 
+sites like Facebook and Twitter using the metadata variables. The OG url also creates an image preview of the post. For a description of how things worked previous to adding sharing
+its below this function. The main thing that was added is the sharebutton component, which is provided with all post data so that when the post is shared on different social media sites
+it provides a link preview as well. 
+*/
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const params = await props.params;
   const post = await prisma.posts.findUnique({
@@ -32,19 +37,17 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
     where: { postId: post.id },
   });
 
-  // Create a description from the post content
   const ranks = [post.rank1, post.rank2, post.rank3].filter(Boolean).slice(0, 3);
   const rankDescription = `Top ${ranks.length}: ${ranks.join(', ')}`;
   const description = post.description ? post.description.slice(0, 155) + (post.description.length > 155 ? '...' : '') : rankDescription;
   const canonicalUrl = `https://ranktop.net/post/${params.id}`;
   
-  // Generate OpenGraph image URL with proper parameters
   const ogImageUrl = `https://ranktop.net/api/og?title=${encodeURIComponent(post.title)}&description=${encodeURIComponent(post.description || '')}&ranks=${encodeURIComponent(ranks.join(','))}`;
 
   return {
     title: post.title,
     description: description,
-    // Open Graph tags for Facebook, Discord, etc.
+
     openGraph: {
       title: post.title,
       description: description,
@@ -63,7 +66,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
       publishedTime: metadata?.date.toISOString(),
       authors: post.username ? [post.username] : undefined,
     },
-    // Twitter Card tags
+
     twitter: {
       card: 'summary_large_image',
       title: post.title,
@@ -73,12 +76,9 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
       site: '@ranktop', // Replace with your Twitter handle
     },
 
-    // Additional metadata
     alternates: {
       canonical: canonicalUrl,
     },
-    
-    // Schema.org structured data will be added via JSON-LD in the component
   };
 }
 
