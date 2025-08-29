@@ -186,7 +186,7 @@ const structuredData = {
             <div className="grid grid-cols-1 grid-flow-row auto-rows-min w-full max-w-2xl h-4/5">
               <div className="max-w-2xl w-full flex justify-between items-end">
                 <header className="text-2xl text-ellipsis overflow-hidden text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">{post.title}</header>
-                <div className="flex space-x-4 pb-4">
+                <div className="flex space-x-3 pb-4">
                   <ShareButton postId={params.id} postTitle={post.title} postDescription={post.description} postRanks={[post.rank1, post.rank2, post.rank3, post.rank4, post.rank5]} />
                   {yours && !editable &&
                     <Delete id={params.id} />
