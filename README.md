@@ -2,7 +2,7 @@
 
 Ranktop is a social media website for users to create and discuss ranked lists. Users can share their top five (with potential for more ranks in the future) across various categories, such as sports, books, fashion, and more.
 ## Site link
-[https://ranktop.vercel.app]
+[https://ranktop.net]
 
 ## Features
 - **Ranked List Posts**: Users can easily create and share ranked lists.
