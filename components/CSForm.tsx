@@ -284,11 +284,11 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
 
                 {/* Title and Ranks Section */}
                 <div className="bg-slate-700 bg-opacity-30 rounded-md p-4 mt-4">
-                  <input name="title" placeholder="Title" className="text-2xl font-semibold outline-none w-full bg-transparent placeholder-slate-400 mb-4" required pattern=".*\S.*" maxLength={40} />
+                  <input name="title" placeholder="Title" className="text-2xl font-semibold outline-none w-full bg-transparent placeholder-slate-400 mb-4" required pattern="[^:'\\%{}]*\S[^:'\\%{}]*" maxLength={40} />
                   {[...Array(ranks)].map((_, index) => (
                     <div key={index} className="flex items-center space-x-2 mb-2">
                       <label className="text-xl">{index + 1}.</label>
-                      <input name={`r${index + 1}`} className="flex-1 text-xl bg-transparent border-b border-transparent outline-none focus:border-blue-500 pb-1 w-11/12" required pattern=".*\S.*" />
+                      <input name={`r${index + 1}`} className="flex-1 text-xl bg-transparent border-b border-transparent outline-none focus:border-blue-500 pb-1 w-11/12" required pattern="[^:'\\%{}]*\S[^:'\\%{}]*" maxLength={80} />
                     </div>
                   ))}
                 </div>
@@ -391,7 +391,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                   <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6 text-slate-400 hover:text-slate-200" />
                 </button>
               </div>
-              <h2 className="text-2xl text-slate-300 font-bold text-center mb-4 px-4">Sign in to add images</h2>
+              <h2 className="text-2xl text-slate-300 font-bold text-center mb-4 px-4">Sign in to enable image and video posts</h2>
               <button onClick={() => signIn(undefined, { callbackUrl: `/newpost` })} className="my-2 w-72 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full">Sign In</button>
             </div>
           </div>

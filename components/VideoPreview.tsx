@@ -32,12 +32,40 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, v
     totalSteps: number;
   }>({ step: 0, totalSteps: 0 });
 
+  // Validation logic - only videos are required
+  const canProcess = videoFiles.length >= 2;
+
+  // Generate status message
+  const getStatusMessage = () => {
+    if (videoFiles.length === 0) {
+      return 'Add at least 2 videos to begin';
+    }
+    if (videoFiles.length < 2) {
+      return 'Too few videos uploaded - need at least 2 videos to stitch';
+    }
+    return 'Ready to process';
+  };
+
+  // Fill in missing ranks and title with default values
+  const getProcessingTitle = () => {
+    return title && title.trim() !== '' ? title : 'Your Title Here';
+  };
+
+  const getProcessingRanks = () => {
+    const processedRanks = [];
+    for (let i = 0; i < videoFiles.length; i++) {
+      const rank = ranks[i];
+      processedRanks.push(rank && rank.trim() !== '' ? rank : 'Your rank here');
+    }
+    return processedRanks;
+  };
+
   const uploadFileToSignedUrl = async (file: File, signedUrl: string): Promise<void> => {
     const response = await fetch(signedUrl, {
       method: 'PUT',
       body: file,
       headers: {
-        'Content-Type': 'video/mp4'
+        'Content-Type': file.type
       }
     });
 
@@ -69,7 +97,8 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, v
         body: JSON.stringify({
           action: 'getUploadUrls',
           videoCount: videoFiles.length,
-          sessionId: sessionId
+          sessionId: sessionId,
+          fileTypes: videoFiles.map(file => file.type)
         })
       });
 
@@ -116,8 +145,8 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, v
         },
         body: JSON.stringify({
           sessionId: sessionId,
-          title: title,
-          ranks: ranks,
+          title: getProcessingTitle(),
+          ranks: getProcessingRanks(),
           videoOrder: videoOrder || videoFiles.map((_, i) => videoFiles.length - 1 - i),
           filePaths: filePaths
         })
@@ -185,21 +214,19 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, v
   return (
     <div className="w-full max-w-[400px] mx-auto bg-slate-700/30 rounded-lg p-4">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-bold text-white">{title}</h3>
-        {!videoUrl && (
-          <button 
-            type="button"
-            onClick={processVideos} 
-            disabled={processing}
-            className={`px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
-              processing 
-                ? 'opacity-50 cursor-not-allowed bg-slate-600' 
-                : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 shadow-lg hover:shadow-xl'
-            }`}
-          >
-            {processing ? 'Processing...' : 'Process Videos'}
-          </button>
-        )}
+        <h3 className="text-xl font-bold text-white">Your Title Here</h3>
+        <button 
+          type="button"
+          onClick={processVideos} 
+          disabled={processing || !canProcess}
+          className={`px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
+            processing || !canProcess
+              ? 'opacity-50 cursor-not-allowed bg-slate-600' 
+              : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 shadow-lg hover:shadow-xl'
+          }`}
+        >
+          {processing ? 'Processing...' : videoUrl ? 'Reprocess Videos' : 'Process Videos'}
+        </button>
       </div>
 
       <div className="relative bg-black rounded-lg overflow-hidden" 
@@ -237,6 +264,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, v
             controls
             preload="metadata"
             onError={() => setError('Video playback error')}
+            crossOrigin="anonymous"
           />
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-full text-red-400 p-4 text-center">
@@ -250,8 +278,15 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, v
             </button>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-slate-400 p-4 text-center">
-            <span>Click "Process Videos" to start</span>
+          <div className="flex items-center justify-center h-full text-slate-400 p-6 text-center">
+            <div>
+              <p className="text-base mb-2">{getStatusMessage()}</p>
+              {canProcess && (
+                <p className="text-sm text-slate-500">
+                  {videoFiles.length} video{videoFiles.length !== 1 ? 's' : ''} ready to stitch
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>
