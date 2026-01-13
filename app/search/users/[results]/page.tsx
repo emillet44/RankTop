@@ -4,9 +4,10 @@ import { LoadUserResults } from "@/components/serverActions/loadposts";
 import Link from "next/link";
 import profilepic from "../../../../pfp.png";
 import Image from 'next/image';
+import { Metadata } from "next";
 
 //Title is set to the search results for: result for hopefully better SEO, also just more descriptive
-export async function generateMetadata(props: { params: Promise<{ results: string }> }) {
+export async function generateMetadata(props: { params: Promise<{ results: string }> }): Promise<Metadata> {
   const params = await props.params;
   return {
     title: 'Search results for: ' + params.results

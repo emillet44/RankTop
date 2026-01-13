@@ -86,7 +86,7 @@ export function AddComment({ userid, postid, username }: { userid: string, posti
     }
 
     return () => currentObserver.disconnect();
-  }, [loading, end]);
+  }, [loading, end, addComments]);
 
   const toggleModal = () => setModal(!modalon);
 

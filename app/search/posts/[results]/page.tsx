@@ -1,10 +1,11 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/headers/Header";
 import { LoadPostResults } from "@/components/serverActions/loadposts";
+import { Metadata } from "next";
 import Link from "next/link";
 
 //Title is set to the search results for: result for hopefully better SEO, also just more descriptive
-export async function generateMetadata(props: { params: Promise<{ results: string }> }) {
+export async function generateMetadata(props: { params: Promise<{ results: string }> }): Promise<Metadata> {
   const params = await props.params;
   return {
     title: 'Search results for: ' + params.results

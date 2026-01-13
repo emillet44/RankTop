@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { ListCarousel } from "./ListCarousel"
 import { VideoDisplay } from "./VideoDisplay"
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LoadBatch, LoadBatchCat } from "./serverActions/loadposts";
 
 export default function PostsList({ starter }: { starter: any }) {
@@ -18,9 +18,11 @@ export default function PostsList({ starter }: { starter: any }) {
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  const addPostsCat = async (category: string) => {
+  const addPostsCat = useCallback(async (category: string) => {
     try {
+      // batch.current is a Ref, so it doesn't need to be in the dependency array
       const posts = await LoadBatchCat(batch.current, category);
+
       setPosts((prevPosts: any) => [...prevPosts, ...posts]);
 
       if (posts.length === 0) {
@@ -31,7 +33,7 @@ export default function PostsList({ starter }: { starter: any }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Empty array because it doesn't rely on any props or state variables
 
   const addPosts = async (type: string, date: string) => {
     try {
@@ -90,7 +92,7 @@ export default function PostsList({ starter }: { starter: any }) {
         observer.current.disconnect();
       }
     };
-  }, [loading, end]);
+  }, [loading, end, category, date, lockcat, sort, addPostsCat]);
 
   const loadCategory = (e: any) => {
     if (lockcat != "") {
@@ -225,11 +227,11 @@ export default function PostsList({ starter }: { starter: any }) {
           {list.metadata?.videos && list.metadata.videoUrl ? (
             <div className="pt-8 pb-4 sm:border-x border-b border-slate-700">
               <header className="pl-8 text-4xl line-clamp-2 leading-tight text-slate-400 font-semibold pb-2">{list.title}</header>
-              <VideoDisplay 
-                videoUrl={list.metadata.videoUrl} 
-                postid={list.id} 
+              <VideoDisplay
+                videoUrl={list.metadata.videoUrl}
+                postid={list.id}
                 title={list.title}
-                variant="preview" 
+                variant="preview"
               />
               <div className="flex flex-row justify-between items-center border-t border-slate-100 pt-4 mx-8 mt-8">
                 <div>

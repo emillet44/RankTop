@@ -24,7 +24,7 @@ export function FeedbackForm() {
       router.push("/");
     }
 
-  }, [submitted, redirectSeconds]);
+  }, [submitted, redirectSeconds, router]);
 
   const subHandler = (e: any) => {
     e.preventDefault();

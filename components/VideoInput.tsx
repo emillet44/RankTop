@@ -88,7 +88,7 @@ export default function VideoUploadSection({
       <div className="mt-4 p-3 bg-blue-900 bg-opacity-20 rounded-md border border-blue-700">
         <p className="text-sm text-blue-200">
           <FontAwesomeIcon icon={faVideo} className="mr-2" />
-          Upload video clips for each rank. They'll be automatically spliced together when you submit. Supported formats: mp4, webm, ogg.
+          Upload video clips for each rank. They will be automatically spliced together when you submit.
         </p>
       </div>
     </div>

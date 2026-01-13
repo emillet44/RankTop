@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner, faExclamationTriangle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/navigation';
@@ -25,9 +25,9 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
   const router = useRouter();
   const started = useRef(false);
 
-  const runSubmission = async () => {
-    if (started.current) return;
-    started.current = true;
+  const runSubmission = useCallback(async () => {
+  if (started.current) return;
+  started.current = true;
 
     try {
       // PHASE 1: VIDEO UPLOADS (If needed)
@@ -142,11 +142,11 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
       setError(err.message || "An unexpected error occurred during submission.");
       started.current = false; // Allow retry
     }
-  };
+  }, [formData, videoFiles, postType, router]);
 
   useEffect(() => {
     runSubmission();
-  }, []);
+  }, [runSubmission]);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/90 backdrop-blur-md px-4">

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from 'next/image';
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LoadUserPosts } from "./serverActions/loadposts";
 
 
@@ -16,26 +16,28 @@ export default function ProfilePostList({ starter, profileid }: { starter: any, 
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  const addPosts = async () => {
-    try {
-      const posts = await LoadUserPosts(batch.current, profileid);
-      if (posts) {
-        setPosts((prevPosts: any) => [...prevPosts, ...posts]);
+  const addPosts = useCallback(async () => {
+  try {
+    // Note: 'batch.current' doesn't need to be in the dependency array 
+    // because refs don't trigger re-renders and their identity is stable.
+    const posts = await LoadUserPosts(batch.current, profileid);
+    
+    if (posts) {
+      // Using the functional update (prevPosts => ...) is best practice here
+      setPosts((prevPosts: any) => [...prevPosts, ...posts]);
 
-        if (posts.length === 0) {
-          setEnd(true);
-        }
+      if (posts.length === 0) {
+        setEnd(true);
       }
-      else {
-        throw ("Post metadata couldn't be read.");
-      }
-
-    } catch (error) {
-      console.error("Error loading more posts:", error);
-    } finally {
-      setLoading(false);
+    } else {
+      throw new Error("Post metadata couldn't be read.");
     }
+  } catch (error) {
+    console.error("Error loading more posts:", error);
+  } finally {
+    setLoading(false);
   }
+}, [profileid]); // Only recreate this function if the profileid changes
 
   useEffect(() => {
     if (observer.current) {
@@ -63,7 +65,7 @@ export default function ProfilePostList({ starter, profileid }: { starter: any, 
         observer.current.disconnect();
       }
     };
-  }, [loading, end]);
+  }, [loading, end, addPosts]);
 
   return (
     <>

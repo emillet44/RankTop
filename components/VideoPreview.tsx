@@ -182,7 +182,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, v
           </div>
         ) : (
           <div className="flex items-center justify-center h-full text-slate-400 p-6 text-center">
-            <p className="text-base">Click "Process Videos" to create your ranked video</p>
+            Select <span className="font-semibold text-white">Process Videos</span> to create your ranked video.
           </div>
         )}
       </div>

@@ -2,11 +2,11 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/headers/Header";
 import { LoadGroupResults } from "@/components/serverActions/loadposts";
 import Link from "next/link";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import Image from "next/image";
+import { Metadata } from "next";
 
 //Title is set to the search results for: result for hopefully better SEO, also just more descriptive
-export async function generateMetadata(props: { params: Promise<{ results: string }> }) {
+export async function generateMetadata(props: { params: Promise<{ results: string }> }): Promise<Metadata> {
   const params = await props.params;
   return {
     title: 'Search results for: ' + params.results
@@ -33,13 +33,13 @@ export default async function Results(props: { params: Promise<{ results: string
                 <div className="h-44 w-full flex flex-col">
                   {group.bannerimg && (
                     <div className="h-16 -mx-5 -mt-5 mb-3 bg-slate-800 relative overflow-hidden rounded-t-md">
-                      <img src={`https://storage.googleapis.com/ranktop-i/${group.id}banner.png`} alt={`${group.name} banner`} className="w-full h-full object-cover" />
+                      <Image src={`https://storage.googleapis.com/ranktop-i/${group.id}banner.png`} alt={`${group.name} banner`} className="w-full h-full object-cover" />
                     </div>
                   )}
                   <div className="flex items-center mb-3">
                     <div className="relative h-12 w-12 rounded-full overflow-hidden mr-3 bg-slate-700">
                       {group.profileimg ? (
-                        <img src={`https://storage.googleapis.com/ranktop-i/${group.id}profile.png`} alt={`${group.name}'s profile`} className="h-full w-full object-cover" />
+                        <Image src={`https://storage.googleapis.com/ranktop-i/${group.id}profile.png`} alt={`${group.name}'s profile`} className="h-full w-full object-cover" />
                       ) : (
                         <label>Profile</label>
                       )}
