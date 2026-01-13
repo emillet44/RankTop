@@ -112,7 +112,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, v
       setError(err.message);
       setProcessing(false);
     }
-  }, [videoFiles, ranks, title, videoOrder, onSessionCreated]);
+  }, [videoFiles, ranks, title, onSessionCreated]);
 
   return (
     <div className="w-full max-w-[400px] mx-auto bg-slate-700/30 rounded-lg p-4">

@@ -11,9 +11,6 @@ module.exports = {
         },
       ],
     },
-    experimental: {
-    esmExternals: 'loose'
-  },
   
   // Configure webpack to handle FFmpeg and Web Workers
   webpack: (config, { isServer }) => {

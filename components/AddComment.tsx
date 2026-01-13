@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react"
 import { newComment, newReply } from "./serverActions/commentupload";
 import { AddCommentLike } from "./AddCommentLike"
@@ -50,15 +50,16 @@ export function AddComment({ userid, postid, username }: { userid: string, posti
   const commentInput = useRef<HTMLSpanElement>(null);
   const replyInput = useRef<HTMLSpanElement>(null);
 
-  const addComments = async (type: string) => {
+  const addComments = useCallback(async (type: string) => {
     try {
       setLoading(true);
+      // Use the values directly; since they are strings/stable refs, this is safe
       const newcomments: Comment[] = await LoadBatch(batch.current, type, userid, postid);
+
       if (newcomments.length > 0) {
         setComments(prevComments => [...prevComments, ...newcomments]);
         batch.current += 1;
-      }
-      else {
+      } else {
         setEnd(true);
       }
     } catch (error) {
@@ -66,7 +67,7 @@ export function AddComment({ userid, postid, username }: { userid: string, posti
     } finally {
       setLoading(false);
     }
-  }
+  }, [userid, postid]); // Re-create only if the user or post context changes
 
   useEffect(() => {
     const currentObserver = new IntersectionObserver(
@@ -185,17 +186,17 @@ export function AddComment({ userid, postid, username }: { userid: string, posti
         <div key={com.id} className="flex flex-col pt-3">
           <div className="flex flex-row gap-1 items-center">
             {com.username &&
-                    <Link href={`/user/${com.username}`} className="items-center flex flex-row space-x-1 w-fit">
-                      <Image src={profilepic} alt={"pfp"} width={30} height={30} />
-                      <header className="text-slate-400">{com.username}</header>
-                    </Link>
-                  }
-                  {com.username === null &&
-                    <div className="items-center flex flex-row space-x-1">
-                      <Image src={profilepic} alt={"pfp"} width={30} height={30} />
-                      <header className="text-slate-400">Guest</header>
-                    </div>
-                  }
+              <Link href={`/user/${com.username}`} className="items-center flex flex-row space-x-1 w-fit">
+                <Image src={profilepic} alt={"pfp"} width={30} height={30} />
+                <header className="text-slate-400">{com.username}</header>
+              </Link>
+            }
+            {com.username === null &&
+              <div className="items-center flex flex-row space-x-1">
+                <Image src={profilepic} alt={"pfp"} width={30} height={30} />
+                <header className="text-slate-400">Guest</header>
+              </div>
+            }
             <p key={com.id} className="text-md text-slate-400 before:content-['\00B7']">{" " + dateCalc(com.date)}</p>
           </div>
           <p className="text-slate-400">{com.text}</p>
