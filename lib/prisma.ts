@@ -1,12 +1,25 @@
 import { PrismaClient } from '@prisma/client'
+import { neonConfig } from '@neondatabase/serverless'
+import { PrismaNeon } from '@prisma/adapter-neon'
+import ws from 'ws'
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
+// Configure WebSocket for local development
+if (process.env.NODE_ENV !== 'production') {
+  neonConfig.webSocketConstructor = ws
 }
 
-//This function just sets up the Prisma client for use, but it saves a lot of repetition as Prisma is used in many of the server actions
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined
+}
+
+function createPrismaClient() {
+  const connectionString = `${process.env.POSTGRES_PRISMA_URL}`
+  const adapter = new PrismaNeon({connectionString})
+  return new PrismaClient({ adapter })
+}
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient()
 
 if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
+  globalForPrisma.prisma = prisma
 }

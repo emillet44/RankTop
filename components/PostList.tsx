@@ -2,25 +2,9 @@
 
 import Link from "next/link"
 import { ListCarousel } from "./ListCarousel"
+import { VideoDisplay } from "./VideoDisplay"
 import { useEffect, useRef, useState } from "react";
 import { LoadBatch, LoadBatchCat } from "./serverActions/loadposts";
-
-//This function is pure wizardry to me, but in general, there's a few key things happening. First, posts is loaded with the prop data from the main homepage, or the first batch.
-//Batch keeps track of how many posts the user has scrolled through, loading prevents the loadposts server action from being called repeatedly and also serves as an indicator for
-//the user, end determines if there are no more posts to load, observerRef is the element that the observer refers to when it checks if it is within or near the viewport, and observer
-//is the magic API that automatically triggers the function when the reference element is near to the viewport. The addposts function is what handles updating the posts state variable
-//using the spread operator to merge the old posts and new posts, and if there are no posts being sent back by LoadAll then the end of the post type has been reached. When finished it
-//updates loading to false to allow more loads. The useEffect hook is used to kill the observer whenever the component unmounts, new posts are loading, or the end is reached. Within 
-//it, roughly what it's doing is managing the observer/observerRef to watch for intersection with a 0.1 threshold(large threshold, 1 is smallest, where threshold describes how close
-//the element has to be to the viewport to trigger a load). 
-//Posts are now sorted by categories, hence the extra state variables lockcat and category. When the category is changed, batch 0 of that category is loaded from loadposts, by 
-//resetting the post list, batch, and end variables. If the category is custom, a load will not be triggered until the user enters a custom category name within the input(might be 
-//very hard but implementing the Algolia instant search here would be incredibly useful to make custom categories viable, as currently there's no way to know what custom categories 
-//are out there or what ones are popular). 'c' is added to any custom category string, as it's used as an indicator to determine whether to search for the exact category or something
-//similar to the category within loadposts. It's better for now to look for something similar when using custom, because it allows users to find custom communities easier(wont matter
-//once Algolia search is used, it already does that). Posts can also be sorted by views and likes within a certain time frame, which is possible by layering the intersection observer
-//with more conditions(the value of sort), adding a separate function and server action to handle sorts other than category, and ensuring posts are reset on any change of the select 
-//filters.
 
 export default function PostsList({ starter }: { starter: any }) {
   const [posts, setPosts] = useState(starter);
@@ -237,7 +221,26 @@ export default function PostsList({ starter }: { starter: any }) {
       </div>
       {posts?.map((list: any, index: number) => (
         <Link href={`/post/${list.id}`} className="w-full" key={list.id}>
-          {list.metadata?.images &&
+          {/* Video posts */}
+          {list.metadata?.videos && list.metadata.videoUrl ? (
+            <div className="pt-8 pb-4 sm:border-x border-b border-slate-700">
+              <header className="pl-8 text-4xl line-clamp-2 leading-tight text-slate-400 font-semibold pb-2">{list.title}</header>
+              <VideoDisplay 
+                videoUrl={list.metadata.videoUrl} 
+                postid={list.id} 
+                title={list.title}
+                variant="preview" 
+              />
+              <div className="flex flex-row justify-between items-center border-t border-slate-100 pt-4 mx-8 mt-8">
+                <div>
+                  <label className="text-xl text-slate-400">{list.metadata.likes} likes</label>
+                  <label className="ml-6 text-xl text-slate-400">{list.metadata.views} views</label>
+                </div>
+                <label className="text-xl text-slate-400">{getPostDate(new Date(list.metadata.date))}</label>
+              </div>
+            </div>
+          ) : list.metadata?.images ? (
+            /* Image posts */
             <div className="pt-8 pb-4 sm:border-x border-b border-slate-700">
               <header className="pl-8 text-4xl line-clamp-2 leading-tight text-slate-400 font-semibold">{list.title}</header>
               <ListCarousel ranks={[list.rank1, list.rank2, list.rank3, list.rank4, list.rank5]} postid={list.id} firstimage={index === 0} />
@@ -249,8 +252,8 @@ export default function PostsList({ starter }: { starter: any }) {
                 <label className="text-xl text-slate-400">{getPostDate(new Date(list.metadata.date))}</label>
               </div>
             </div>
-          }
-          {!list.metadata?.images &&
+          ) : (
+            /* Text-only posts */
             <div className="sm:border-x border-b border-slate-700">
               <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8">
                 <header className="text-4xl line-clamp-2 leading-tight text-slate-400 font-semibold">{list.title}</header>
@@ -268,7 +271,7 @@ export default function PostsList({ starter }: { starter: any }) {
                 <label className="text-xl text-slate-400">{getPostDate(new Date(list.metadata.date))}</label>
               </div>
             </div>
-          }
+          )}
         </Link>
       ))}
       <div ref={observerRef} className="h-[1px]" />

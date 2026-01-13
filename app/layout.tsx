@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import './globals.css'
 import { Inter } from 'next/font/google'
 import Script from "next/script";
@@ -6,7 +7,7 @@ import Script from "next/script";
 //this page essentially manages some constant layout info like the website title, the font, the body, etc.
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'RankTop'
 }
 

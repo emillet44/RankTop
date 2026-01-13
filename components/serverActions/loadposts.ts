@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from "@/lib/prisma";
+import { getSignedGCSUrl } from "@/lib/signedurls";
 
 //This server action loads different types of posts from the database, either 20(its still 4 for testing), or the first 50 results of a search. Soon there will be functions to load
 //categories, subcategories, by likes, or by views.
@@ -9,14 +10,39 @@ import { prisma } from "@/lib/prisma";
 //and a time range, which is calculated with a switch corresponding to the options from the select box. 
 //LoadResults loads 10 search results of type post, user, or group depending on the type specified during the search
 
+async function addVideoUrls(posts: any[]) {
+  return await Promise.all(
+    posts.map(async (post) => {
+      if (post.metadata?.videos) {
+        post.metadata.videoUrl = await getSignedGCSUrl('ranktop-v', `${post.id}.mp4`);
+      }
+      return post;
+    })
+  );
+}
+
+export async function LoadSinglePost(postId: string) {
+  const post = await prisma.posts.findUnique({
+    where: { id: postId },
+    include: { metadata: true },
+  });
+  
+  if (post) {
+    const [postWithUrl] = await addVideoUrls([post]);
+    return postWithUrl;
+  }
+  return null;
+}
+
 export async function LoadAll() {
   const aposts = await prisma.posts.findMany({
     include: {
       metadata: true,
     },
   });
-  return aposts;
+  return await addVideoUrls(aposts);
 }
+
 export async function LoadBatch(batch: number, type: string, date: string) {
   const now = new Date();
   let startdate;
@@ -59,7 +85,7 @@ export async function LoadBatch(batch: number, type: string, date: string) {
         metadata: true,
       },
     });
-    return bposts;
+    return await addVideoUrls(bposts);
   }
   else if (type == "Most Liked") {
     const bposts = await prisma.posts.findMany({
@@ -83,9 +109,10 @@ export async function LoadBatch(batch: number, type: string, date: string) {
         metadata: true,
       },
     });
-    return bposts;
+    return await addVideoUrls(bposts);
   }
 }
+
 export async function LoadBatchCat(batch: number, category: string) {
   if (category == "None") {
     const bposts = await prisma.posts.findMany({
@@ -98,7 +125,7 @@ export async function LoadBatchCat(batch: number, category: string) {
         metadata: true,
       },
     });
-    return bposts;
+    return await addVideoUrls(bposts);
   }
   else if (category.charAt(0) == "c") {
     const bposts = await prisma.posts.findMany({
@@ -114,7 +141,7 @@ export async function LoadBatchCat(batch: number, category: string) {
         metadata: true,
       },
     });
-    return bposts;
+    return await addVideoUrls(bposts);
   }
   else {
     const bposts = await prisma.posts.findMany({
@@ -127,12 +154,11 @@ export async function LoadBatchCat(batch: number, category: string) {
         metadata: true,
       },
     });
-    return bposts;
+    return await addVideoUrls(bposts);
   }
 }
+
 export async function LoadPostResults(search: string) {
-
-
   const posts = await prisma.posts.findMany({
     take: 10,
     where: {
@@ -142,8 +168,9 @@ export async function LoadPostResults(search: string) {
       metadata: true,
     },
   });
-  return posts;
+  return await addVideoUrls(posts);
 }
+
 export async function LoadUserResults(search: string) {
   const users = await prisma.user.findMany({
     take: 10,
@@ -153,6 +180,7 @@ export async function LoadUserResults(search: string) {
   });
   return users;
 }
+
 export async function LoadGroupResults(search: string) {
   const groups = await prisma.groups.findMany({
     take: 10,
@@ -163,6 +191,7 @@ export async function LoadGroupResults(search: string) {
   });
   return groups;
 }
+
 export async function LoadUserPosts(batch: number, userid: string) {
   const uposts = await prisma.posts.findMany({
     skip: 9 * batch,
@@ -175,5 +204,5 @@ export async function LoadUserPosts(batch: number, userid: string) {
     },
   });
 
-  return uposts;
+  return await addVideoUrls(uposts);
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faVideo, faPlay, faCircleXmark } from "@fortawesome/free-solid-svg-icons"
+import { faVideo, faCircleXmark } from "@fortawesome/free-solid-svg-icons"
 
 interface VideoData {
   file: File | null;
@@ -56,7 +56,13 @@ export default function VideoUploadSection({
               <label className="text-lg font-medium">{index + 1}.</label>
               {url === null ? (
                 <div className="relative border-2 border-dashed border-blue-500 hover:border-blue-400 rounded-md p-4 h-[120px] bg-blue-900 bg-opacity-10">
-                  <input type="file" accept="video/*" className="absolute inset-0 w-full h-full opacity-0 text-[0px] -indent-10 cursor-pointer z-10" onChange={(e) => onVideoChangeAction(e, index)} />
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="absolute inset-0 w-full h-full opacity-0 text-[0px] -indent-10 cursor-pointer z-10"
+                    onChange={(e) => onVideoChangeAction(e, index)}
+                    required
+                  />
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <FontAwesomeIcon icon={faVideo} className="h-8 w-8 text-blue-400 mb-2" />
                     <span className="text-blue-200 text-center">Click to upload video clip</span>

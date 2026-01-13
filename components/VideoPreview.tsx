@@ -8,6 +8,7 @@ interface VideoPreviewProps {
   ranks: string[];
   title: string;
   videoOrder?: number[];
+  onSessionCreated?: (sessionId: string, filePaths: string[]) => void;
 }
 
 interface ProgressData {
@@ -21,215 +22,116 @@ interface ProgressData {
   timestamp: number;
 }
 
-const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, videoOrder }) => {
+const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, videoOrder, onSessionCreated }) => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState('');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [detailedProgress, setDetailedProgress] = useState<{
-    step: number;
-    totalSteps: number;
-  }>({ step: 0, totalSteps: 0 });
+  const [detailedProgress, setDetailedProgress] = useState<{ step: number; totalSteps: number; }>({ step: 0, totalSteps: 0 });
 
-  // Validation logic - only videos are required
-  const canProcess = videoFiles.length >= 2;
-
-  // Generate status message
-  const getStatusMessage = () => {
-    if (videoFiles.length === 0) {
-      return 'Add at least 2 videos to begin';
-    }
-    if (videoFiles.length < 2) {
-      return 'Too few videos uploaded - need at least 2 videos to stitch';
-    }
-    return 'Ready to process';
-  };
-
-  // Fill in missing ranks and title with default values
-  const getProcessingTitle = () => {
-    return title && title.trim() !== '' ? title : 'Your Title Here';
-  };
-
-  const getProcessingRanks = () => {
-    const processedRanks = [];
-    for (let i = 0; i < videoFiles.length; i++) {
-      const rank = ranks[i];
-      processedRanks.push(rank && rank.trim() !== '' ? rank : 'Your rank here');
-    }
-    return processedRanks;
-  };
-
-  const uploadFileToSignedUrl = async (file: File, signedUrl: string): Promise<void> => {
-    const response = await fetch(signedUrl, {
-      method: 'PUT',
-      body: file,
-      headers: {
-        'Content-Type': file.type
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Upload failed for file: ${response.status} ${response.statusText}`);
-    }
+  // Upload helper for the signed URLs (Direct to GCS)
+  const uploadFileToSignedUrl = async (file: File, signedUrl: string) => {
+    const res = await fetch(signedUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+    if (!res.ok) throw new Error(`Upload failed: ${res.statusText}`);
   };
 
   const processVideos = useCallback(async () => {
     setProcessing(true);
     setError(null);
     setProgress(0);
-    setCurrentStep('Initializing...');
     setVideoUrl(null);
-    setDetailedProgress({ step: 0, totalSteps: 0 });
 
     try {
-      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Step 1: Get signed upload URLs
-      setCurrentStep('Getting upload URLs...');
-      setProgress(5);
+      const sessionId = `session_${Date.now()}`;
 
-      const uploadUrlResponse = await fetch('https://video-processor2-143130158879.us-central1.run.app', {
+      // 1. Get Signed URLs through the proxy
+      setCurrentStep('Preparing upload...');
+      const urlRes = await fetch('/api/video/preview', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        body: JSON.stringify({ action: 'getUploadUrls', videoCount: videoFiles.length, sessionId })
+      });
+      const { uploadUrls, filePaths } = await urlRes.json();
+
+      // Store session for the final submit
+      if (onSessionCreated) onSessionCreated(sessionId, filePaths);
+
+      // 2. Upload fragments to GCS
+      setCurrentStep('Uploading fragments...');
+      await Promise.all(videoFiles.map((file, i) => {
+        const info = uploadUrls.find((u: any) => u.index === i);
+        return uploadFileToSignedUrl(file, info.url);
+      }));
+
+      // 3. Start Processing Stream
+      setCurrentStep('Starting render...');
+      const response = await fetch('/api/video/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'getUploadUrls',
-          videoCount: videoFiles.length,
-          sessionId: sessionId,
-          fileTypes: videoFiles.map(file => file.type)
+          sessionId,
+          title: title || 'Ranked Post',
+          ranks: ranks.filter(r => r.trim() !== ''),
+          filePaths,
+          // videoOrder logic...
         })
       });
 
-      if (!uploadUrlResponse.ok) {
-        throw new Error(`Failed to get upload URLs: ${uploadUrlResponse.status}`);
-      }
+      if (!response.body) throw new Error('No stream available');
 
-      const { uploadUrls, filePaths } = await uploadUrlResponse.json();
-
-      // Step 2: Upload files directly to GCS
-      setCurrentStep('Uploading videos to cloud storage...');
-      setProgress(10);
-
-      const uploadPromises = videoFiles.map(async (file, index) => {
-        const uploadInfo = uploadUrls.find((u: any) => u.index === index);
-        if (!uploadInfo) {
-          throw new Error(`No upload URL found for video ${index}`);
-        }
-        
-        await uploadFileToSignedUrl(file, uploadInfo.url);
-        
-        // Update progress for each completed upload
-        const completedUploads = index + 1;
-        const uploadProgress = 10 + (completedUploads / videoFiles.length) * 20; // 10% to 30%
-        setProgress(Math.round(uploadProgress));
-        
-        if (completedUploads === videoFiles.length) {
-          setCurrentStep('All videos uploaded. Starting processing...');
-        } else {
-          setCurrentStep(`Uploaded ${completedUploads}/${videoFiles.length} videos...`);
-        }
-      });
-
-      await Promise.all(uploadPromises);
-
-      // Step 3: Trigger processing
-      setCurrentStep('Starting video processing...');
-      setProgress(35);
-
-      const processResponse = await fetch('https://video-processor2-143130158879.us-central1.run.app', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          sessionId: sessionId,
-          title: getProcessingTitle(),
-          ranks: getProcessingRanks(),
-          videoOrder: videoOrder || videoFiles.map((_, i) => videoFiles.length - 1 - i),
-          filePaths: filePaths
-        })
-      });
-
-      if (!processResponse.ok) {
-        throw new Error(`Processing request failed: ${processResponse.status} ${processResponse.statusText}`);
-      }
-
-      // Step 4: Read the SSE stream for processing updates
-      const reader = processResponse.body?.getReader();
+      // 4. Handle SSE Stream
+      const reader = response.body.getReader();
       const decoder = new TextDecoder();
-
-      if (!reader) {
-        throw new Error('No response body available');
-      }
 
       while (true) {
         const { done, value } = await reader.read();
-        
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
+        const chunk = decoder.decode(value);
         const lines = chunk.split('\n');
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            try {
-              const data: ProgressData = JSON.parse(line.slice(6));
-              
-              if (data.error) {
-                throw new Error(data.error);
-              }
+            const data: ProgressData = JSON.parse(line.slice(6));
+            if (data.error) throw new Error(data.error);
 
-              // Adjust progress to account for upload phase (35% + remaining 65%)
-              const adjustedProgress = 35 + (data.progress * 0.65);
-              setProgress(Math.round(adjustedProgress));
-              setCurrentStep(data.message);
-              setDetailedProgress({
-                step: data.step,
-                totalSteps: data.totalSteps
-              });
+            // Smooth UI progress
+            const uiProg = Math.round(30 + (data.progress * 0.7));
+            setProgress(uiProg);
+            setCurrentStep(data.message);
 
-              if (data.complete && data.videoUrl) {
-                setVideoUrl(data.videoUrl);
-                setProcessing(false);
-                setProgress(100);
-                setCurrentStep('Complete!');
-                break;
-              }
-            } catch (parseError) {
-              console.warn('Failed to parse SSE data:', parseError);
+            if (data.complete && data.videoUrl) {
+              setVideoUrl(data.videoUrl);
+              setProcessing(false);
+              setProgress(100);
             }
           }
         }
       }
-
-    } catch (err) {
-      console.error('Processing error:', err);
-      setError(`Processing failed: ${err}`);
+    } catch (err: any) {
+      setError(err.message);
       setProcessing(false);
     }
-  }, [videoFiles, ranks, title, videoOrder]);
+  }, [videoFiles, ranks, title, videoOrder, onSessionCreated]);
 
   return (
     <div className="w-full max-w-[400px] mx-auto bg-slate-700/30 rounded-lg p-4">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-bold text-white">Your Title Here</h3>
-        <button 
+        <h3 className="text-xl font-bold text-white">{title || 'Your Title Here'}</h3>
+        <button
           type="button"
-          onClick={processVideos} 
-          disabled={processing || !canProcess}
-          className={`px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
-            processing || !canProcess
-              ? 'opacity-50 cursor-not-allowed bg-slate-600' 
-              : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 shadow-lg hover:shadow-xl'
-          }`}
+          onClick={processVideos}
+          disabled={processing}
+          className={`px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${processing
+            ? 'opacity-50 cursor-not-allowed bg-slate-600'
+            : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 shadow-lg hover:shadow-xl'
+            }`}
         >
           {processing ? 'Processing...' : videoUrl ? 'Reprocess Videos' : 'Process Videos'}
         </button>
       </div>
 
-      <div className="relative bg-black rounded-lg overflow-hidden" 
+      <div className="relative bg-black rounded-lg overflow-hidden"
         style={{ aspectRatio: '9/16', width: '100%', maxWidth: '400px', margin: '0 auto' }}
       >
         {processing ? (
@@ -237,34 +139,35 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, v
             <FontAwesomeIcon icon={faSpinner} className="h-12 w-12 mb-4 animate-spin text-blue-400" />
             <p className="text-lg font-medium text-slate-200 mb-2">Processing videos...</p>
             <p className="text-sm text-slate-400 mb-2">{currentStep}</p>
-            
+
             {detailedProgress.totalSteps > 0 && (
               <p className="text-xs text-slate-500 mb-4">
                 Step {detailedProgress.step} of {detailedProgress.totalSteps}
               </p>
             )}
-            
+
             <div className="w-full mb-4">
               <div className="flex justify-between items-center text-sm mb-2">
                 <span className="text-slate-300 font-medium">Progress</span>
                 <span className="text-blue-400 font-bold">{progress}%</span>
               </div>
               <div className="relative w-full bg-slate-600/50 rounded-full h-3 overflow-hidden">
-                <div 
+                <div
                   className="absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 rounded-full transition-all duration-500 ease-out shadow-lg"
-                  style={{ width: `${progress}%`, boxShadow: '0 0 10px rgba(59, 130, 246, 0.5)' }} 
+                  style={{ width: `${progress}%`, boxShadow: '0 0 10px rgba(59, 130, 246, 0.5)' }}
                 />
               </div>
             </div>
           </div>
         ) : videoUrl ? (
-          <video 
-            src={videoUrl} 
-            className="w-full h-full"
+          <video
+            src={videoUrl}
             controls
+            playsInline
             preload="metadata"
             onError={() => setError('Video playback error')}
             crossOrigin="anonymous"
+            className="w-full h-full"
           />
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-full text-red-400 p-4 text-center">
@@ -279,14 +182,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, v
           </div>
         ) : (
           <div className="flex items-center justify-center h-full text-slate-400 p-6 text-center">
-            <div>
-              <p className="text-base mb-2">{getStatusMessage()}</p>
-              {canProcess && (
-                <p className="text-sm text-slate-500">
-                  {videoFiles.length} video{videoFiles.length !== 1 ? 's' : ''} ready to stitch
-                </p>
-              )}
-            </div>
+            <p className="text-base">Click "Process Videos" to create your ranked video</p>
           </div>
         )}
       </div>

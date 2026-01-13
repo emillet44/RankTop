@@ -4,7 +4,7 @@
 
 const { Storage } = require('@google-cloud/storage');
 
-  const { privateKey } = JSON.parse(process.env.GOOGLE_PRIVATE_KEY || '{ privateKey: null }')
+  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
   const options = {
     credentials: {
       client_email: process.env.GOOGLE_CLIENT_EMAIL,

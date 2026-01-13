@@ -5,7 +5,13 @@ import { Storage } from '@google-cloud/storage'
 //Server action to check whether images exist in the GCS bucket(images are optional, 1 image for a rank does not gurantee all ranks have images). The images are then sorted using the
 //sort method(takes the image number in the url and performs subtractions to determine the order).
 
-const storage = new Storage()
+const storage = new Storage({
+  projectId: process.env.GOOGLE_PROJECT_ID,
+  credentials: {
+    client_email: process.env.GOOGLE_CLIENT_EMAIL,
+    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  },
+})
 const bucketName = 'ranktop-i'
 
 export async function fetchImageMetadata(postid: string) {
