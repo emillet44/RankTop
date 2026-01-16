@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { CreateUsername, UniqueUsername } from "@/components/serverActions/username";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 
 interface UsernameFormProps {
   userid: string;
@@ -18,19 +16,13 @@ export default function UsernameForm({ userid, currentUsername }: UsernameFormPr
   const [disabled, setDisabled] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  const router = useRouter();
-  const { data: session, update } = useSession();
-
   const checkChars = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // 1. Apply your regex
     const result = e.target.value.replace(/[^a-zA-Z0-9-_]/g, '');
     setInputValue(result);
 
-    // 2. Check if it matches "Guest" (case insensitive)
     const reserved = result.toLowerCase() === "guest";
     setIsReserved(reserved);
 
-    // 3. Enable button only if valid length and not reserved
     setDisabled(result.length < 3 || reserved);
   };
 
@@ -61,9 +53,8 @@ export default function UsernameForm({ userid, currentUsername }: UsernameFormPr
     const success = await CreateUsername(inputValue, userid);
 
     if (success) {
-      await update();
-      router.push(`/user/${inputValue.toLowerCase()}`); // Changed to lowercase
-      router.refresh();
+      // Hard navigation forces session to reload from server
+      window.location.href = `/user/${inputValue.toLowerCase()}`;
     } else {
       setConfirmation(false);
       setNotunique(true);

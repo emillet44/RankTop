@@ -8,7 +8,7 @@ export default function SignInPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/'
-  
+
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -117,12 +117,12 @@ export default function SignInPage() {
       setError('Invalid credentials')
       setLoading(false)
     } else {
-      router.push(callbackUrl)
-      router.refresh()
+      // Force a hard navigation to ensure session loads
+      window.location.href = callbackUrl;
     }
   }
 
-  const isFormValid = isSignUp 
+  const isFormValid = isSignUp
     ? email && password && username && !emailError && !passwordError && !usernameError
     : email && password;
 
@@ -147,9 +147,8 @@ export default function SignInPage() {
                 placeholder="Username"
                 value={username}
                 onChange={handleUsernameChange}
-                className={`w-full px-4 py-2 bg-slate-800 border rounded text-white ${
-                  usernameError ? 'border-red-500' : 'border-slate-700'
-                }`}
+                className={`w-full px-4 py-2 bg-slate-800 border rounded text-white ${usernameError ? 'border-red-500' : 'border-slate-700'
+                  }`}
                 required
               />
               {usernameError && (
@@ -163,9 +162,8 @@ export default function SignInPage() {
               placeholder="Email"
               value={email}
               onChange={handleEmailChange}
-              className={`w-full px-4 py-2 bg-slate-800 border rounded text-white ${
-                emailError ? 'border-red-500' : 'border-slate-700'
-              }`}
+              className={`w-full px-4 py-2 bg-slate-800 border rounded text-white ${emailError ? 'border-red-500' : 'border-slate-700'
+                }`}
               required
             />
             {emailError && (
@@ -178,18 +176,17 @@ export default function SignInPage() {
               placeholder="Password"
               value={password}
               onChange={handlePasswordChange}
-              className={`w-full px-4 py-2 bg-slate-800 border rounded text-white ${
-                passwordError ? 'border-red-500' : 'border-slate-700'
-              }`}
+              className={`w-full px-4 py-2 bg-slate-800 border rounded text-white ${passwordError ? 'border-red-500' : 'border-slate-700'
+                }`}
               required
             />
             {passwordError && (
               <p className="text-red-500 text-xs mt-1">{passwordError}</p>
             )}
           </div>
-          <button 
-            type="submit" 
-            disabled={loading || !isFormValid} 
+          <button
+            type="submit"
+            disabled={loading || !isFormValid}
             className="w-full bg-blue-600 py-3 rounded font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Sign In')}
@@ -200,21 +197,21 @@ export default function SignInPage() {
           <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 px-2 text-slate-500">or</span>
         </div>
 
-        <button 
+        <button
           onClick={() => signIn('google', { callbackUrl })}
           className="w-full bg-white text-black py-3 rounded font-bold flex items-center justify-center gap-2"
         >
           Continue with Google
         </button>
 
-        <button 
+        <button
           onClick={() => {
             setIsSignUp(!isSignUp)
             setError('')
             setEmailError('')
             setPasswordError('')
             setUsernameError('')
-          }} 
+          }}
           className="w-full mt-4 text-slate-400 hover:text-white text-sm"
         >
           {isSignUp ? 'Already have an account? Sign in' : 'New here? Create an account'}

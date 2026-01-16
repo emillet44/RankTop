@@ -10,7 +10,7 @@ export async function Header() {
     <div className="fixed w-screen flex justify-center pt-14 pb-2 md:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80% z-[100]">
       <div className="grid grid-flow-col min-w-[300px] h-9 justify-center items-center">
         <Link href="/home">
-          <button className="absolute left-2 top-1.5 text-3xl sm:top-3 sm:text-4xl/7 text-offwhite font-bold tracking-tighter">
+          <button className="absolute left-2 top-1.5 text-3xl sm:top-3 sm:text-4xl/7 text-offwhite tracking-tighter">
             RankTop
           </button>
         </Link>

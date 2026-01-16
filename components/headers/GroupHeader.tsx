@@ -16,7 +16,7 @@ export async function Header() {
       <div className="grid grid-flow-col min-w-[300px] h-9 justify-center items-center">
         {/* Logo */}
         <Link href="/home">
-          <button className="absolute left-2 top-1.5 text-3xl sm:top-3 sm:text-4xl/7 text-offwhite font-bold tracking-tighter hover:text-blue-400 transition-colors">
+          <button className="absolute left-2 top-1.5 text-3xl sm:top-3 sm:text-4xl/7 text-offwhite tracking-tighter hover:text-blue-400 transition-colors">
             RankTop
           </button>
         </Link>

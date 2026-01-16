@@ -102,7 +102,7 @@ export function AddFollow({ following, profileid, userid, username, followerCoun
                   </div>
                   <h2 className="text-slate-200 text-xl font-bold text-center mb-6">Join the community to follow {username}</h2>
                   <button 
-                    onClick={() => signIn(undefined, { callbackUrl: `/user/${username}` })} 
+                    onClick={() => signIn(undefined, { callbackUrl: `/user/${username.toLowerCase()}` })} 
                     className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors"
                   >
                     Sign In / Sign Up

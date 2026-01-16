@@ -52,7 +52,7 @@ export function CompressedMenu({ username, signedin }: { username: string, signe
           <div className="flex flex-col gap-1">
             {signedin && (
               <>
-                <Link href={`/user/${username}`} onClick={toggleMenu} className="hover:bg-slate-800 p-2 rounded-md transition-colors">
+                <Link href={`/user/${username.toLowerCase()}`} onClick={toggleMenu} className="hover:bg-slate-800 p-2 rounded-md transition-colors">
                   Profile
                 </Link>
                 <Link href="/username" onClick={toggleMenu} className="hover:bg-slate-800 p-2 rounded-md transition-colors">

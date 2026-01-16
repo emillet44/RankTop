@@ -27,6 +27,9 @@ function CustomPrismaAdapter(p: typeof prisma) {
 
 export const authOptions: NextAuthOptions = {
   adapter: CustomPrismaAdapter(prisma),
+  session: {
+    strategy: "jwt",
+  },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

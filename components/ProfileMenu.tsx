@@ -40,7 +40,7 @@ export function ProfileMenu({ username, userid }: { username: string, userid: st
             <p className="text-sm truncate text-slate-300 italic">#{userid.slice(-8)}</p>
           </div>
           
-          <Link href={`/user/${username}`} onClick={closeMenu}>
+          <Link href={`/user/${username.toLowerCase()}`} onClick={closeMenu}>
             <button className="text-left hover:bg-blue-600/20 hover:text-blue-400 px-4 py-2 w-full transition-colors">
               Your Profile
             </button>
