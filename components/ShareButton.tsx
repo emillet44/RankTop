@@ -9,15 +9,17 @@ interface ShareButtonProps {
   postTitle: string;
   postDescription?: string | null;
   postRanks: (string | null)[];
+  videoUrl: string | null;
 }
 
 type ImageFormat = 'square' | 'twitter' | 'story';
 
-export function ShareButton({ postId, postTitle, postDescription, postRanks }: ShareButtonProps) {
+export function ShareButton({ postId, postTitle, postDescription, postRanks, videoUrl }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [generatingFormats, setGeneratingFormats] = useState<Set<ImageFormat>>(new Set());
+  const [isDownloadingVideo, setIsDownloadingVideo] = useState(false);
 
   const shareUrl = `https://ranktop.net/post/${postId}`;
 
@@ -45,10 +47,37 @@ export function ShareButton({ postId, postTitle, postDescription, postRanks }: S
     }
   };
 
+  const exportVideo = async () => {
+    if (!videoUrl) return; // Ensure you pass videoUrl as a prop to ShareButton
+    setIsDownloadingVideo(true);
+
+    try {
+      const response = await fetch(videoUrl);
+      if (!response.ok) throw new Error('Failed to download video');
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${postTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setIsExportOpen(false);
+    } catch (error) {
+      console.error('Video download failed:', error);
+      alert('Failed to download video. You can try right-clicking the video and selecting "Save Video As".');
+    } finally {
+      setIsDownloadingVideo(false);
+    }
+  };
+
   // Image export functionality with per-format loading states
   const exportAsImage = async (format: ImageFormat) => {
     setGeneratingFormats(prev => new Set(prev).add(format));
-    
+
     try {
       // Define dimensions for different formats
       const dimensions = {
@@ -58,16 +87,16 @@ export function ShareButton({ postId, postTitle, postDescription, postRanks }: S
       };
 
       const { width, height } = dimensions[format];
-      
+
       // Use your existing OG image endpoint but with custom dimensions
       const imageUrl = `/api/og?title=${encodeURIComponent(postTitle)}&description=${encodeURIComponent(postDescription || '')}&ranks=${encodeURIComponent(postRanks.filter(Boolean).join(','))}&width=${width}&height=${height}&format=${format}`;
-      
+
       // Fetch the image
       const response = await fetch(imageUrl);
       if (!response.ok) throw new Error('Failed to generate image');
-      
+
       const blob = await response.blob();
-      
+
       // Create download link
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -77,7 +106,7 @@ export function ShareButton({ postId, postTitle, postDescription, postRanks }: S
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       setIsExportOpen(false);
     } catch (error) {
       console.error('Failed to export image:', error);
@@ -136,13 +165,13 @@ export function ShareButton({ postId, postTitle, postDescription, postRanks }: S
         <span className="hidden sm:inline">Export</span>
       </button>
 
-      {(isShareOpen || isExportOpen) && 
+      {(isShareOpen || isExportOpen) &&
         <>
           {/* Backdrop */}
           <div className="fixed inset-0 z-40" onClick={closeAllMenus} />
 
           {/* Share menu */}
-          {isShareOpen && 
+          {isShareOpen &&
             <div className="absolute right-0 top-12 z-50 bg-slate-800 border border-slate-700 rounded-md shadow-lg min-w-48 p-2">
               {/* Copy Link */}
               <button onClick={copyToClipboard} className="w-full flex items-center space-x-3 p-3 hover:bg-slate-700 rounded-md transition-colors">
@@ -192,52 +221,80 @@ export function ShareButton({ postId, postTitle, postDescription, postRanks }: S
           }
 
           {/* Export menu */}
-          {isExportOpen && 
-            <div className="absolute right-0 top-12 z-50 bg-slate-800 border border-slate-700 rounded-md shadow-lg min-w-56 p-2">
-              <div className="px-3 py-2 text-xs text-slate-400 font-medium uppercase tracking-wide border-b border-slate-600 mb-2">
-                Export as Image
-              </div>
-              
-              <button onClick={() => exportAsImage('square')} disabled={generatingFormats.has('square')} className="w-full flex items-center justify-between p-3 hover:bg-slate-700 rounded-md transition-colors disabled:opacity-50">
-                <div className="flex items-center space-x-3">
-                  <FontAwesomeIcon icon={faImage} style={{ color: "#94a3b8" }} />
-                  <div className="text-left">
-                    <div className="text-slate-300 font-medium">Instagram Square</div>
-                    <div className="text-slate-500 text-sm">1080 × 1080</div>
-                  </div>
-                </div>
-                {generatingFormats.has('square') && 
-                  <div className="w-4 h-4 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin" />
-                }
-              </button>
+          {isExportOpen && (
+            <div className="absolute right-0 top-12 z-50 bg-slate-800 border border-slate-700 rounded-md shadow-lg min-w-64 p-2">
 
-              <button onClick={() => exportAsImage('twitter')} disabled={generatingFormats.has('twitter')} className="w-full flex items-center justify-between p-3 hover:bg-slate-700 rounded-md transition-colors disabled:opacity-50">
-                <div className="flex items-center space-x-3">
-                  <FontAwesomeIcon icon={faImage} style={{ color: "#94a3b8" }} />
-                  <div className="text-left">
-                    <div className="text-slate-300 font-medium">Twitter Card</div>
-                    <div className="text-slate-500 text-sm">1200 × 675</div>
+              {/* CASE 1: VIDEO POST */}
+              {videoUrl ? (
+                <>
+                  <button
+                    onClick={exportVideo}
+                    disabled={isDownloadingVideo}
+                    className="w-full flex items-center justify-between p-3 hover:bg-slate-700 rounded-md transition-colors disabled:opacity-50 group"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="bg-blue-500/10 p-2 rounded-lg group-hover:bg-blue-500/20 transition-colors">
+                        <FontAwesomeIcon icon={faDownload} className="text-blue-400" />
+                      </div>
+                      <div className="text-left">
+                        <div className="text-blue-400 font-bold">Download Video</div>
+                        <div className="text-slate-500 text-xs font-mono">MP4 • 1080p</div>
+                      </div>
+                    </div>
+                    {isDownloadingVideo && (
+                      <div className="w-4 h-4 border-2 border-slate-600 border-t-blue-400 rounded-full animate-spin" />
+                    )}
+                  </button>
+                </>
+              ) : (
+                /* CASE 2: TEXT/IMAGE POST */
+                <>
+                  <div className="px-3 py-2 text-xs text-slate-400 font-medium uppercase tracking-wide border-b border-slate-700 mb-2">
+                    Export as Image
                   </div>
-                </div>
-                {generatingFormats.has('twitter') && 
-                  <div className="w-4 h-4 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin" />
-                }
-              </button>
 
-              <button onClick={() => exportAsImage('story')} disabled={generatingFormats.has('story')} className="w-full flex items-center justify-between p-3 hover:bg-slate-700 rounded-md transition-colors disabled:opacity-50">
-                <div className="flex items-center space-x-3">
-                  <FontAwesomeIcon icon={faImage} style={{ color: "#94a3b8" }} />
-                  <div className="text-left">
-                    <div className="text-slate-300 font-medium">Story Format</div>
-                    <div className="text-slate-500 text-sm">1080 × 1920</div>
-                  </div>
-                </div>
-                {generatingFormats.has('story') && 
-                  <div className="w-4 h-4 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin" />
-                }
-              </button>
+                  <button onClick={() => exportAsImage('square')} disabled={generatingFormats.has('square')} className="w-full flex items-center justify-between p-3 hover:bg-slate-700 rounded-md transition-colors disabled:opacity-50">
+                    <div className="flex items-center space-x-3">
+                      <FontAwesomeIcon icon={faImage} className="text-slate-400" />
+                      <div className="text-left">
+                        <div className="text-slate-300 font-medium">Instagram Square</div>
+                        <div className="text-slate-500 text-sm">1080 × 1080</div>
+                      </div>
+                    </div>
+                    {generatingFormats.has('square') && (
+                      <div className="w-4 h-4 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin" />
+                    )}
+                  </button>
+
+                  <button onClick={() => exportAsImage('twitter')} disabled={generatingFormats.has('twitter')} className="w-full flex items-center justify-between p-3 hover:bg-slate-700 rounded-md transition-colors disabled:opacity-50">
+                    <div className="flex items-center space-x-3">
+                      <FontAwesomeIcon icon={faImage} className="text-slate-400" />
+                      <div className="text-left">
+                        <div className="text-slate-300 font-medium">Twitter Card</div>
+                        <div className="text-slate-500 text-sm">1200 × 675</div>
+                      </div>
+                    </div>
+                    {generatingFormats.has('twitter') && (
+                      <div className="w-4 h-4 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin" />
+                    )}
+                  </button>
+
+                  <button onClick={() => exportAsImage('story')} disabled={generatingFormats.has('story')} className="w-full flex items-center justify-between p-3 hover:bg-slate-700 rounded-md transition-colors disabled:opacity-50">
+                    <div className="flex items-center space-x-3">
+                      <FontAwesomeIcon icon={faImage} className="text-slate-400" />
+                      <div className="text-left">
+                        <div className="text-slate-300 font-medium">Story Format</div>
+                        <div className="text-slate-500 text-sm">1080 × 1920</div>
+                      </div>
+                    </div>
+                    {generatingFormats.has('story') && (
+                      <div className="w-4 h-4 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin" />
+                    )}
+                  </button>
+                </>
+              )}
             </div>
-          }
+          )}
         </>
       }
     </div>

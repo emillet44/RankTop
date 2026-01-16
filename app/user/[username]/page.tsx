@@ -3,65 +3,76 @@ import { Footer } from "@/components/Footer";
 import { LoadUserPosts } from "@/components/serverActions/loadposts";
 import ProfilePostList from "@/components/ProfilePostList";
 import { prisma } from "@/lib/prisma";
-import { SignState } from "@/components/serverActions/signinstate";
-import profilepic from "../../../pfp.png"
+import { getSessionData } from "@/lib/auth-helpers";
+import profilepic from "../../../pfp.png";
 import Image from 'next/image';
 import { AddFollow } from "@/components/AddFollow";
-
+import { notFound, redirect } from "next/navigation";
 
 export default async function Profile(props: { params: Promise<{ username: string }> }) {
-  const params = await props.params;
+  const { username } = await props.params;
+  const session = await getSessionData();
+  const currentUserId = session?.userid;
 
-  const profileid = await prisma.user.findUnique({
-    where: {
-      username: params.username
+  // Case-insensitive lookup
+  const profileUser = await prisma.user.findFirst({
+    where: { 
+      username: {
+        equals: username,
+        mode: 'insensitive'
+      }
     },
     select: {
       id: true,
+      username: true, // Get the actual capitalized username
       followerCount: true,
-      followingCount: true
+      followingCount: true,
+      followers: currentUserId ? {
+        where: { followerId: currentUserId },
+        select: { followerId: true }
+      } : false
     }
   });
 
-  if (profileid != null) {
+  // 1. Handle user not found
+  if (!profileUser) {
+    notFound();
+  }
 
-    const posts = await LoadUserPosts(0, profileid.id);
-    const states = await SignState();
-    const following = (await prisma.follow.findUnique({
-      where: {
-        followerId_followingId: {
-          followerId: states[2],
-          followingId: profileid.id,
-        },
-      }
-    })) != null;
-    return (
-      <>
-        <Header />
-        <div className="min-h-[calc(100vh-64px)] pt-[148px] lg:pt-[100px] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed flex items-center flex-col">
-          <div className="max-w-7xl w-[370px] lg:w-[840px] xl:w-full flex justify-between items-start border-b border-white pb-2">
-            <div className="flex flex-row items-center">
-              <div className="w-16 h-16 mr-2 rounded-full relative flex">
-                <Image src={profilepic} alt="pfp" className="flex-shrink-0 object-fill" />
-              </div>
-              <AddFollow following={following} profileid={profileid.id} userid={states[2]} username={params.username} followerCount={profileid.followerCount} followingCount={profileid.followingCount} />
+  // 2. Redirect to lowercase canonical URL if needed
+  const lowercaseUsername = profileUser.username.toLowerCase();
+  if (username !== lowercaseUsername) {
+    redirect(`/user/${lowercaseUsername}`);
+  }
+
+  const posts = await LoadUserPosts(0, profileUser.id);
+  const isFollowing = Array.isArray(profileUser.followers) && profileUser.followers.length > 0;
+  const isOwnProfile = currentUserId === profileUser.id;
+
+  return (
+    <>
+      <Header />
+      <div className="min-h-[calc(100vh-64px)] pt-[148px] lg:pt-[100px] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed flex items-center flex-col">
+        <div className="max-w-7xl w-[370px] lg:w-[840px] xl:w-full flex justify-between items-start border-b border-white pb-4">
+          <div className="flex flex-row items-center w-full">
+            <div className="w-16 h-16 mr-4 rounded-full relative overflow-hidden border border-gray-800">
+              <Image src={profilepic} alt="pfp" className="object-cover" fill />
             </div>
+            
+            <AddFollow 
+              following={isFollowing} 
+              profileid={profileUser.id} 
+              userid={currentUserId} 
+              username={profileUser.username} // Use actual capitalized username
+              followerCount={profileUser.followerCount} 
+              followingCount={profileUser.followingCount}
+              isOwnProfile={isOwnProfile} 
+            />
           </div>
-          <ProfilePostList starter={posts} profileid={profileid.id} />
         </div>
-        <Footer />
-      </>
-    )
-  }
-  else {
-    return (
-      <>
-        <Header />
-        <div className="min-h-[calc(100vh-64px)] pt-[148px] lg:pt-[100px] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed flex items-center justify-center flex-col">
-          <header className="text-offwhite">Profile not found!</header>
-        </div>
-        <Footer />
-      </>
-    )
-  }
+        <ProfilePostList starter={posts} profileid={profileUser.id} />
+      </div>
+      <Footer />
+    </>
+  );
 }

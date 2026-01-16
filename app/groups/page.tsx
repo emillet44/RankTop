@@ -2,31 +2,19 @@ import { Header } from "@/components/headers/GroupHeader";
 import { Footer } from "@/components/Footer";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { SignState } from "@/components/serverActions/signinstate";
+import { getSessionData } from "@/lib/auth-helpers";
 import Image from 'next/image';
 
 export default async function Groups() {
+  const { signedin, userid } = await getSessionData();
 
-  const states: any[] = await SignState();
   const usergroups = await prisma.groups.findMany({
     where: {
       OR: [
-        {
-          members: {
-            some: {
-              id: states[2],
-            },
-          },
-        },
-        {
-          admins: {
-            some: {
-              id: states[2],
-            },
-          },
-        },
-      ],
-    },
+        { members: { some: { id: userid } } },
+        { admins: { some: { id: userid } } }
+      ]
+    }
   });
 
   return (
@@ -48,7 +36,7 @@ export default async function Groups() {
         </div>
         <div className="flex justify-center px-4 sm:px-6 lg:px-8">
           <div className="w-full max-w-4xl bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-            {states[0] && usergroups.length !== 0 && usergroups?.map((group: any) => (
+            {signedin && usergroups.length !== 0 && usergroups?.map((group: any) => (
               <div className="border-b border-gray-700 last:border-none" key={group.id}>
                 <Link href={`/group/${group.id}`}>
                   <div className="flex items-center p-4 hover:bg-gray-700">
@@ -71,17 +59,17 @@ export default async function Groups() {
                 </Link>
               </div>
             ))}
-            {states[0] && usergroups.length === 0 &&
+            {signedin && usergroups.length === 0 &&
               <div className="p-8 text-center">
                 <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">No groups yet!</h2>
                 <p className="text-gray-300 mb-6">Check out the search tab to find groups you might be interested in.</p>
                 <Link href="/groupsearch" className="inline-block px-6 py-3 bg-blue-800 text-white rounded-md hover:bg-blue-900">Search Groups</Link>
               </div>
             }
-            {!states[0] &&
+            {!signedin &&
               <div className="p-8 text-center">
                 <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">Sign in to view your groups</h2>
-                <Link href="/api/auth/signin" className="inline-block px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600">Sign In</Link>
+                <Link href="/signin" className="inline-block px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600">Sign In</Link>
               </div>
             }
           </div>

@@ -102,7 +102,7 @@ export function JoinGroupForm({ signedin, userid }: { signedin: boolean, userid:
         {!signedin &&
           <div className="p-8 text-center">
             <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4">Sign in to join a group</h2>
-            <Link href="/api/auth/signin" className="inline-block px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600">Sign In</Link>
+            <Link href="/signin" className="inline-block px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600">Sign In</Link>
           </div>
         }
 

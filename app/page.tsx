@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 }
 
 export default function Home() {
-  // UpdatePostViews();
+  //UpdatePostViews();
   return (
     <>
       <Header />

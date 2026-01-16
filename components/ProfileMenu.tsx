@@ -2,55 +2,64 @@
 
 import Image from 'next/image'
 import profilepic from '../pfp.png'
-import { useEffect, useRef, useState } from 'react'
-import { AddUsername } from './AddUsername';
+import { useState } from 'react'
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
 
-//This button displays the username and eventually it will display the profile picture of users(for now its a default image). menuOpen is used to toggle the drawer either through the
-//button or clicking anywhere outside the drawer. drawerRef is a reference to the div that contains the drawer, which is used to determine in combination with buttonRef to determine
-//all potential locations that the user can click to exit the drawer(basically not the button or the drawer[not the button because it already has it's own toggle function]).
-
 export function ProfileMenu({ username, userid }: { username: string, userid: string }) {
-
   const [menuOpen, setMenuOpen] = useState(false);
-  const drawerRef = useRef<HTMLDivElement | null>(null);
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
 
-  const handleClickOutside = (event: MouseEvent) => {
-    if (menuOpen && !(drawerRef.current?.contains(event.target as Node) || buttonRef.current?.contains(event.target as Node))) {
-      setMenuOpen(false);
-    }
-  }
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  }
-
-  useEffect(() => {
-    document.addEventListener('click', handleClickOutside, true);
-    return () => {
-      document.removeEventListener('click', handleClickOutside, true);
-    };
-  });
+  const closeMenu = () => setMenuOpen(false);
+  const toggleMenu = () => setMenuOpen((prev) => !prev);
 
   return (
-    <div className="flex-shrink min-w-0 max-w-full z-50">
-      <button ref={buttonRef} onClick={toggleMenu} className="flex items-center gap-1 hover:outline outline-2 p-1 text-sm sm:text-base rounded-sm outline-offwhite w-full">
-        <Image src={profilepic} alt="pfp" width={30} height={30} className="flex-shrink-0" />
-        <span className="text-offwhite truncate min-w-0 flex-grow">{username}</span>
-      </button>
-      {menuOpen &&
-        <div ref={drawerRef} className="fixed flex flex-col top-16 right-3 w-56 outline outline-slate-700 bg-slate-900 rounded-lg text-offwhite py-1">
-          {username === "" &&
-            <AddUsername userid={userid} />
-          }
-          <Link href={`/user/${username}`}>
-            <button className="text-left hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1 w-full">Profile</button>
-          </Link>
-          <button onClick={() => signOut({ callbackUrl: "/" })} className="text-left hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Log Out</button>
+    <div className="relative flex-shrink min-w-0 max-w-full z-[110]">
+      {menuOpen && (
+        <div 
+          className="fixed inset-0 z-[-1] cursor-default" 
+          onClick={closeMenu} 
+        />
+      )}
+
+      <button 
+        onClick={toggleMenu} 
+        className="flex items-center gap-2 hover:outline outline-1 p-1 pr-2 text-sm sm:text-base rounded-md outline-slate-700 bg-white/5 transition-all max-w-[150px] sm:max-w-[200px]"
+      >
+        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+          <Image src={profilepic} alt="pfp" width={32} height={32} className="object-cover" />
         </div>
-      }
+        <span className="text-offwhite truncate font-medium">@{username}</span>
+      </button>
+
+      {menuOpen && (
+        <div 
+          className="absolute flex flex-col top-12 right-0 w-56 outline outline-1 outline-slate-700 bg-slate-900 rounded-lg text-offwhite py-2 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200"
+        >
+          <div className="px-4 py-2 border-b border-slate-800 mb-1">
+            <p className="text-xs text-slate-500 uppercase font-bold">Account</p>
+            <p className="text-sm truncate text-slate-300 italic">#{userid.slice(-8)}</p>
+          </div>
+          
+          <Link href={`/user/${username}`} onClick={closeMenu}>
+            <button className="text-left hover:bg-blue-600/20 hover:text-blue-400 px-4 py-2 w-full transition-colors">
+              Your Profile
+            </button>
+          </Link>
+          
+          <Link href="/username" onClick={closeMenu}>
+            <button className="text-left hover:bg-blue-600/20 hover:text-blue-400 px-4 py-2 w-full transition-colors">
+              Settings
+            </button>
+          </Link>
+
+          <button 
+            onClick={() => signOut({ callbackUrl: "/" })} 
+            className="text-left hover:bg-red-600/20 hover:text-red-400 px-4 py-2 w-full transition-colors border-t border-slate-800 mt-1"
+          >
+            Log Out
+          </button>
+        </div>
+      )}
     </div>
   )
 }

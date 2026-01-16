@@ -6,88 +6,113 @@ import { faCircleXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { signIn } from "next-auth/react";
 
-export function AddFollow({ following, profileid, userid, username, followerCount, followingCount }: { following: boolean, profileid: string, userid: string, username: string, followerCount: number, followingCount: number }) {
+interface AddFollowProps {
+  following: boolean;
+  profileid: string;
+  userid?: string; // Optional because user might be logged out
+  username: string;
+  followerCount: number;
+  followingCount: number;
+  isOwnProfile: boolean;
+}
 
+export function AddFollow({ following, profileid, userid, username, followerCount, followingCount, isOwnProfile }: AddFollowProps) {
   const count = useRef(0);
   const [followed, setFollowed] = useState(following);
   const [quickfollow, setQuickFollow] = useState(0);
   const [modalon, setModal] = useState(false);
   const [pause, setPause] = useState(false);
 
-  const toggleModal = () => {
-    setModal(!modalon);
-  }
-
   const toggleFollow = async () => {
-    if (pause) {
-      return;
-    }
+    if (pause || isOwnProfile) return;
+    
     count.current = count.current + 1;
-    setPause(true);
+    if (count.current > 6) return; // Basic rate limit
 
-    if (count.current <= 6) {
-      if (followed) {
-        setFollowed(false);
-        setQuickFollow(quickfollow - 1);
-        await removeFollow(profileid, userid);
-      }
-      else {
-        setFollowed(true);
-        setQuickFollow(quickfollow + 1);
-        await addFollow(profileid, userid);
-      }
+    setPause(true);
+    if (followed) {
+      setFollowed(false);
+      setQuickFollow(prev => prev - 1);
+      await removeFollow(profileid, userid!);
+    } else {
+      setFollowed(true);
+      setQuickFollow(prev => prev + 1);
+      await addFollow(profileid, userid!);
     }
 
-    setTimeout(() => {
-      setPause(false);
-    }, 1000);
-  }
+    setTimeout(() => setPause(false), 1000);
+  };
 
-  if (userid) {
-    return (
-      <>
-        <div className="flex flex-col">
-          <h1 className="text-4xl text-offwhite">{username}</h1>
-          <div className="flex flex-row space-x-4">
-            <h2 className="text-sm text-slate-400 mt-1">{followerCount + quickfollow} Followers</h2>
-            <h2 className="text-sm text-slate-400 mt-1">{followingCount} Following</h2>
-          </div>
+  return (
+    <div className="flex flex-row items-center justify-between w-full">
+      {/* 1. Identity Section: Always visible */}
+      <div className="flex flex-col">
+        <h1 className="text-4xl text-offwhite font-bold">{username}</h1>
+        <div className="flex flex-row space-x-4">
+          <h2 className="text-sm text-slate-400 mt-1">
+            <span className="text-offwhite font-semibold">{followerCount + quickfollow}</span> Followers
+          </h2>
+          <h2 className="text-sm text-slate-400 mt-1">
+            <span className="text-offwhite font-semibold">{followingCount}</span> Following
+          </h2>
         </div>
+      </div>
 
-        {!(profileid === userid) &&
+      {/* 2. Action Section: Context-aware */}
+      <div className="ml-4">
+        {isOwnProfile ? (
+          // Case A: User is looking at themselves
+          <button className="outline outline-2 outline-slate-700 rounded-md px-4 py-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-300 transition-all">
+            Edit Profile
+          </button>
+        ) : userid ? (
+          // Case B: Logged in and looking at someone else
+          <button 
+            onClick={toggleFollow} 
+            className={`outline outline-2 outline-slate-700 rounded-md py-2 w-[100px] transition-all bg-slate-50 bg-opacity-5 group ${
+              followed ? 'hover:bg-red-600 hover:bg-opacity-20' : 'hover:bg-opacity-10'
+            }`}
+          >
+            {followed ? (
+              <>
+                <span className="group-hover:hidden text-slate-400">Following</span>
+                <span className="hidden group-hover:block text-red-400">Unfollow?</span>
+              </>
+            ) : (
+              <span className="text-slate-400">Follow</span>
+            )}
+          </button>
+        ) : (
+          // Case C: Logged out
           <>
-            {!followed &&
-              <button onClick={toggleFollow} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400 ml-4 mt-4">Follow</button>
-            }
-            {followed &&
-              <button onClick={toggleFollow} className="outline outline-2 outline-slate-700 rounded-md py-2 bg-slate-50 hover:bg-opacity-20 hover:bg-red-600 w-[84px] bg-opacity-5 text-slate-400 ml-4 mt-4 group">
-                <header className="group-hover:hidden text-slate-400">Following</header>
-                <header className="hidden group-hover:block text-slate-400">Unfollow?</header>
-              </button>
-            }
-          </>
-        }
-      </>
-    )
-  }
-  else {
-    return (
-      <>
-        <button onClick={toggleModal} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400 ml-4 mt-4">Follow</button>
-        {modalon &&
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-slate-800 rounded-lg p-1 w-80 flex flex-col items-center">
-              <div className="flex w-full justify-end">
-                <button onClick={toggleModal}>
-                  <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6 text-slate-400 hover:text-slate-200" />
-                </button> 
+            <button 
+              onClick={() => setModal(true)} 
+              className="outline outline-2 outline-slate-700 rounded-md px-6 py-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400"
+            >
+              Follow
+            </button>
+            
+            {modalon && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 w-80 flex flex-col items-center shadow-2xl">
+                  <div className="flex w-full justify-end mb-2">
+                    <button onClick={() => setModal(false)}>
+                      <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6 text-slate-500 hover:text-white transition-colors" />
+                    </button> 
+                  </div>
+                  <h2 className="text-slate-200 text-xl font-bold text-center mb-6">Join the community to follow {username}</h2>
+                  <button 
+                    onClick={() => signIn(undefined, { callbackUrl: `/user/${username}` })} 
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors"
+                  >
+                    Sign In / Sign Up
+                  </button>
+                </div>
               </div>
-              <h2 className="text-slate-300 text-2xl font-bold text-center mb-4 px-4">Sign in to follow users</h2>
-              <button onClick={() => signIn(undefined, { callbackUrl: `/user/${username}` })} className="my-2 w-72 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full">Sign In</button>
-            </div>
-          </div>
-        }
-      </>
-    )
-  }
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
 }

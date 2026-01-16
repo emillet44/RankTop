@@ -1,122 +1,137 @@
 'use client'
 
-import { FC, useState } from "react";
-import { CreateUsername, UniqueUsername } from "./serverActions/username";
+import { useState } from "react";
+import { CreateUsername, UniqueUsername } from "@/components/serverActions/username";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
-//This function starts by initializing state variables and the Nextjs router. When the "Add Username" button is clicked, the toggleForm function is called
-//which opens the form if it was closed, or closes all the forms if any were open. As soon as the user types in the input, characters are validated using
-//regex in checkChars, replacing invalid characters with "". When the continue button is clicked, checkUnique is called, which either displays the notunique
-//form that says the username is already taken, or the confirmopen form, that asks if the user is sure of this username as its permanent, and displays a back
-//and submit button. If the back button is clicked, the base form with the username input is shown again, and if the submit button is clicked, newUsername
-//is called which adds the username to the database and silently refreshes the page(similar to ctrl + r but the page never goes blank) to display the username.
-//The previous format of AddUsername with a small floating form has now been changed to a modal centered on the screen, to avoid any scaling issues.
+interface UsernameFormProps {
+  userid: string;
+  currentUsername: string;
+}
 
-export function AddUsername({ userid }: { userid: string }) {
-
-  const [formopen, setFormOpen] = useState(Boolean);
-  const [confirmopen, setConfirmation] = useState(Boolean);
-  const [notunique, setNotunique] = useState(Boolean);
+export default function UsernameForm({ userid, currentUsername }: UsernameFormProps) {
+  const [confirmopen, setConfirmation] = useState(false);
+  const [notunique, setNotunique] = useState(false);
+  const [isReserved, setIsReserved] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [disabled, setDisabled] = useState(true);
+  const [loading, setLoading] = useState(false);
+
   const router = useRouter();
+  const { data: session, update } = useSession();
 
-  const toggleForm = (e: any) => {
-    e.preventDefault();
-    if (formopen && e.target.id === "parent") {
-      setFormOpen(false);
-      setConfirmation(false);
-      setNotunique(false);
-      setDisabled(true);
-      setInputValue("");
-    }
-    else {
-      setFormOpen(true);
-    }
-  }
-
-  const back = (e: any) => {
-    e.preventDefault();
-    if (e.target.value == "uniqueback") {
-      setNotunique(false);
-    }
-    else {
-      setConfirmation(false);
-    }
-  }
-
-  const checkUnique = (e: any) => {
-    e.preventDefault();
-
-    UniqueUsername(inputValue).then((result) => {
-      if (result) {
-        setNotunique(true);
-        setConfirmation(false);
-      }
-      else {
-        setNotunique(false);
-        setConfirmation(true);
-      }
-    })
-  }
-
-  const checkChars = (e: any) => {
-    const result = e.target.value.replace(/[^a-z0-9-_]/gi, '');
+  const checkChars = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // 1. Apply your regex
+    const result = e.target.value.replace(/[^a-zA-Z0-9-_]/g, '');
     setInputValue(result);
-    if (e.target.value !== "") {
-      setDisabled(false);
-    }
-    else {
-      setDisabled(true);
-    }
-  }
 
-  const newUsername = (e: any) => {
-    CreateUsername(inputValue, userid).then((result) => {
-      if (result) {
-        router.refresh();
-      }
-      else {
-        setConfirmation(false);
-        setNotunique(true);
-      }
-    });
-  }
+    // 2. Check if it matches "Guest" (case insensitive)
+    const reserved = result.toLowerCase() === "guest";
+    setIsReserved(reserved);
+
+    // 3. Enable button only if valid length and not reserved
+    setDisabled(result.length < 3 || reserved);
+  };
+
+  const checkUnique = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (disabled || loading) return;
+
+    setLoading(true);
+    const isTaken = await UniqueUsername(inputValue);
+
+    if (isTaken) {
+      setNotunique(true);
+      setConfirmation(false);
+    } else {
+      setNotunique(false);
+      setConfirmation(true);
+    }
+    setLoading(false);
+  };
+
+  const back = () => {
+    setNotunique(false);
+    setConfirmation(false);
+  };
+
+  const handleFinalSubmit = async () => {
+    setLoading(true);
+    const success = await CreateUsername(inputValue, userid);
+
+    if (success) {
+      await update();
+      router.push(`/user/${inputValue.toLowerCase()}`); // Changed to lowercase
+      router.refresh();
+    } else {
+      setConfirmation(false);
+      setNotunique(true);
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      <button onClick={toggleForm} className="outline-none peer text-left text-offwhite hover:bg-slate-600 hover:bg-opacity-50 px-2 py-1">Add Username</button>
-      {formopen &&
-        <div onClick={toggleForm} id="parent" className="z-50 fixed top-0 right-0 flex w-screen h-screen items-center justify-center bg-gray-600/50">
-          <div className="outline outline-slate-700 bg-slate-900 rounded-lg w-64 p-4 text-base">
-            {!confirmopen && !notunique &&
-              <div className="grid grid-cols-1 gap-2 grid-flow-row auto-rows-auto">
-                <label className="text-slate-400">Username</label>
-                <input name="username" id="username" value={inputValue} onChange={checkChars} className="outline outline-2 outline-slate-700 rounded-sm bg-transparent text-offwhite" maxLength={16}></input>
-                <div className="flex justify-end">
-                  <button type="submit" onClick={checkUnique} disabled={disabled} className="outline outline-2 outline-slate-700 rounded-sm w-20 disabled:invisible text-slate-400">Continue</button>
-                </div>
-              </div>
-            }
-            {notunique &&
-              <div className="grid grid-cols-1 gap-2 grid-flow-row auto-rows-auto">
-                <label>Username Taken</label>
-                <button value="uniqueback" onClick={back} className="outline outline-2 rounded-sm w-24">Try Another</button>
-              </div>
-            }
-            {confirmopen &&
-              <div className="grid grid-cols-2 gap-2 grid-flow-row auto-rows-auto">
-                <label className="text-slate-400">{inputValue}</label>
-                <label className="col-span-2 text-slate-400">This will be your permanent username. Are you sure?</label>
-                <button onClick={back} className="outline outline-2 outline-slate-700 rounded-sm w-16 text-slate-400">Back</button>
-                <div className="col-start-2 flex justify-end">
-                  <button onClick={newUsername} className="outline outline-2 outline-slate-700 rounded-sm w-16 text-slate-400">Submit</button>
-                </div>
-              </div>
-            }
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 flex items-center justify-center p-4">
+      <div className="outline outline-slate-700 bg-slate-900 rounded-xl w-full max-w-sm p-8 shadow-2xl">
+
+        {!confirmopen && !notunique && (
+          <form onSubmit={checkUnique} className="flex flex-col gap-6">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-bold text-offwhite">Change Handle</h1>
+              <p className="text-slate-400 text-sm">
+                Current: <span className="text-blue-400">@{currentUsername || 'none'}</span>
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-slate-500 text-xs font-bold uppercase">New Username</label>
+              <input
+                autoFocus
+                value={inputValue}
+                onChange={checkChars}
+                className={`outline outline-2 rounded-md bg-slate-950 p-3 text-offwhite transition-all text-lg outline-slate-800 focus:outline-blue-600 ${isReserved ? 'focus:outline-red-500' : ''}`}
+                maxLength={16}
+                placeholder="new_handle"
+              />
+              {isReserved && (
+                <p className="text-red-500 text-xs italic">&quot;Guest&quot; is a reserved name.</p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={disabled || loading}
+              className="bg-blue-600 hover:bg-blue-500 disabled:opacity-30 rounded-md py-3 text-white font-bold transition-all"
+            >
+              {loading ? 'Checking...' : 'Check Availability'}
+            </button>
+          </form>
+        )}
+
+        {/* Taken State */}
+        {notunique && (
+          <div className="flex flex-col gap-6 text-center">
+            <h2 className="text-xl font-bold text-white">Already Taken</h2>
+            <p className="text-slate-400 text-sm">Someone else is already using <span className="text-red-400">@{inputValue}</span>.</p>
+            <button onClick={back} className="outline outline-2 outline-slate-700 rounded-md py-3 text-slate-300 font-bold">Try Another</button>
           </div>
-        </div>
-      }
-    </>
-  )
+        )}
+
+        {/* Confirmation State */}
+        {confirmopen && (
+          <div className="flex flex-col gap-6 text-center">
+            <span className="text-blue-400 font-mono text-3xl font-bold italic">@{inputValue}</span>
+            <p className="text-slate-400 text-sm">This is permanent. Once you confirm, all your previous posts and comments will update to this handle.</p>
+            <div className="grid grid-cols-2 gap-4">
+              <button onClick={back} className="outline outline-2 outline-slate-700 rounded-md py-3 text-slate-400">Back</button>
+              <button onClick={handleFinalSubmit} disabled={loading} className="bg-green-600 hover:bg-green-500 rounded-md py-3 text-white font-bold">
+                {loading ? 'Updating...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

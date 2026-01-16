@@ -1,8 +1,9 @@
 import { Header } from "@/components/headers/NewPostHeader";
 import { CSForm } from "../../components/CSForm";
 import { Footer } from "@/components/Footer";
-import { SignState } from "@/components/serverActions/signinstate";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../api/auth/[...nextauth]/auth";
 
 //This page displays under the /newpost url, and calls the header and CSForm functions. Due to the way that Nextjs renders components, this page
 //had to work like this to avoid the fetch waterfall error, which happens when server actions are called during the initial render of a client component.
@@ -11,61 +12,55 @@ import { prisma } from "@/lib/prisma";
 
 
 export default async function NewPost() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session?.user?.id) {
+    // User not signed in
+    return (
+      <>
+        <Header />
+        <CSForm signedin={false} username="" userid="" usergroups={null} />
+        <Footer />
+      </>
+    );
+  }
 
-  const states: any[] = await SignState();
+  // Single query to get everything
   const user = await prisma.user.findUnique({
     where: {
-      id: states[2]
+      id: session.user.id
     },
     select: {
+      username: true,
       memberGroups: {
         select: {
-          id: true
+          id: true,
+          name: true,
         }
       },
       adminGroups: {
         select: {
-          id: true
+          id: true,
+          name: true,
         }
       }
     }
   });
-  const useringroup = !!user && (user.memberGroups.length > 0 || user.adminGroups.length > 0);
-  if(useringroup) {
-    const usergroups = await prisma.user.findUnique({
-      where: {
-        id: states[2],
-      },
-      select: {
-        memberGroups: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        adminGroups: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-    return (
-      <>
-        <Header />
-        <CSForm signedin={states[0]} username={states[1]} userid={states[2]} usergroups={usergroups} />
-        <Footer />
-      </>
-    )
-  }
-  else {
-    return (
-      <>
-        <Header />
-        <CSForm signedin={states[0]} username={states[1]} userid={states[2]} usergroups="" />
-        <Footer />
-      </>
-    )
-  }
+
+  const usergroups = (user?.memberGroups.length || user?.adminGroups.length) 
+    ? user 
+    : null;
+
+  return (
+    <>
+      <Header />
+      <CSForm 
+        signedin={true} 
+        username={user?.username || session.user.name || ''} 
+        userid={session.user.id} 
+        usergroups={usergroups} 
+      />
+      <Footer />
+    </>
+  );
 }

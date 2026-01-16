@@ -2,11 +2,11 @@ import { Header } from "@/components/headers/GroupHeader";
 import { Footer } from "@/components/Footer";
 import Link from "next/link";
 import { JoinGroupForm } from "@/components/JoinGroupForm";
-import { SignState } from "@/components/serverActions/signinstate";
+import { getSessionData } from "@/lib/auth-helpers";
 
 export default async function SearchGroups() {
 
-  const states: any[] = await SignState();
+  const { signedin, userid } = await getSessionData();
 
   return (
     <>
@@ -25,7 +25,7 @@ export default async function SearchGroups() {
             </li>
           </ul>
         </div>
-        <JoinGroupForm signedin={states[0]} userid={states[2]} />
+        <JoinGroupForm signedin={signedin} userid={userid} />
       </div>
       <Footer />
     </>

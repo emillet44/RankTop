@@ -1,47 +1,59 @@
 import Link from "next/link"
-import { SignState } from "../serverActions/signinstate"
+import { getSessionData } from "@/lib/auth-helpers";
 import { Search } from "../search/SearchBox"
 import { ProfileMenu } from "../ProfileMenu";
-import { CompressedMenu } from "../CompressedMenu";
 
-
-//Main header that displays sign in state, determines whether the user has added a username or not. If not, it will employ the AddUsername component. The states array is widely used
-//throughout the code to store important states like sign in state, like state, username, email, etc. States[0] stores login state, and states[1] stores username state. States[2]
-//stores the actual username.
-
+/**
+ * Main Header
+ * Uses getSessionData (optimized for NextAuth) to determine if a user
+ * is authenticated and passes the username/userid to the ProfileMenu.
+ */
 export async function Header() {
-
-  const states: any[] = await SignState();
+  const { signedin, username, userid } = await getSessionData();
 
   return (
-    <div className="fixed w-screen flex justify-center pt-14 pb-2 md:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80% z-10">
-      <div className="grid grid-flow-col min-w-[300px] h-9 justify-center">
-        <Link href="/">
-          <button className="absolute left-2 top-1.5 text-3xl sm:top-3 sm:text-4xl/7 text-offwhite">RankTop</button>
+    <div className="fixed w-screen flex justify-center pt-14 pb-2 md:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80% z-[100]">
+      <div className="grid grid-flow-col min-w-[300px] h-9 justify-center items-center">
+        {/* Logo */}
+        <Link href="/home">
+          <button className="absolute left-2 top-1.5 text-3xl sm:top-3 sm:text-4xl/7 text-offwhite font-bold tracking-tighter hover:text-blue-400 transition-colors">
+            RankTop
+          </button>
         </Link>
+
+        {/* Global Search Component */}
         <Search />
 
-        {states[0] &&
-          <div className="w-[calc(100vw-140px)] md:min-w-[230px] md:w-[calc(50vw-160px)] absolute justify-end flex-row right-2 2xl:right-4 md:top-1 top-[7px] items-center flex">
+        {signedin ? (
+          /* AUTHENTICATED STATE */
+          <div className="w-[calc(100vw-140px)] md:min-w-[230px] md:w-[calc(50vw-160px)] absolute justify-end flex-row right-2 2xl:right-4 md:top-1 top-[7px] items-center flex gap-2">
             <Link href="/newpost">
-              <button className="hover:outline outline-2 py-2 px-2 rounded-sm text-sm sm:text-base text-offwhite whitespace-nowrap">New Post</button>
+              <button className="hover:outline outline-1 outline-slate-700 py-2 px-3 rounded-md text-sm sm:text-base text-offwhite whitespace-nowrap bg-white/5 transition-all">
+                New Post
+              </button>
             </Link>
-            <div className="z-50">
-              <ProfileMenu username={states[1]} userid={states[2]} />
+            
+            <div className="z-[110]">
+              {/* ProfileMenu now receives actual username from session */}
+              <ProfileMenu username={username} userid={userid} />
             </div>
           </div>
-        }
-        {!states[0] &&
-          <>
-            <Link href="/api/auth/signin">
-              <button className="absolute right-2 top-1.5 hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">Sign In</button>
-            </Link>
+        ) : (
+          /* GUEST STATE */
+          <div className="absolute right-2 top-1.5 flex gap-2">
             <Link href="/newpost">
-              <button className="absolute right-20 top-1.5 hover:outline outline-2 py-2 px-2 rounded-sm text-offwhite">New Post</button>
+              <button className="hidden sm:block hover:outline outline-1 outline-slate-700 py-2 px-3 rounded-md text-offwhite bg-white/5 transition-all">
+                New Post
+              </button>
             </Link>
-          </>
-        }
+            <Link href="/signin">
+              <button className="hover:bg-blue-600 outline outline-1 outline-blue-600 py-2 px-4 rounded-md text-offwhite transition-all font-semibold">
+                Sign In
+              </button>
+            </Link>
+          </div>
+        )}
       </div>
     </div>
-  )
+  );
 }

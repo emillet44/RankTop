@@ -16,7 +16,7 @@ export async function AlgoliaUpdate() {
 
     if (!metadata) {
       console.error("Metadata not found, retrying in 60 seconds...");
-      setTimeout(AlgoliaUpdate, 60000); 
+      setTimeout(AlgoliaUpdate, 60000);
       AlgoliaUpdate();
       return;
     }
@@ -38,7 +38,7 @@ export async function AlgoliaUpdate() {
         username: post.author?.username || post.username,
         date: post.metadata?.date?.toISOString() || null,
       }));
-      
+
       await postsIndex.saveObjects(formattedPosts);
       await prisma.algoliaMetadata.update({
         where: { id: "last-update" },
@@ -59,7 +59,7 @@ export async function AlgoliaUpdate() {
         name: group.name,
         private: group.private,
       }));
-      
+
       await groupsIndex.saveObjects(formattedGroups);
       await prisma.algoliaMetadata.update({
         where: { id: "last-update" },
@@ -70,7 +70,7 @@ export async function AlgoliaUpdate() {
     // Update Users
     const usersIndex = client.initIndex('Users');
     const users = await prisma.user.findMany({
-      where: { joindate: { gt: metadata.lastUser }, username: { not: null } },
+      where: { joindate: { gt: metadata.lastUser } },
       orderBy: { joindate: 'asc' }
     });
 
@@ -79,7 +79,7 @@ export async function AlgoliaUpdate() {
         objectID: user.id,
         username: user.username,
       }));
-      
+
       await usersIndex.saveObjects(formattedUsers);
       await prisma.algoliaMetadata.update({
         where: { id: "last-update" },

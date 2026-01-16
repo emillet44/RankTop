@@ -227,12 +227,7 @@ export default function PostsList({ starter }: { starter: any }) {
           {list.metadata?.videos && list.metadata.videoUrl ? (
             <div className="pt-8 pb-4 sm:border-x border-b border-slate-700">
               <header className="pl-8 text-4xl line-clamp-2 leading-tight text-slate-400 font-semibold pb-2">{list.title}</header>
-              <VideoDisplay
-                videoUrl={list.metadata.videoUrl}
-                postid={list.id}
-                title={list.title}
-                variant="preview"
-              />
+              <VideoDisplay videoUrl={list.metadata.videoUrl} title={list.title} ranks={[list.rank1, list.rank2, list.rank3, list.rank4, list.rank5]} variant="preview" />
               <div className="flex flex-row justify-between items-center border-t border-slate-100 pt-4 mx-8 mt-8">
                 <div>
                   <label className="text-xl text-slate-400">{list.metadata.likes} likes</label>
