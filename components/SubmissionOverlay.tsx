@@ -30,7 +30,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
     started.current = true;
 
     try {
-      // PHASE 1: UPLOADS (5% to 45%)
+      // PHASE 1: VIDEO UPLOADS
       if (postType === 'video' && !formData.has('sessionId')) {
         setMessage('Preparing cloud storage...');
         setProgress(5);
@@ -59,8 +59,6 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
           });
 
           if (!uploadRes.ok) throw new Error(`Upload failed for clip ${i + 1}`);
-
-          // Progress mapping for uploads
           setProgress(Math.round(10 + ((i + 1) / videoFiles.length) * 35));
         }
 
@@ -68,9 +66,9 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
         formData.append('filePaths', JSON.stringify(filePaths));
       }
 
-      // PHASE 2: RENDERING (46% to 100%)
+      // PHASE 2: FINAL PROCESSING (SSE)
       if (postType === 'video') {
-        setMessage('Starting final render...');
+        setMessage('Starting final 1080p render...');
         setProgress(46);
 
         const payload = Object.fromEntries(formData);
@@ -93,58 +91,49 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
         const finalPostId = response.headers.get('X-Post-Id');
         const reader = response.body?.getReader();
         const decoder = new TextDecoder();
+        let buffer = ''; // THE PERMANENT FIX: Store partial chunks here
+
         if (!reader) throw new Error("Processing stream unavailable");
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          // Crucial: Use stream: true to prevent broken JSON chunks
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
+          // Append new chunk to buffer
+          buffer += decoder.decode(value, { stream: true });
+
+          // Split by double newline (SSE standard)
+          const lines = buffer.split('\n');
+
+          // Keep the last element (likely a partial line) in the buffer
+          buffer = lines.pop() || '';
 
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.error) throw new Error(data.error);
+            const trimmedLine = line.trim();
+            if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
 
-                // --- Improved Mapping Logic ---
-                // Server 0-15% (Downloading) maps to UI 46-50%
-                // Server 15-90% (Rendering) maps to UI 50-90%
-                // Server 90-100% (Finalizing) maps to UI 90-100%
-                let uiProg;
-                if (data.progress <= 15) {
-                  uiProg = Math.round(46 + (data.progress * 0.26)); 
-                } else if (data.progress <= 90) {
-                  uiProg = Math.round(50 + ((data.progress - 15) * 0.53));
-                } else {
-                  uiProg = Math.round(90 + ((data.progress - 90) * 1.0));
-                }
+            try {
+              const data = JSON.parse(trimmedLine.slice(6));
+              if (data.error) throw new Error(data.error);
 
-                setProgress(Math.min(uiProg, 100));
+              // Map 0-100% to UI 46-100%
+              const uiProg = Math.round(46 + (data.progress * 0.54));
+              setProgress(Math.min(uiProg, 100));
+              setMessage(data.message || 'Processing...');
 
-                // Clean up the message for the user
-                if (data.progress <= 15) {
-                  setMessage('Initializing render engine...');
-                } else {
-                  setMessage(data.message || 'Processing...');
-                }
-
-                if (data.complete) {
-                  setProgress(100);
-                  setIsComplete(true);
-                  setTimeout(() => router.push(`/post/${finalPostId}`), 1200);
-                }
-              } catch (e) {
-                // Silently skip malformed JSON chunks that occur during high-speed streaming
-                console.debug("Partial stream chunk ignored");
+              if (data.complete) {
+                setProgress(100);
+                setIsComplete(true);
+                setTimeout(() => router.push(`/post/${finalPostId}`), 1000);
               }
+            } catch (e) {
+              // If JSON is partial, it's now handled by the buffer logic
+              console.debug("Partial JSON chunk - waiting for next packet");
             }
           }
         }
       } else {
-        // TEXT/IMAGE LOGIC
+        // TEXT/IMAGE POSTS
         setMessage('Saving post...');
         setProgress(70);
         const resultId = await newList(formData);
@@ -164,7 +153,6 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
     runSubmission();
   }, [runSubmission]);
 
-  // UI remains the same as your provided code
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/90 backdrop-blur-md px-4">
       <div className="w-full max-w-sm p-8 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl text-center">

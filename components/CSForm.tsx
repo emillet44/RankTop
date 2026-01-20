@@ -284,7 +284,6 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
   const handleSessionCreated = (sessionId: string, filePaths: string[]) => {
     setVideoSessionId(sessionId);
     setVideoFilePaths(filePaths);
-    console.log('Session created:', { sessionId, filePaths }); // For debugging
   };
 
   return (
