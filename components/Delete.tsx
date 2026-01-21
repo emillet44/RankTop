@@ -12,22 +12,25 @@ export function Delete({ id }: { id: string }) {
 
   const [modalon, setModal] = useState(false);
   const router = useRouter();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const toggleModal = () => {
     setModal(!modalon);
   }
 
-  const subHandler = () => {
-    DeletePost(id).then(() => {
-      router.push("/");
-    })
-  }
+  const subHandler = async () => {
+    setIsDeleting(true);
+    try {
+        await DeletePost(id);
+        router.push("/");
+    } catch (err) {
+        alert("Failed to delete post");
+        setIsDeleting(false);
+    }
+}
 
   return (
     <>
-
-
-
       <button onClick={toggleModal} className="outline outline-2 outline-slate-700 rounded-md p-2 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400 h-10 whitespace-nowrap">Delete</button>
       {modalon &&
         <div className="fixed inset-0 flex items-center justify-center z-50">
@@ -36,8 +39,7 @@ export function Delete({ id }: { id: string }) {
               <FontAwesomeIcon icon={faCircleXmark} className="w-6 h-6 text-slate-400 hover:text-slate-200" />
             </button>
             <h1 className="text-slate-300 text-2xl font-bold text-center mb-4 px-4">Delete this post?</h1>
-            <button onClick={subHandler} className="my-2 w-72 py-2 bg-red-500 hover:bg-red-600 text-white rounded-full">Delete</button>
-
+            <button onClick={subHandler} disabled={isDeleting} className="my-2 w-72 py-2 bg-red-500 hover:bg-red-600 text-white rounded-full">{isDeleting ? "Deleting..." : "Delete"}</button>
           </div>
         </div>
       }
