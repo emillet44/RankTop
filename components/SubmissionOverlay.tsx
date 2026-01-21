@@ -26,17 +26,18 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
   const started = useRef(false);
 
   const runSubmission = useCallback(async () => {
-    if (started.current) return;
-    started.current = true;
+  if (started.current) return;
+  started.current = true;
 
     try {
-      // PHASE 1: VIDEO UPLOADS
+      // PHASE 1: VIDEO UPLOADS (If needed)
       if (postType === 'video' && !formData.has('sessionId')) {
         setMessage('Preparing cloud storage...');
         setProgress(5);
 
         const sessionId = `session_${Date.now()}`;
 
+        // 1. Get Signed URLs via the Video Proxy
         const urlRes = await fetch('/api/video/final', {
           method: 'POST',
           body: JSON.stringify({ action: 'getUploadUrls', videoCount: videoFiles.length, sessionId })
@@ -47,11 +48,14 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
         const { uploadUrls, filePaths } = data;
 
+        // 2. Sequential Uploads for accurate progress
         for (let i = 0; i < videoFiles.length; i++) {
           const file = videoFiles[i];
           setMessage(`Uploading clip ${i + 1} of ${videoFiles.length}...`);
 
           const info = uploadUrls.find((u: any) => u.index === i);
+          if (!info) throw new Error(`Upload config missing for clip ${i + 1}`);
+
           const uploadRes = await fetch(info.url, {
             method: 'PUT',
             body: file,
@@ -59,6 +63,8 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
           });
 
           if (!uploadRes.ok) throw new Error(`Upload failed for clip ${i + 1}`);
+
+          // Progress from 10% to 45%
           setProgress(Math.round(10 + ((i + 1) / videoFiles.length) * 35));
         }
 
@@ -66,11 +72,12 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
         formData.append('filePaths', JSON.stringify(filePaths));
       }
 
-      // PHASE 2: FINAL PROCESSING (SSE)
+      // PHASE 2: FINAL PROCESSING
       if (postType === 'video') {
         setMessage('Starting final 1080p render...');
         setProgress(46);
 
+        // Construct payload from FormData
         const payload = Object.fromEntries(formData);
         const response = await fetch('/api/video/final', {
           method: 'POST',
@@ -88,52 +95,40 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
           throw new Error(errData.error || `Server error: ${response.status}`);
         }
 
+        // Get Post ID from the custom header we set in the proxy
         const finalPostId = response.headers.get('X-Post-Id');
+
+        // Read the SSE Stream for real-time progress
         const reader = response.body?.getReader();
         const decoder = new TextDecoder();
-        let buffer = ''; // THE PERMANENT FIX: Store partial chunks here
-
         if (!reader) throw new Error("Processing stream unavailable");
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          // Append new chunk to buffer
-          buffer += decoder.decode(value, { stream: true });
-
-          // Split by double newline (SSE standard)
-          const lines = buffer.split('\n');
-
-          // Keep the last element (likely a partial line) in the buffer
-          buffer = lines.pop() || '';
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
 
           for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
-
-            try {
-              const data = JSON.parse(trimmedLine.slice(6));
+            if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.slice(6));
               if (data.error) throw new Error(data.error);
 
-              // Map 0-100% to UI 46-100%
+              // Map Cloud Run 0-100% to UI 46-100%
               const uiProg = Math.round(46 + (data.progress * 0.54));
-              setProgress(Math.min(uiProg, 100));
+              setProgress(uiProg);
               setMessage(data.message || 'Processing...');
 
               if (data.complete) {
-                setProgress(100);
                 setIsComplete(true);
                 setTimeout(() => router.push(`/post/${finalPostId}`), 1000);
               }
-            } catch (e) {
-              // If JSON is partial, it's now handled by the buffer logic
-              console.debug("Partial JSON chunk - waiting for next packet");
             }
           }
         }
       } else {
-        // TEXT/IMAGE POSTS
+        // PHASE 2 (ALT): TEXT/IMAGE POSTS
         setMessage('Saving post...');
         setProgress(70);
         const resultId = await newList(formData);
@@ -144,8 +139,8 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
     } catch (err: any) {
       console.error("Submission error:", err);
-      setError(err.message || "An unexpected error occurred.");
-      started.current = false;
+      setError(err.message || "An unexpected error occurred during submission.");
+      started.current = false; // Allow retry
     }
   }, [formData, videoFiles, postType, router]);
 
@@ -176,6 +171,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
             <FontAwesomeIcon icon={faSpinner} className="text-4xl text-blue-500 animate-spin mb-6" />
             <h2 className="text-xl font-bold text-white mb-2">Finalizing Post</h2>
             <p className="text-sm text-slate-400 mb-8 h-10 overflow-hidden">{message}</p>
+
             <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
               <div
                 className="bg-gradient-to-r from-blue-600 to-cyan-400 h-full transition-all duration-500 ease-out"
