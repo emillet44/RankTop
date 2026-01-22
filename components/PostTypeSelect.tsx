@@ -51,7 +51,7 @@ export default function PostTypeSelector({
         <>
           <button 
             type="button" 
-            onClick={onToggleModalAction} 
+            onClick={onToggleVideosAction}
             className="flex justify-center items-center p-3 outline outline-2 outline-slate-700 rounded-md bg-slate-50 bg-opacity-5 hover:bg-opacity-10 text-lg font-semibold"
           >
             <FontAwesomeIcon icon={faVideo} className="mr-2 h-5" />
