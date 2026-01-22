@@ -15,14 +15,16 @@ const storage = new Storage({
  */
 export async function getSignedGCSUrl(
   bucketName: string, 
-  filePath: string, 
+  filePath: string,
+  action: 'read' | 'write',
   expiresInMinutes: number = 15
 ) {
   try {
     const options = {
       version: 'v4' as const,
-      action: 'read' as const,
+      action: action,
       expires: Date.now() + expiresInMinutes * 60 * 1000,
+      ...(action === 'write' && { contentType: 'image/png' })
     };
 
     const [url] = await storage

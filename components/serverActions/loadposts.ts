@@ -14,7 +14,7 @@ async function addVideoUrls(posts: any[]) {
   return await Promise.all(
     posts.map(async (post) => {
       if (post.metadata?.videos) {
-        post.metadata.videoUrl = await getSignedGCSUrl('ranktop-v', `${post.id}.mp4`);
+        post.metadata.videoUrl = await getSignedGCSUrl('ranktop-v', `${post.id}.mp4`, 'read');
       }
       return post;
     })

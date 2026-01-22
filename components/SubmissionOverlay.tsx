@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner, faExclamationTriangle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/navigation';
 import { newList } from '@/components/serverActions/listupload';
+import { getSignedGCSUrl } from '@/lib/signedurls';
 
 interface SubmissionOverlayProps {
   formData: FormData;
@@ -26,8 +27,8 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
   const started = useRef(false);
 
   const runSubmission = useCallback(async () => {
-  if (started.current) return;
-  started.current = true;
+    if (started.current) return;
+    started.current = true;
 
     try {
       // PHASE 1: VIDEO UPLOADS (If needed)
@@ -127,8 +128,57 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
             }
           }
         }
-      } else {
-        // PHASE 2 (ALT): TEXT/IMAGE POSTS
+      } else if (postType === 'image') {
+        setMessage('Creating post record...');
+        setProgress(20);
+
+        // 1. Create a metadata-only version of FormData to bypass 1MB limit
+        const metadataOnly = new FormData();
+        formData.forEach((value, key) => {
+          if (!(value instanceof File)) {
+            metadataOnly.append(key, value);
+          }
+        });
+
+        // 2. Save to DB first to get the real postId
+        const resultId = await newList(metadataOnly);
+        if (!resultId) throw new Error("Failed to create post record.");
+
+        // 3. Extract images from the ORIGINAL formData
+        const imageFiles: { file: File, index: string }[] = [];
+        formData.forEach((value, key) => {
+          if (value instanceof File && key.startsWith('img')) {
+            imageFiles.push({ file: value, index: key.replace('img', '') });
+          }
+        });
+
+        // 4. Upload images directly to GCS using the resultId
+        setMessage(`Uploading ${imageFiles.length} images...`);
+        for (let i = 0; i < imageFiles.length; i++) {
+          const { file, index } = imageFiles[i];
+          const fileName = `${resultId}${index}.png`; // Matches resultId + "1.png"
+
+          const uploadUrl = await getSignedGCSUrl('ranktop-i', fileName, 'write', 5);
+          if (!uploadUrl) throw new Error(`Could not generate upload permission for image ${index}`);
+
+          const uploadRes = await fetch(uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: { 'Content-Type': 'image/png' }
+          });
+
+          if (!uploadRes.ok) throw new Error(`Image ${index} failed to upload to storage.`);
+
+          setProgress(20 + Math.round(((i + 1) / imageFiles.length) * 75));
+        }
+
+        setProgress(100);
+        setIsComplete(true);
+        setTimeout(() => router.push(`/post/${resultId}`), 1000);
+      }
+
+      else {
+        // Simple Text Post
         setMessage('Saving post...');
         setProgress(70);
         const resultId = await newList(formData);
@@ -140,7 +190,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
     } catch (err: any) {
       console.error("Submission error:", err);
       setError(err.message || "An unexpected error occurred during submission.");
-      started.current = false; // Allow retry
+      started.current = false;
     }
   }, [formData, videoFiles, postType, router]);
 
