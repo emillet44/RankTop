@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
 interface VideoDisplayProps {
@@ -68,7 +69,7 @@ export function VideoDisplay({
             onError={() => setIsLoading(false)}
           >
             {/* Hidden img tag to catch poster load errors */}
-            <img 
+            <Image 
               src={posterUrl} 
               onError={() => setPosterError(true)} 
               style={{ display: 'none' }} 
