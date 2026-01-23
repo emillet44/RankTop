@@ -16,14 +16,14 @@ export default function Home() {
         <section className="w-full max-w-4xl text-center pt-32 pb-20">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">Rank Anything. Discover Everything.</h1>
           <p className="text-lg md:text-xl text-gray-300 mb-8">
-            Ranktop lets you create, share, and explore ranked lists — from hot takes to factual breakdowns. No limits, just opinions.
+            Ranktop lets you create, share, and explore ranked lists; from hot takes to factual breakdowns. No limits, just opinions.
           </p>
           <a href="/home" className="bg-white text-black font-semibold text-lg px-6 py-3 rounded-2xl shadow hover:bg-gray-100 transition">Get Started</a>
         </section>
         <section className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-8 pb-32">
           <div className="bg-stone-900 p-6 rounded-2xl shadow hover:shadow-lg transition">
             <h3 className="text-xl font-semibold mb-2">Create Your Own Ranks</h3>
-            <p className="text-gray-400">List your top games, movies, ideas — anything. Up to 5 ranks, with optional images and description.</p>
+            <p className="text-gray-400">List your top games, movies, ideas - anything. Up to 5 ranks, with optional images, videos, and description.</p>
           </div>
           <div className="bg-stone-900 p-6 rounded-2xl shadow hover:shadow-lg transition">
             <h3 className="text-xl font-semibold mb-2">Discover Hot Takes</h3>
