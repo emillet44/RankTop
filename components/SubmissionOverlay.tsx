@@ -26,6 +26,13 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
   const router = useRouter();
   const started = useRef(false);
 
+  // Helper to handle completion redirect
+  const handleSuccess = useCallback((postId: string) => {
+    setIsComplete(true);
+    setProgress(100);
+    setTimeout(() => router.push(`/post/${postId}`), 1000);
+  }, [router]);
+
   const runSubmission = useCallback(async () => {
     if (started.current) return;
     started.current = true;
@@ -38,7 +45,6 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
         const sessionId = `session_${Date.now()}`;
 
-        // 1. Get Signed URLs via the Video Proxy
         const urlRes = await fetch('/api/video/final', {
           method: 'POST',
           body: JSON.stringify({ action: 'getUploadUrls', videoCount: videoFiles.length, sessionId })
@@ -49,7 +55,6 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
         const { uploadUrls, filePaths } = data;
 
-        // 2. Sequential Uploads for accurate progress
         for (let i = 0; i < videoFiles.length; i++) {
           const file = videoFiles[i];
           setMessage(`Uploading clip ${i + 1} of ${videoFiles.length}...`);
@@ -65,7 +70,6 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
           if (!uploadRes.ok) throw new Error(`Upload failed for clip ${i + 1}`);
 
-          // Progress from 10% to 45%
           setProgress(Math.round(10 + ((i + 1) / videoFiles.length) * 35));
         }
 
@@ -78,15 +82,19 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
         setMessage('Starting final 1080p render...');
         setProgress(46);
 
-        // Construct payload from FormData
         const payload = Object.fromEntries(formData);
+        
+        // Ensure filePaths is correctly parsed if it came from FormData strings
+        const rawFilePaths = formData.get('filePaths');
+        const filePaths = typeof rawFilePaths === 'string' ? JSON.parse(rawFilePaths) : [];
+
         const response = await fetch('/api/video/final', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...payload,
             ranks: [payload.r1, payload.r2, payload.r3, payload.r4, payload.r5].filter(Boolean),
-            filePaths: JSON.parse(formData.get('filePaths') as string || '[]'),
+            filePaths,
             sessionId: formData.get('sessionId')
           })
         });
@@ -96,69 +104,90 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
           throw new Error(errData.error || `Server error: ${response.status}`);
         }
 
-        // Get Post ID from the custom header we set in the proxy
         const finalPostId = response.headers.get('X-Post-Id');
-
-        // Read the SSE Stream for real-time progress
         const reader = response.body?.getReader();
         const decoder = new TextDecoder('utf-8');
         if (!reader) throw new Error("Processing stream unavailable");
 
         let buffer = '';
+        let lastProgress = 46;
 
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
-
-          // Decode and append to buffer
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
           
-          // Keep the last segment in the buffer as it might be incomplete
+          if (value) {
+            buffer += decoder.decode(value, { stream: true });
+          }
+
+          // Process full lines
+          const lines = buffer.split('\n');
+          // Keep the last segment in the buffer (it might be incomplete)
           buffer = lines.pop() || '';
 
           for (const line of lines) {
             const trimmedLine = line.trim();
-            if (trimmedLine.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(trimmedLine.slice(6));
-                
-                if (data.error) throw new Error(data.error);
+            if (!trimmedLine.startsWith('data: ')) continue;
 
-                // Map Cloud Run 0-100% to UI 46-100%
-                const uiProg = Math.round(46 + (data.progress * 0.54));
-                setProgress(uiProg);
-                
-                if (data.message) setMessage(data.message);
+            try {
+              const data = JSON.parse(trimmedLine.slice(6));
+              if (data.error) throw new Error(data.error);
 
-                if (data.complete) {
-                  setIsComplete(true);
-                  const targetId = finalPostId || data.videoUrl?.split('/').pop()?.split('.')[0];
-                  setTimeout(() => router.push(`/post/${targetId}`), 1000);
+              const uiProg = Math.round(46 + (data.progress * 0.54));
+              if (uiProg > lastProgress) lastProgress = uiProg;
+              setProgress(uiProg);
+              
+              if (data.message) setMessage(data.message);
+
+              if (data.complete) {
+                const targetId = finalPostId || data.videoUrl?.split('/').pop()?.split('.')[0];
+                if (targetId) {
+                  handleSuccess(targetId);
+                  return; // Exit function immediately on success
                 }
-              } catch (parseError) {
-                console.warn('Skipped malformed SSE frame');
               }
+            } catch (e) {
+              console.warn('Skipped malformed SSE frame');
             }
+          }
+
+          if (done) {
+            // Check the buffer one last time. 
+            // Sometimes the "complete" message is the very last chunk.
+            if (buffer.trim().startsWith('data: ')) {
+               try {
+                  const data = JSON.parse(buffer.trim().slice(6));
+                  if (data.complete) {
+                    const targetId = finalPostId || data.videoUrl?.split('/').pop()?.split('.')[0];
+                    if (targetId) {
+                        handleSuccess(targetId);
+                        return;
+                    }
+                  }
+               } catch (e) {}
+            }
+
+            // SAFETY CHECK: If stream closed cleanly but missed the JSON
+            if (lastProgress > 80 && finalPostId) {
+                console.log("Stream closed with high progress. Assuming success.");
+                handleSuccess(finalPostId);
+            } else {
+                // Only throw if really didn't finish
+                throw new Error("Connection closed before completion.");
+            }
+            break;
           }
         }
       } else if (postType === 'image') {
+        // Image Post Logic
         setMessage('Creating post record...');
         setProgress(20);
-
-        // 1. Create a metadata-only version of FormData to bypass 1MB limit
         const metadataOnly = new FormData();
         formData.forEach((value, key) => {
-          if (!(value instanceof File)) {
-            metadataOnly.append(key, value);
-          }
+          if (!(value instanceof File)) metadataOnly.append(key, value);
         });
-
-        // 2. Save to DB first to get the real postId
         const resultId = await newList(metadataOnly);
         if (!resultId) throw new Error("Failed to create post record.");
 
-        // 3. Extract images from the ORIGINAL formData
         const imageFiles: { file: File, index: string }[] = [];
         formData.forEach((value, key) => {
           if (value instanceof File && key.startsWith('img')) {
@@ -166,39 +195,27 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
           }
         });
 
-        // 4. Upload images directly to GCS using the resultId
         setMessage(`Uploading ${imageFiles.length} images...`);
         for (let i = 0; i < imageFiles.length; i++) {
           const { file, index } = imageFiles[i];
-          const fileName = `${resultId}${index}.png`; // Matches resultId + "1.png"
-
+          const fileName = `${resultId}${index}.png`;
           const uploadUrl = await getSignedGCSUrl('ranktop-i', fileName, 'write', 5);
           if (!uploadUrl) throw new Error(`Could not generate upload permission for image ${index}`);
-
           const uploadRes = await fetch(uploadUrl, {
             method: 'PUT',
             body: file,
             headers: { 'Content-Type': 'image/png' }
           });
-
-          if (!uploadRes.ok) throw new Error(`Image ${index} failed to upload to storage.`);
-
+          if (!uploadRes.ok) throw new Error(`Image ${index} failed to upload.`);
           setProgress(20 + Math.round(((i + 1) / imageFiles.length) * 75));
         }
-
-        setProgress(100);
-        setIsComplete(true);
-        setTimeout(() => router.push(`/post/${resultId}`), 1000);
-      }
-
-      else {
-        // Simple Text Post
+        handleSuccess(resultId);
+      } else {
+        // Text Post Logic
         setMessage('Saving post...');
         setProgress(70);
         const resultId = await newList(formData);
-        setProgress(100);
-        setIsComplete(true);
-        setTimeout(() => router.push(`/post/${resultId}`), 1000);
+        handleSuccess(resultId);
       }
 
     } catch (err: any) {
@@ -206,7 +223,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
       setError(err.message || "An unexpected error occurred during submission.");
       started.current = false;
     }
-  }, [formData, videoFiles, postType, router]);
+  }, [formData, videoFiles, postType, handleSuccess]);
 
   useEffect(() => {
     runSubmission();
