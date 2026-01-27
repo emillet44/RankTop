@@ -58,8 +58,10 @@ export async function POST(req: Request) {
     return new Response(response.data as any, {
       headers: {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-cache, no-transform',
         'Connection': 'keep-alive',
+        'Content-Encoding': 'none',
+        'X-Accel-Buffering': 'no',
         'Access-Control-Expose-Headers': 'X-Post-Id',
         'X-Post-Id': post.id,
       },

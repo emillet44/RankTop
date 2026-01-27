@@ -101,29 +101,43 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
         // Read the SSE Stream for real-time progress
         const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
+        const decoder = new TextDecoder('utf-8');
         if (!reader) throw new Error("Processing stream unavailable");
+
+        let buffer = '';
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
+          // Decode and append to buffer
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          
+          // Keep the last segment in the buffer as it might be incomplete
+          buffer = lines.pop() || '';
 
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = JSON.parse(line.slice(6));
-              if (data.error) throw new Error(data.error);
+            const trimmedLine = line.trim();
+            if (trimmedLine.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(trimmedLine.slice(6));
+                
+                if (data.error) throw new Error(data.error);
 
-              // Map Cloud Run 0-100% to UI 46-100%
-              const uiProg = Math.round(46 + (data.progress * 0.54));
-              setProgress(uiProg);
-              setMessage(data.message || 'Processing...');
+                // Map Cloud Run 0-100% to UI 46-100%
+                const uiProg = Math.round(46 + (data.progress * 0.54));
+                setProgress(uiProg);
+                
+                if (data.message) setMessage(data.message);
 
-              if (data.complete) {
-                setIsComplete(true);
-                setTimeout(() => router.push(`/post/${finalPostId}`), 1000);
+                if (data.complete) {
+                  setIsComplete(true);
+                  const targetId = finalPostId || data.videoUrl?.split('/').pop()?.split('.')[0];
+                  setTimeout(() => router.push(`/post/${targetId}`), 1000);
+                }
+              } catch (parseError) {
+                console.warn('Skipped malformed SSE frame');
               }
             }
           }

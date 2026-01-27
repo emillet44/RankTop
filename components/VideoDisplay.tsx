@@ -68,15 +68,17 @@ export function VideoDisplay({
             onLoadedMetadata={() => setIsLoading(false)}
             onError={() => setIsLoading(false)}
           >
-            {/* Hidden img tag to catch poster load errors */}
-            <Image 
-              src={posterUrl} 
-              onError={() => setPosterError(true)} 
-              style={{ display: 'none' }} 
-              alt=""
-            />
             Your browser does not support the video tag.
           </video>
+          <Image 
+            src={posterUrl} 
+            onError={() => setPosterError(true)} 
+            alt=""
+            width={10}
+            height={10}
+            unoptimized={true}
+            className="hidden"
+          />
         </div>
 
         {variant === 'preview' && <div className="w-8" />}
