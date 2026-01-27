@@ -26,37 +26,40 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
   const router = useRouter();
   const started = useRef(false);
 
-  // Helper to handle completion redirect
+ // Helper to handle completion redirect
   const handleSuccess = useCallback(async (postId: string) => {
     setIsComplete(true);
     setProgress(100);
 
-    // Verify video availability before redirecting.
-    // GCS is "eventually consistent", so we poll the URL until it returns 200 OK.
     if (postType === 'video') {
       setMessage('Verifying playback...');
-      // Assuming standard GCS public URL structure based on your thumbnail logic
       const videoUrl = `https://storage.googleapis.com/ranktop-v/${postId}.mp4`;
       const startTime = Date.now();
       
       // Poll for up to 20 seconds
       while (Date.now() - startTime < 20000) {
         try {
-          const res = await fetch(videoUrl, { method: 'HEAD', cache: 'no-store' });
+          // Add a random query param to bypass browser caching of 404s
+          const res = await fetch(`${videoUrl}?t=${Date.now()}`, { 
+            method: 'HEAD', 
+            cache: 'no-store' 
+          });
+          
           if (res.ok && res.status === 200) {
              const size = res.headers.get('content-length');
-             // Extra safety: ensure file isn't 0 bytes
-             if (size && parseInt(size) > 1000) break;
+             if (size && parseInt(size) > 1000) break; // It's ready!
           }
         } catch (e) {
-          console.log("Waiting for GCS consistency...");
+          // ignore
         }
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // FIX: Wait only 250ms (quarter second) instead of 2000ms
+        await new Promise(resolve => setTimeout(resolve, 250));
       }
     }
 
     setMessage('Redirecting...');
-    setTimeout(() => router.push(`/post/${postId}`), 500);
+    // Reduce this cosmetic delay too
+    setTimeout(() => router.push(`/post/${postId}`), 100);
   }, [router, postType]);
 
   const runSubmission = useCallback(async () => {
