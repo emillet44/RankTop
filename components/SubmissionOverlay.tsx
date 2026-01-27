@@ -27,11 +27,37 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
   const started = useRef(false);
 
   // Helper to handle completion redirect
-  const handleSuccess = useCallback((postId: string) => {
+  const handleSuccess = useCallback(async (postId: string) => {
     setIsComplete(true);
     setProgress(100);
-    setTimeout(() => router.push(`/post/${postId}`), 1000);
-  }, [router]);
+
+    // Verify video availability before redirecting.
+    // GCS is "eventually consistent", so we poll the URL until it returns 200 OK.
+    if (postType === 'video') {
+      setMessage('Verifying playback...');
+      // Assuming standard GCS public URL structure based on your thumbnail logic
+      const videoUrl = `https://storage.googleapis.com/ranktop-v/${postId}.mp4`;
+      const startTime = Date.now();
+      
+      // Poll for up to 20 seconds
+      while (Date.now() - startTime < 20000) {
+        try {
+          const res = await fetch(videoUrl, { method: 'HEAD', cache: 'no-store' });
+          if (res.ok && res.status === 200) {
+             const size = res.headers.get('content-length');
+             // Extra safety: ensure file isn't 0 bytes
+             if (size && parseInt(size) > 1000) break;
+          }
+        } catch (e) {
+          console.log("Waiting for GCS consistency...");
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+
+    setMessage('Redirecting...');
+    setTimeout(() => router.push(`/post/${postId}`), 500);
+  }, [router, postType]);
 
   const runSubmission = useCallback(async () => {
     if (started.current) return;
@@ -39,6 +65,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
     try {
       // PHASE 1: VIDEO UPLOADS (If needed)
+      // If we have a sessionId from Preview, we SKIP this block
       if (postType === 'video' && !formData.has('sessionId')) {
         setMessage('Preparing cloud storage...');
         setProgress(5);
@@ -141,7 +168,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
               if (data.complete) {
                 const targetId = finalPostId || data.videoUrl?.split('/').pop()?.split('.')[0];
                 if (targetId) {
-                  handleSuccess(targetId);
+                  await handleSuccess(targetId);
                   return; // Exit function immediately on success
                 }
               }
@@ -151,27 +178,25 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
           }
 
           if (done) {
-            // Check the buffer one last time. 
-            // Sometimes the "complete" message is the very last chunk.
+            // Check buffer one last time
             if (buffer.trim().startsWith('data: ')) {
                try {
                   const data = JSON.parse(buffer.trim().slice(6));
                   if (data.complete) {
                     const targetId = finalPostId || data.videoUrl?.split('/').pop()?.split('.')[0];
                     if (targetId) {
-                        handleSuccess(targetId);
+                        await handleSuccess(targetId);
                         return;
                     }
                   }
                } catch (e) {}
             }
 
-            // SAFETY CHECK: If stream closed cleanly but missed the JSON
+            // SAFETY CHECK: Stream closed logic
             if (lastProgress > 80 && finalPostId) {
                 console.log("Stream closed with high progress. Assuming success.");
-                handleSuccess(finalPostId);
+                await handleSuccess(finalPostId);
             } else {
-                // Only throw if really didn't finish
                 throw new Error("Connection closed before completion.");
             }
             break;
@@ -209,13 +234,13 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
           if (!uploadRes.ok) throw new Error(`Image ${index} failed to upload.`);
           setProgress(20 + Math.round(((i + 1) / imageFiles.length) * 75));
         }
-        handleSuccess(resultId);
+        await handleSuccess(resultId);
       } else {
         // Text Post Logic
         setMessage('Saving post...');
         setProgress(70);
         const resultId = await newList(formData);
-        handleSuccess(resultId);
+        await handleSuccess(resultId);
       }
 
     } catch (err: any) {

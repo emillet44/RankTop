@@ -1,3 +1,6 @@
+export const maxDuration = 300; // Allows execution for up to 5 minutes
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { GoogleAuth } from 'google-auth-library';
 import { prisma } from "@/lib/prisma";
