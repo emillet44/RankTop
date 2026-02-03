@@ -26,28 +26,43 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
   const router = useRouter();
   const started = useRef(false);
 
- // Helper to handle completion redirect
   const handleSuccess = useCallback((postId: string) => {
     setIsComplete(true);
     setProgress(100);
     setMessage('Redirecting...');
-    
-    setTimeout(() => router.push(`/post/${postId}`), 500);
-}, [router]);
+    setTimeout(() => router.push(`/post/${postId}`), 800);
+  }, [router]);
+
+  // Real Progress Upload Helper using XMLHttpRequest
+  const uploadWithProgress = (url: string, file: File, onProgress: (pct: number) => void): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', url);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          onProgress((e.loaded / e.total) * 100);
+        }
+      };
+      xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload status ${xhr.status}`)));
+      xhr.onerror = () => reject(new Error('Network error during upload'));
+      xhr.send(file);
+    });
+  };
 
   const runSubmission = useCallback(async () => {
     if (started.current) return;
     started.current = true;
 
     try {
-      // PHASE 1: VIDEO UPLOADS (If needed)
-      // If we have a sessionId from Preview, we SKIP this block
-      if (postType === 'video' && !formData.has('sessionId')) {
+      let postId = '';
+
+      // --- CASE A: VIDEO POSTS ---
+      if (postType === 'video') {
         setMessage('Preparing cloud storage...');
         setProgress(5);
 
         const sessionId = `session_${Date.now()}`;
-
         const urlRes = await fetch('/api/video/final', {
           method: 'POST',
           body: JSON.stringify({ action: 'getUploadUrls', videoCount: videoFiles.length, sessionId })
@@ -58,170 +73,103 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
         const { uploadUrls, filePaths } = data;
 
+        // Upload phase: 5% to 45%
         for (let i = 0; i < videoFiles.length; i++) {
           const file = videoFiles[i];
-          setMessage(`Uploading clip ${i + 1} of ${videoFiles.length}...`);
-
           const info = uploadUrls.find((u: any) => u.index === i);
-          if (!info) throw new Error(`Upload config missing for clip ${i + 1}`);
-
-          const uploadRes = await fetch(info.url, {
-            method: 'PUT',
-            body: file,
-            headers: { 'Content-Type': file.type }
+          
+          await uploadWithProgress(info.url, file, (pct) => {
+            const stepWeight = 40 / videoFiles.length;
+            setProgress(Math.round(5 + (i * stepWeight) + (pct / 100 * stepWeight)));
+            setMessage(`Uploading clip ${i + 1} of ${videoFiles.length}... ${Math.round(pct)}%`);
           });
-
-          if (!uploadRes.ok) throw new Error(`Upload failed for clip ${i + 1}`);
-
-          setProgress(Math.round(10 + ((i + 1) / videoFiles.length) * 35));
         }
 
-        formData.append('sessionId', sessionId);
-        formData.append('filePaths', JSON.stringify(filePaths));
-      }
-
-      // PHASE 2: FINAL PROCESSING
-      if (postType === 'video') {
-        setMessage('Starting final 1080p render...');
-        setProgress(46);
-
-        const payload = Object.fromEntries(formData);
+        // Trigger Phase: Tells Next.js to create the DB record and ping GCR
+        setMessage('Starting final render...');
+        setProgress(50);
         
-        // Ensure filePaths is correctly parsed if it came from FormData strings
-        const rawFilePaths = formData.get('filePaths');
-        const filePaths = typeof rawFilePaths === 'string' ? JSON.parse(rawFilePaths) : [];
-
-        const response = await fetch('/api/video/final', {
+        const payload = Object.fromEntries(formData);
+        const triggerRes = await fetch('/api/video/final', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...payload,
             ranks: [payload.r1, payload.r2, payload.r3, payload.r4, payload.r5].filter(Boolean),
             filePaths,
-            sessionId: formData.get('sessionId')
+            sessionId
           })
         });
 
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || `Server error: ${response.status}`);
-        }
+        if (!triggerRes.ok) throw new Error("Failed to initialize server-side processing.");
+        postId = triggerRes.headers.get('X-Post-Id') || '';
 
-        const finalPostId = response.headers.get('X-Post-Id');
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder('utf-8');
-        if (!reader) throw new Error("Processing stream unavailable");
+        // Polling Phase: 50% to 99%
+        let attempts = 0;
+        while (attempts < 100) { // Max 5 mins approx
+          const statusRes = await fetch(`/api/posts/${postId}/status`);
+          const statusData = await statusRes.json();
 
-        let buffer = '';
-        let lastProgress = 46;
-
-        while (true) {
-          const { done, value } = await reader.read();
+          if (statusData.status === 'READY') {
+            handleSuccess(postId);
+            return;
+          } 
           
-          if (value) {
-            buffer += decoder.decode(value, { stream: true });
+          if (statusData.status === 'FAILED') {
+            throw new Error(statusData.error || "Video processing failed.");
           }
 
-          // Process full lines
-          const lines = buffer.split('\n');
-          // Keep the last segment in the buffer (it might be incomplete)
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (!trimmedLine.startsWith('data: ')) continue;
-
-            try {
-              const data = JSON.parse(trimmedLine.slice(6));
-              if (data.error) throw new Error(data.error);
-
-              const uiProg = Math.round(46 + (data.progress * 0.54));
-              if (uiProg > lastProgress) lastProgress = uiProg;
-              setProgress(uiProg);
-              
-              if (data.message) setMessage(data.message);
-
-              if (data.complete) {
-                const targetId = finalPostId || data.videoUrl?.split('/').pop()?.split('.')[0];
-                if (targetId) {
-                  await handleSuccess(targetId);
-                  return; // Exit function immediately on success
-                }
-              }
-            } catch (e) {
-              console.warn('Skipped malformed SSE frame');
-            }
-          }
-
-          if (done) {
-            // Check buffer one last time
-            if (buffer.trim().startsWith('data: ')) {
-               try {
-                  const data = JSON.parse(buffer.trim().slice(6));
-                  if (data.complete) {
-                    const targetId = finalPostId || data.videoUrl?.split('/').pop()?.split('.')[0];
-                    if (targetId) {
-                        await handleSuccess(targetId);
-                        return;
-                    }
-                  }
-               } catch (e) {}
-            }
-
-            // SAFETY CHECK: Stream closed logic
-            if (lastProgress > 80 && finalPostId) {
-                console.log("Stream closed with high progress. Assuming success.");
-                await handleSuccess(finalPostId);
-            } else {
-                throw new Error("Connection closed before completion.");
-            }
-            break;
-          }
+          // Slow progress creep to show life
+          setProgress(prev => Math.min(prev + 0.5, 98));
+          setMessage('Rendering video fragments...');
+          
+          await new Promise(r => setTimeout(r, 3000));
+          attempts++;
         }
+        throw new Error("Rendering took too long. It might still finish; check your profile in a moment.");
+
+      // --- CASE B: IMAGE POSTS ---
       } else if (postType === 'image') {
-        // Image Post Logic
         setMessage('Creating post record...');
-        setProgress(20);
+        setProgress(10);
+        
         const metadataOnly = new FormData();
-        formData.forEach((value, key) => {
-          if (!(value instanceof File)) metadataOnly.append(key, value);
-        });
-        const resultId = await newList(metadataOnly);
-        if (!resultId) throw new Error("Failed to create post record.");
+        formData.forEach((val, key) => { if (!(val instanceof File)) metadataOnly.append(key, val); });
+        
+        postId = await newList(metadataOnly);
+        if (!postId) throw new Error("Could not save post metadata.");
 
         const imageFiles: { file: File, index: string }[] = [];
-        formData.forEach((value, key) => {
-          if (value instanceof File && key.startsWith('img')) {
-            imageFiles.push({ file: value, index: key.replace('img', '') });
-          }
-        });
+        formData.forEach((v, k) => { if (v instanceof File && k.startsWith('img')) imageFiles.push({ file: v, index: k.replace('img', '') }); });
 
-        setMessage(`Uploading ${imageFiles.length} images...`);
+        // Upload phase: 10% to 90%
         for (let i = 0; i < imageFiles.length; i++) {
           const { file, index } = imageFiles[i];
-          const fileName = `${resultId}${index}.png`;
+          const fileName = `${postId}${index}.png`;
           const uploadUrl = await getSignedGCSUrl('ranktop-i', fileName, 'write', 5);
-          if (!uploadUrl) throw new Error(`Could not generate upload permission for image ${index}`);
-          const uploadRes = await fetch(uploadUrl, {
-            method: 'PUT',
-            body: file,
-            headers: { 'Content-Type': 'image/png' }
+          
+          if (!uploadUrl) throw new Error("Failed to get signed upload URL.");
+          
+          await uploadWithProgress(uploadUrl, file, (pct) => {
+            const stepWeight = 80 / imageFiles.length;
+            setProgress(Math.round(10 + (i * stepWeight) + (pct / 100 * stepWeight)));
+            setMessage(`Uploading image ${i + 1} of ${imageFiles.length}...`);
           });
-          if (!uploadRes.ok) throw new Error(`Image ${index} failed to upload.`);
-          setProgress(20 + Math.round(((i + 1) / imageFiles.length) * 75));
         }
-        await handleSuccess(resultId);
+        handleSuccess(postId);
+
+      // --- CASE C: TEXT POSTS ---
       } else {
-        // Text Post Logic
         setMessage('Saving post...');
-        setProgress(70);
+        setProgress(40);
         const resultId = await newList(formData);
-        await handleSuccess(resultId);
+        if (!resultId) throw new Error("Failed to save post.");
+        handleSuccess(resultId);
       }
 
     } catch (err: any) {
       console.error("Submission error:", err);
-      setError(err.message || "An unexpected error occurred during submission.");
+      setError(err.message || "An unexpected error occurred.");
       started.current = false;
     }
   }, [formData, videoFiles, postType, handleSuccess]);
@@ -261,7 +209,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
               />
             </div>
             <span className="inline-block mt-4 text-xs font-mono text-slate-500 uppercase tracking-widest">
-              {progress}% Processed
+              {Math.floor(progress)}% Processed
             </span>
           </>
         )}

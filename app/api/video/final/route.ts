@@ -1,4 +1,4 @@
-export const maxDuration = 60; // Allows execution for up to 1 minute
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
@@ -20,7 +20,6 @@ export async function POST(req: Request) {
   try {
     const client = await auth.getIdTokenClient(url!);
 
-    // PHASE 1: Getting Signed URLs (JSON)
     if (body.action === 'getUploadUrls') {
       const response = await client.request({
         url,
@@ -32,10 +31,9 @@ export async function POST(req: Request) {
       return NextResponse.json(response.data);
     }
 
-    // PHASE 2: Database Creation and Final Processing (Streaming)
     const { title, r1, r2, r3, r4, r5, description, category, username, userid, visibility } = body;
 
-    // Create the DB record
+    // 1. Create the DB record with status 'PROCESSING'
     const post = await prisma.posts.create({
       data: {
         title,
@@ -45,29 +43,36 @@ export async function POST(req: Request) {
         username: username || null,
         author: userid ? { connect: { id: userid } } : undefined,
         private: visibility === "Private",
-        metadata: { create: { videos: true } }
+        metadata: {
+          create: {
+            videos: true,
+            status: 'PROCESSING'
+          }
+        }
       }
     });
 
-    // Trigger Cloud Run 1080p Render
-    const response = await client.request({
+    const protocol = req.headers.get('x-forwarded-proto') || 'https';
+    const host = req.headers.get('host');
+    const currentWebsiteUrl = `${protocol}://${host}`;
+
+    // 2. Trigger Cloud Run (FIRE AND FORGET)
+    client.request({
       url,
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-callback-url': currentWebsiteUrl
+      },
       data: { ...body, postId: post.id },
-      responseType: 'stream',
+    }).catch(err => {
+      console.error("Background GCR Trigger Failed:", err);
     });
 
-    return new Response(response.data as any, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache, no-transform',
-        'Connection': 'keep-alive',
-        'Content-Encoding': 'none',
-        'X-Accel-Buffering': 'no',
-        'Access-Control-Expose-Headers': 'X-Post-Id',
-        'X-Post-Id': post.id,
-      },
+    // 3. Return immediately with the postId
+    return new Response(null, {
+      status: 200,
+      headers: { 'X-Post-Id': post.id },
     });
 
   } catch (error: any) {

@@ -9,6 +9,9 @@ import { UpdatePostViews } from "@/components/serverActions/batchviews";
 //The description under the title when it shows up on Google Search
 export const metadata: Metadata = {
   description: 'Create, share, and browse lists on anything and everything, ranked.',
+  alternates: {
+    canonical: '/home',
+  },
 }
 
 //This is the homepage, very similar to /unverified and /all, but it displays verified posts by default. This is to prevent potentially NSFW posts from displaying

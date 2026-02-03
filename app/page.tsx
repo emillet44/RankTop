@@ -5,6 +5,9 @@ import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   description: 'Create, share, and browse lists on anything and everything, ranked.',
+  alternates: {
+    canonical: '/',
+  },
 }
 
 export default function Home() {
