@@ -27,6 +27,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
 
   const [ranks, setRanks] = useState(2);
   const [settingsToggle, setSettingsToggle] = useState(false);
+  const [showRankNotes, setShowRankNotes] = useState(false);
   const descref = useRef<HTMLTextAreaElement | null>(null);
   const descvalue = useRef("");
   const [image, setImage] = useState(false);
@@ -142,6 +143,10 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
   const toggleSettings = (e: any) => {
     e.preventDefault();
     setSettingsToggle(!settingsToggle);
+  };
+
+  const toggleRankNotes = (e: any) => {
+    setShowRankNotes(e.target.checked);
   };
 
   // Helper to check if preview is allowed
@@ -311,9 +316,29 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
               <div className="bg-slate-700 bg-opacity-30 rounded-md p-4 mt-4">
                 <input name="title" placeholder="Title" className="text-2xl font-semibold outline-none w-full bg-transparent placeholder-slate-400 mb-4" required pattern="[^:'\\%{}]*\S[^:'\\%{}]*" maxLength={40} />
                 {[...Array(ranks)].map((_, index) => (
-                  <div key={index} className="flex items-center space-x-2 mb-2">
-                    <label className="text-xl">{index + 1}.</label>
-                    <input name={`r${index + 1}`} className="flex-1 text-xl bg-transparent border-b border-transparent outline-none focus:border-blue-500 pb-1 w-11/12" required pattern="[^:'\\%{}]*\S[^:'\\%{}]*" maxLength={80} />
+                  <div key={index} className="mb-2">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <label className="text-xl">{index + 1}.</label>
+                      <input 
+                        name={`r${index + 1}`}
+                        className="flex-1 text-xl bg-transparent border-b border-transparent outline-none focus:border-blue-500 pb-1 w-11/12"
+                        required
+                        pattern="[^:'\\%{}]*\S[^:'\\%{}]*"
+                        maxLength={80}
+                      />
+                    </div>
+                    {/* Optional rank note - only shown if toggle is on */}
+                    {showRankNotes && (
+                      <div className="ml-8 flex items-center">
+                        <span className="text-slate-500 mr-2 text-sm">↳</span>
+                        <input
+                          name={`r${index + 1}_note`}
+                          className="flex-1 text-sm bg-slate-800 bg-opacity-40 border border-slate-600 rounded px-2 py-1 outline-none focus:border-blue-500 placeholder-slate-500 transition-colors"
+                          placeholder="Add a quick reason (optional)"
+                          maxLength={50}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -329,7 +354,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
               }
 
               {/* Optional Settings */}
-              <OptionalSettingsSection settingsToggle={settingsToggle} onToggleSettingsAction={toggleSettings} signedin={signedin} usergroups={usergroups} descref={descref} />
+              <OptionalSettingsSection settingsToggle={settingsToggle} onToggleSettingsAction={toggleSettings} onToggleRankNotes={toggleRankNotes} signedin={signedin} usergroups={usergroups} descref={descref} showRankNotes={showRankNotes} />
             </div>
 
             {/* Preview Section */}

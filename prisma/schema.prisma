@@ -14,6 +14,11 @@ model Posts {
   rank3       String?
   rank4       String?
   rank5       String?
+  rank1_note  String?
+  rank2_note  String?
+  rank3_note  String?
+  rank4_note  String?
+  rank5_note  String?
   authorId    String?
   username    String?
   description String?
