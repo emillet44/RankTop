@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { GoogleAuth } from 'google-auth-library';
+import { CloudTasksClient } from '@google-cloud/tasks';
 import { prisma } from "@/lib/prisma";
 
 const auth = new GoogleAuth({
@@ -13,6 +14,13 @@ const auth = new GoogleAuth({
   projectId: process.env.GOOGLE_PROJECT_ID,
 });
 
+const tasksClient = new CloudTasksClient({
+  credentials: {
+    client_email: process.env.GOOGLE_CLIENT_EMAIL,
+    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  },
+});
+
 export async function POST(req: Request) {
   const body = await req.json();
   const url = process.env.FINAL_VIDEO_SERVICE_URL;
@@ -20,6 +28,7 @@ export async function POST(req: Request) {
   try {
     const client = await auth.getIdTokenClient(url!);
 
+    // Handle signed URL generation
     if (body.action === 'getUploadUrls') {
       const response = await client.request({
         url,
@@ -56,18 +65,35 @@ export async function POST(req: Request) {
     const host = req.headers.get('host');
     const currentWebsiteUrl = `${protocol}://${host}`;
 
-    // 2. Trigger Cloud Run (FIRE AND FORGET)
-    client.request({
-      url,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-callback-url': currentWebsiteUrl
+    // 2. Create Cloud Task to trigger video processing
+    const project = process.env.GOOGLE_PROJECT_ID!;
+    const location = 'us-central1';
+    const queue = 'video-processing'; // We'll create this queue next
+
+    const parent = tasksClient.queuePath(project, location, queue);
+
+    // Get ID token for authenticated Cloud Run request
+    const serviceAccountEmail = process.env.GOOGLE_CLIENT_EMAIL!;
+    
+    const task = {
+      httpRequest: {
+        httpMethod: 'POST' as const,
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-callback-url': currentWebsiteUrl,
+        },
+        body: Buffer.from(JSON.stringify({
+          ...body,
+          postId: post.id,
+        })).toString('base64'),
+        oidcToken: {
+          serviceAccountEmail,
+        },
       },
-      data: { ...body, postId: post.id },
-    }).catch(err => {
-      console.error("Background GCR Trigger Failed:", err);
-    });
+    };
+
+    await tasksClient.createTask({ parent, task });
 
     // 3. Return immediately with the postId
     return new Response(null, {
