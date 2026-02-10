@@ -57,43 +57,50 @@ export async function POST(req: Request) {
     const host = req.headers.get('host');
     const currentWebsiteUrl = `${protocol}://${host}`;
 
-    // 2. Create Cloud Task
-    const { CloudTasksClient } = await import('@google-cloud/tasks');
-    
-    const tasksClient = new CloudTasksClient({
-      credentials: {
-        client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      },
-    });
-
+    // 2. Create Cloud Task via REST API (no SDK needed!)
     const project = process.env.GOOGLE_PROJECT_ID!;
     const location = 'us-central1';
     const queue = 'video-processing';
-
-    const parent = tasksClient.queuePath(project, location, queue);
-
-    const serviceAccountEmail = process.env.GOOGLE_CLIENT_EMAIL!;
     
-    const task = {
-      httpRequest: {
-        httpMethod: 'POST' as const,
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'x-callback-url': currentWebsiteUrl,
-        },
-        body: Buffer.from(JSON.stringify({
-          ...body,
-          postId: post.id,
-        })).toString('base64'),
-        oidcToken: {
-          serviceAccountEmail,
+    const queuePath = `projects/${project}/locations/${location}/queues/${queue}`;
+    const taskApiUrl = `https://cloudtasks.googleapis.com/v2/${queuePath}/tasks`;
+
+    // Get access token
+    const accessToken = await auth.getAccessToken();
+
+    const taskPayload = {
+      task: {
+        httpRequest: {
+          httpMethod: 'POST',
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'x-callback-url': currentWebsiteUrl,
+          },
+          body: Buffer.from(JSON.stringify({
+            ...body,
+            postId: post.id,
+          })).toString('base64'),
+          oidcToken: {
+            serviceAccountEmail: process.env.GOOGLE_CLIENT_EMAIL,
+          },
         },
       },
     };
 
-    await tasksClient.createTask({ parent, task });
+    const taskResponse = await fetch(taskApiUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(taskPayload),
+    });
+
+    if (!taskResponse.ok) {
+      const errorText = await taskResponse.text();
+      throw new Error(`Failed to create task: ${taskResponse.status} - ${errorText}`);
+    }
 
     // 3. Return immediately with the postId
     return new Response(null, {
