@@ -41,7 +41,7 @@ export async function POST(req: Request) {
       return NextResponse.json(response.data);
     }
 
-    const { title, r1, r2, r3, r4, r5, description, category, username, userid, visibility, sessionId, videoCount } = body;
+    const { title, r1, r2, r3, r4, r5, description, category, username, userid, visibility, filePaths } = body;
 
     // 1. Create the DB record
     const post = await prisma.posts.create({
@@ -60,7 +60,6 @@ export async function POST(req: Request) {
     });
 
     // 2. Prepare payload - Construct filePaths and group ranks
-    const filePaths = Array.from({ length: videoCount }, (_, i) => `${sessionId}/v_${i}.mp4`);
     const ranks = [r1, r2, r3, r4, r5].filter(Boolean);
 
     // Using the Vercel/Production URL from headers directly
