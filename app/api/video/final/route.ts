@@ -5,7 +5,8 @@ import { NextResponse } from 'next/server';
 import { GoogleAuth } from 'google-auth-library';
 import { prisma } from "@/lib/prisma";
 
-const auth = new GoogleAuth({
+// Auth for Cloud Run (ID tokens - no scopes)
+const cloudRunAuth = new GoogleAuth({
   credentials: {
     client_email: process.env.GOOGLE_CLIENT_EMAIL,
     private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
@@ -13,28 +14,36 @@ const auth = new GoogleAuth({
   projectId: process.env.GOOGLE_PROJECT_ID,
 });
 
+// Auth for Cloud Tasks (Access tokens - with scopes)
+const cloudTasksAuth = new GoogleAuth({
+  credentials: {
+    client_email: process.env.GOOGLE_CLIENT_EMAIL,
+    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  },
+  projectId: process.env.GOOGLE_PROJECT_ID,
+  scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+});
+
 export async function POST(req: Request) {
   const body = await req.json();
   const url = process.env.FINAL_VIDEO_SERVICE_URL;
 
   try {
-    const client = await auth.getIdTokenClient(url!);
+    const client = await cloudRunAuth.getIdTokenClient(url!);
 
-    // Handle signed URL generation
     if (body.action === 'getUploadUrls') {
       const response = await client.request({
         url,
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         data: body,
-        responseType: 'json',
       });
       return NextResponse.json(response.data);
     }
 
-    const { title, r1, r2, r3, r4, r5, description, category, username, userid, visibility } = body;
+    const { title, r1, r2, r3, r4, r5, description, category, username, userid, visibility, sessionId, videoCount } = body;
 
-    // 1. Create the DB record with status 'PROCESSING'
+    // 1. Create the DB record
     const post = await prisma.posts.create({
       data: {
         title,
@@ -45,28 +54,27 @@ export async function POST(req: Request) {
         author: userid ? { connect: { id: userid } } : undefined,
         private: visibility === "Private",
         metadata: {
-          create: {
-            videos: true,
-            status: 'PROCESSING'
-          }
+          create: { videos: true, status: 'PROCESSING' }
         }
       }
     });
 
+    // 2. Prepare payload - Construct filePaths and group ranks
+    const filePaths = Array.from({ length: videoCount }, (_, i) => `${sessionId}/v_${i}.mp4`);
+    const ranks = [r1, r2, r3, r4, r5].filter(Boolean);
+
+    // Using the Vercel/Production URL from headers directly
     const protocol = req.headers.get('x-forwarded-proto') || 'https';
     const host = req.headers.get('host');
     const currentWebsiteUrl = `${protocol}://${host}`;
 
-    // 2. Create Cloud Task via REST API (no SDK needed!)
+    // 3. Create Cloud Task
     const project = process.env.GOOGLE_PROJECT_ID!;
     const location = 'us-central1';
     const queue = 'video-processing';
-    
-    const queuePath = `projects/${project}/locations/${location}/queues/${queue}`;
-    const taskApiUrl = `https://cloudtasks.googleapis.com/v2/${queuePath}/tasks`;
+    const taskApiUrl = `https://cloudtasks.googleapis.com/v2/projects/${project}/locations/${location}/queues/${queue}/tasks`;
 
-    // Get access token
-    const accessToken = await auth.getAccessToken();
+    const accessToken = await cloudTasksAuth.getAccessToken();
 
     const taskPayload = {
       task: {
@@ -78,7 +86,9 @@ export async function POST(req: Request) {
             'x-callback-url': currentWebsiteUrl,
           },
           body: Buffer.from(JSON.stringify({
-            ...body,
+            title,
+            ranks,
+            filePaths,
             postId: post.id,
           })).toString('base64'),
           oidcToken: {
@@ -99,14 +109,10 @@ export async function POST(req: Request) {
 
     if (!taskResponse.ok) {
       const errorText = await taskResponse.text();
-      throw new Error(`Failed to create task: ${taskResponse.status} - ${errorText}`);
+      throw new Error(`Cloud Task Creation Failed: ${taskResponse.status} - ${errorText}`);
     }
 
-    // 3. Return immediately with the postId
-    return new Response(null, {
-      status: 200,
-      headers: { 'X-Post-Id': post.id },
-    });
+    return new Response(null, { status: 200, headers: { 'X-Post-Id': post.id } });
 
   } catch (error: any) {
     console.error("Final Proxy Error:", error.message);
