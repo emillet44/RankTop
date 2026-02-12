@@ -1,188 +1,169 @@
 'use client'
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSpinner, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner, faExclamationTriangle, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 
 interface VideoPreviewProps {
   videoFiles: File[];
   ranks: string[];
   title: string;
-  videoOrder?: number[];
   onSessionCreated?: (sessionId: string, filePaths: string[]) => void;
 }
 
-interface ProgressData {
-  step: number;
-  totalSteps: number;
-  progress: number;
-  message: string;
-  videoUrl?: string;
-  complete?: boolean;
-  error?: string;
-  timestamp: number;
-}
-
-const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, videoOrder, onSessionCreated }) => {
+const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, onSessionCreated }) => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [currentStep, setCurrentStep] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [detailedProgress, setDetailedProgress] = useState<{ step: number; totalSteps: number; }>({ step: 0, totalSteps: 0 });
+  const processingRef = useRef(false);
 
-  // Upload helper for the signed URLs (Direct to GCS)
-  const uploadFileToSignedUrl = async (file: File, signedUrl: string) => {
-    const res = await fetch(signedUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
-    if (!res.ok) throw new Error(`Upload failed: ${res.statusText}`);
+  // Upload helper with progress
+  const uploadWithProgress = (url: string, file: File, onProgress: (pct: number) => void): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', url);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress((e.loaded / e.total) * 100);
+      };
+      xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`)));
+      xhr.onerror = () => reject(new Error('Network error'));
+      xhr.send(file);
+    });
   };
 
   const processVideos = useCallback(async () => {
+    if (processingRef.current) return;
+    processingRef.current = true;
     setProcessing(true);
     setError(null);
-    setProgress(0);
     setVideoUrl(null);
+    setProgress(0);
 
     try {
       const sessionId = `session_${Date.now()}`;
 
-      // 1. Get Signed URLs through the proxy
-      setCurrentStep('Preparing upload...');
+      // 1. Get Upload URLs
+      setStatusMessage('Preparing upload...');
       const urlRes = await fetch('/api/video/preview', {
         method: 'POST',
         body: JSON.stringify({ action: 'getUploadUrls', videoCount: videoFiles.length, sessionId })
       });
       const { uploadUrls, filePaths } = await urlRes.json();
-
-      // Store session for the final submit
+      
       if (onSessionCreated) onSessionCreated(sessionId, filePaths);
 
-      // 2. Upload fragments to GCS
-      setCurrentStep('Uploading fragments...');
-      await Promise.all(videoFiles.map((file, i) => {
+      // 2. Upload Files (0-50%)
+      setStatusMessage('Uploading clips...');
+      for (let i = 0; i < videoFiles.length; i++) {
+        const file = videoFiles[i];
         const info = uploadUrls.find((u: any) => u.index === i);
-        return uploadFileToSignedUrl(file, info.url);
-      }));
+        await uploadWithProgress(info.url, file, (pct) => {
+            const step = 50 / videoFiles.length;
+            const currentBase = i * step;
+            setProgress(Math.round(currentBase + (pct * (step / 100))));
+        });
+      }
 
-      // 3. Start Processing Stream
-      setCurrentStep('Starting render...');
-      const response = await fetch('/api/video/preview', {
+      // 3. Trigger Cloud Task
+      setStatusMessage('Queuing render...');
+      setProgress(55);
+      const triggerRes = await fetch('/api/video/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'trigger',
           sessionId,
           title: title || 'Ranked Post',
           ranks: ranks.filter(r => r.trim() !== ''),
-          filePaths,
-          // videoOrder logic...
+          filePaths
         })
       });
 
-      if (!response.body) throw new Error('No stream available');
+      if (!triggerRes.ok) throw new Error('Failed to start rendering task');
 
-      // 4. Handle SSE Stream
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
+      // 4. Poll for Status (55-99%)
+      setStatusMessage('Rendering preview...');
+      let attempts = 0;
+      const pollInterval = setInterval(async () => {
+        try {
+          attempts++;
+          const statusRes = await fetch('/api/video/preview', {
+             method: 'POST',
+             body: JSON.stringify({ action: 'checkStatus', sessionId })
+          });
+          const statusData = await statusRes.json();
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data: ProgressData = JSON.parse(line.slice(6));
-            if (data.error) throw new Error(data.error);
-
-            // Smooth UI progress
-            const uiProg = Math.round(30 + (data.progress * 0.7));
-            setProgress(uiProg);
-            setCurrentStep(data.message);
-
-            if (data.complete && data.videoUrl) {
-              setVideoUrl(data.videoUrl);
-              setProcessing(false);
-              setProgress(100);
-            }
+          if (statusData.status === 'SUCCESS' && statusData.videoUrl) {
+            clearInterval(pollInterval);
+            setVideoUrl(statusData.videoUrl);
+            setProcessing(false);
+            setProgress(100);
+            processingRef.current = false;
+          } else if (statusData.status === 'FAILED') {
+            clearInterval(pollInterval);
+            throw new Error(statusData.error || 'Rendering failed');
+          } else {
+            // Fake progress creep while waiting
+            setProgress(prev => Math.min(prev + 1, 95));
           }
+
+          if (attempts > 60) { // Timeout after ~2 mins
+            clearInterval(pollInterval);
+            throw new Error('Rendering timed out');
+          }
+        } catch (e: any) {
+          clearInterval(pollInterval);
+          setError(e.message);
+          setProcessing(false);
+          processingRef.current = false;
         }
-      }
+      }, 2000);
+
     } catch (err: any) {
       setError(err.message);
       setProcessing(false);
+      processingRef.current = false;
     }
   }, [videoFiles, ranks, title, onSessionCreated]);
 
   return (
     <div className="w-full max-w-[400px] mx-auto bg-slate-700/30 rounded-lg p-4">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-bold text-white">{title || 'Your Title Here'}</h3>
+        <h3 className="text-xl font-bold text-white">{title || 'Preview'}</h3>
         <button
-          type="button"
           onClick={processVideos}
           disabled={processing}
-          className={`px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${processing
-            ? 'opacity-50 cursor-not-allowed bg-slate-600'
-            : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20 shadow-lg hover:shadow-xl'
-            }`}
+          className={`px-3 py-2 rounded-md transition-all text-sm font-medium ${
+            processing ? 'opacity-50 cursor-not-allowed bg-slate-600' : 'bg-blue-600 hover:bg-blue-700 shadow-lg'
+          }`}
         >
-          {processing ? 'Processing...' : videoUrl ? 'Reprocess Videos' : 'Process Videos'}
+          {processing ? 'Processing' : videoUrl ? 'Refresh' : 'Generate'}
         </button>
       </div>
 
-      <div className="relative bg-black rounded-lg overflow-hidden"
-        style={{ aspectRatio: '9/16', width: '100%', maxWidth: '400px', margin: '0 auto' }}
-      >
+      <div className="relative bg-black rounded-lg overflow-hidden aspect-[9/16] w-full max-w-[400px] mx-auto">
         {processing ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 to-slate-800/90 flex flex-col items-center justify-center p-6">
-            <FontAwesomeIcon icon={faSpinner} className="h-12 w-12 mb-4 animate-spin text-blue-400" />
-            <p className="text-lg font-medium text-slate-200 mb-2">Processing videos...</p>
-            <p className="text-sm text-slate-400 mb-2">{currentStep}</p>
-
-            {detailedProgress.totalSteps > 0 && (
-              <p className="text-xs text-slate-500 mb-4">
-                Step {detailedProgress.step} of {detailedProgress.totalSteps}
-              </p>
-            )}
-
-            <div className="w-full mb-4">
-              <div className="flex justify-between items-center text-sm mb-2">
-                <span className="text-slate-300 font-medium">Progress</span>
-                <span className="text-blue-400 font-bold">{progress}%</span>
-              </div>
-              <div className="relative w-full bg-slate-600/50 rounded-full h-3 overflow-hidden">
-                <div
-                  className="absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 rounded-full transition-all duration-500 ease-out shadow-lg"
-                  style={{ width: `${progress}%`, boxShadow: '0 0 10px rgba(59, 130, 246, 0.5)' }}
-                />
-              </div>
+          <div className="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center p-6 text-center">
+            <FontAwesomeIcon icon={faSpinner} className="h-10 w-10 mb-4 animate-spin text-blue-400" />
+            <p className="text-white font-medium mb-2">{statusMessage}</p>
+            <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+              <div className="bg-blue-500 h-full transition-all duration-300" style={{ width: `${progress}%` }} />
             </div>
+            <p className="text-xs text-slate-400 mt-2">{progress}%</p>
           </div>
         ) : videoUrl ? (
-          <video
-            src={videoUrl}
-            controls
-            playsInline
-            preload="metadata"
-            onError={() => setError('Video playback error')}
-            crossOrigin="anonymous"
-            className="w-full h-full"
-          />
+          <video src={videoUrl} controls autoPlay loop playsInline className="w-full h-full object-cover" />
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-full text-red-400 p-4 text-center">
             <FontAwesomeIcon icon={faExclamationTriangle} className="h-8 w-8 mb-2" />
-            <span className="text-sm">{error}</span>
-            <button
-              onClick={() => setError(null)}
-              className="mt-2 px-3 py-1 text-xs bg-slate-600 hover:bg-slate-500 rounded transition-colors"
-            >
-              Dismiss
-            </button>
+            <p className="text-sm">{error}</p>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-slate-400 p-6 text-center">
-            Select <span className="font-semibold text-white">Process Videos</span> to create your ranked video.
+          <div className="flex flex-col items-center justify-center h-full text-slate-500">
+            <FontAwesomeIcon icon={faPlayCircle} className="h-12 w-12 mb-2 opacity-50" />
+            <p>Click Generate to preview</p>
           </div>
         )}
       </div>
