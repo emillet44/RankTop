@@ -462,6 +462,8 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
           videoFiles={submissionData.videoFiles}
           postType={postType}
           onClose={() => setSubmissionData(null)}
+          previousSessionId={videoSessionId}
+          previousFilePaths={videoFilePaths}
         />
       )}
     </div>

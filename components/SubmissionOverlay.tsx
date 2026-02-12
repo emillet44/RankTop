@@ -11,13 +11,17 @@ interface SubmissionOverlayProps {
   videoFiles: File[];
   postType: 'text' | 'image' | 'video';
   onClose: () => void;
+  previousSessionId?: string | null;
+  previousFilePaths?: string[] | null;
 }
 
 export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
   formData,
   videoFiles,
   postType,
-  onClose
+  onClose,
+  previousSessionId,
+  previousFilePaths
 }) => {
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState('Initializing...');
@@ -42,7 +46,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
         if (res.ok) {
           const data = await res.json();
-          
+
           if (data.status === 'READY' || data.status === 'SUCCESS') {
             return true;
           }
@@ -51,9 +55,9 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
           }
           // Update progress bar based on backend calculation if available
           if (data.progress) {
-             // Map backend progress (5-100) to UI progress (50-100)
-             const uiProgress = 50 + (data.progress * 0.5);
-             setProgress(uiProgress);
+            // Map backend progress (5-100) to UI progress (50-100)
+            const uiProgress = 50 + (data.progress * 0.5);
+            setProgress(uiProgress);
           }
         }
       } catch (e) {
@@ -92,46 +96,59 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
     try {
       let postId = '';
 
-      // === VIDEO PIPELINE ===
       if (postType === 'video') {
-        setMessage('Preparing cloud storage...');
-        setProgress(5);
 
-        const sessionId = `session_${Date.now()}`;
-        
-        // 1. Get Signed URLs
-        const urlRes = await fetch('/api/video/final', {
-          method: 'POST',
-          body: JSON.stringify({ 
-            action: 'getUploadUrls', 
-            videoCount: videoFiles.length, 
-            sessionId,
-            fileTypes: videoFiles.map(f => f.type)
-          })
-        });
+        let sessionId = previousSessionId;
+        let filePaths = previousFilePaths;
 
-        const data = await urlRes.json();
-        if (!urlRes.ok || !data.uploadUrls) throw new Error(data.error || "Failed to get upload URLs");
-        const { uploadUrls, filePaths } = data;
+        // 1. Check if we need to upload
+        if (sessionId && filePaths && filePaths.length > 0) {
+          // SKIP UPLOAD: Reuse existing files from Preview
+          setMessage('Using existing video uploads...');
+          setProgress(45); // Jump straight to 45%
+          await new Promise(r => setTimeout(r, 800)); // Small delay for UX transition
+        }
+        else {
+          // FULL UPLOAD: No preview was done, or data missing
+          setMessage('Preparing cloud storage...');
+          setProgress(5);
 
-        // 2. Upload Files (Progress: 5% -> 45%)
-        for (let i = 0; i < videoFiles.length; i++) {
-          const file = videoFiles[i];
-          const info = uploadUrls.find((u: any) => u.index === i);
-          
-          await uploadWithProgress(info.url, file, (pct) => {
-            const stepWeight = 40 / videoFiles.length;
-            const baseProgress = 5 + (i * stepWeight);
-            const addedProgress = (pct / 100) * stepWeight;
-            setProgress(Math.round(baseProgress + addedProgress));
-            setMessage(`Uploading clip ${i + 1} of ${videoFiles.length}...`);
+          sessionId = `session_${Date.now()}`;
+
+          const urlRes = await fetch('/api/video/final', {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'getUploadUrls',
+              videoCount: videoFiles.length,
+              sessionId,
+              fileTypes: videoFiles.map(f => f.type)
+            })
           });
+
+          const data = await urlRes.json();
+          if (!urlRes.ok || !data.uploadUrls) throw new Error(data.error || "Failed to get upload URLs");
+
+          filePaths = data.filePaths;
+          const { uploadUrls } = data;
+
+          for (let i = 0; i < videoFiles.length; i++) {
+            const file = videoFiles[i];
+            const info = uploadUrls.find((u: any) => u.index === i);
+
+            await uploadWithProgress(info.url, file, (pct) => {
+              const stepWeight = 40 / videoFiles.length;
+              const baseProgress = 5 + (i * stepWeight);
+              const addedProgress = (pct / 100) * stepWeight;
+              setProgress(Math.round(baseProgress + addedProgress));
+              setMessage(`Uploading clip ${i + 1} of ${videoFiles.length}...`);
+            });
+          }
         }
 
-        // 3. Trigger Cloud Task
+        // 2. Trigger Cloud Task (Reusing sessionId and filePaths)
         setMessage('Starting render...');
         setProgress(50);
-        
+
         const payload = Object.fromEntries(formData);
         const triggerRes = await fetch('/api/video/final', {
           method: 'POST',
@@ -147,23 +164,23 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
         if (!triggerRes.ok) throw new Error("Failed to initialize server-side processing.");
         postId = triggerRes.headers.get('X-Post-Id') || '';
 
-        // 4. Poll JSON Status (Progress: 50% -> 100%)
+        // 3. Poll JSON Status
         setMessage('Rendering video...');
         await pollStatus(postId);
-        
+
         setIsComplete(true);
         setProgress(100);
         setMessage('Redirecting...');
         setTimeout(() => router.push(`/post/${postId}`), 800);
 
-      // === IMAGE PIPELINE ===
+        // === IMAGE PIPELINE ===
       } else if (postType === 'image') {
         setMessage('Creating post record...');
         setProgress(10);
-        
+
         const metadataOnly = new FormData();
         formData.forEach((val, key) => { if (!(val instanceof File)) metadataOnly.append(key, val); });
-        
+
         postId = await newList(metadataOnly);
         if (!postId) throw new Error("Could not save post metadata.");
 
@@ -174,28 +191,28 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
           const { file, index } = imageFiles[i];
           const fileName = `${postId}${index}.png`;
           const uploadUrl = await getSignedGCSUrl('ranktop-i', fileName, 'write', 5);
-          
+
           if (!uploadUrl) throw new Error("Failed to get signed upload URL.");
-          
+
           await uploadWithProgress(uploadUrl, file, (pct) => {
             const stepWeight = 80 / imageFiles.length;
             setProgress(Math.round(10 + (i * stepWeight) + (pct / 100 * stepWeight)));
             setMessage(`Uploading image ${i + 1} of ${imageFiles.length}...`);
           });
         }
-        
+
         setIsComplete(true);
         setProgress(100);
         setMessage('Redirecting...');
         setTimeout(() => router.push(`/post/${postId}`), 800);
 
-      // === TEXT PIPELINE ===
+        // === TEXT PIPELINE ===
       } else {
         setMessage('Saving post...');
         setProgress(40);
         const resultId = await newList(formData);
         if (!resultId) throw new Error("Failed to save post.");
-        
+
         setIsComplete(true);
         setProgress(100);
         setMessage('Redirecting...');
@@ -207,11 +224,9 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
       setError(err.message || "An unexpected error occurred.");
       started.current = false;
     }
-  }, [formData, videoFiles, postType, router]);
+  }, [formData, videoFiles, postType, router, previousSessionId, previousFilePaths]);
 
-  useEffect(() => {
-    runSubmission();
-  }, [runSubmission]);
+  useEffect(() => { runSubmission(); }, [runSubmission]);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/90 backdrop-blur-md px-4">
