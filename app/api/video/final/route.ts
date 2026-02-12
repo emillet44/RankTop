@@ -1,11 +1,7 @@
-export const maxDuration = 60;
-export const dynamic = 'force-dynamic';
-
 import { NextResponse } from 'next/server';
 import { GoogleAuth } from 'google-auth-library';
 import { prisma } from "@/lib/prisma";
 
-// Auth for Cloud Run (ID tokens - no scopes)
 const cloudRunAuth = new GoogleAuth({
   credentials: {
     client_email: process.env.GOOGLE_CLIENT_EMAIL,
@@ -14,7 +10,6 @@ const cloudRunAuth = new GoogleAuth({
   projectId: process.env.GOOGLE_PROJECT_ID,
 });
 
-// Auth for Cloud Tasks (Access tokens - with scopes)
 const cloudTasksAuth = new GoogleAuth({
   credentials: {
     client_email: process.env.GOOGLE_CLIENT_EMAIL,
@@ -29,9 +24,9 @@ export async function POST(req: Request) {
   const url = process.env.FINAL_VIDEO_SERVICE_URL;
 
   try {
-    const client = await cloudRunAuth.getIdTokenClient(url!);
-
-    if (body.action === 'getUploadUrls') {
+    // 1. Proxy Actions (Upload URLs OR Check Status)
+    if (body.action === 'getUploadUrls' || body.action === 'checkStatus') {
+      const client = await cloudRunAuth.getIdTokenClient(url!);
       const response = await client.request({
         url,
         method: 'POST',
@@ -41,9 +36,9 @@ export async function POST(req: Request) {
       return NextResponse.json(response.data);
     }
 
+    // 2. Create Submission (DB Record + Cloud Task)
     const { title, r1, r2, r3, r4, r5, description, category, username, userid, visibility, filePaths } = body;
 
-    // 1. Create the DB record
     const post = await prisma.posts.create({
       data: {
         title,
@@ -54,23 +49,20 @@ export async function POST(req: Request) {
         author: userid ? { connect: { id: userid } } : undefined,
         private: visibility === "Private",
         metadata: {
-          create: { videos: true, status: 'PROCESSING' }
+          create: { videos: true, status: 'PROCESSING' } 
         }
       }
     });
 
-    // 2. Prepare payload - Construct filePaths and group ranks
     const ranks = [r1, r2, r3, r4, r5].filter(Boolean);
-
-    // Using the Vercel/Production URL from headers directly
     const protocol = req.headers.get('x-forwarded-proto') || 'https';
     const host = req.headers.get('host');
     const currentWebsiteUrl = `${protocol}://${host}`;
 
-    // 3. Create Cloud Task
+    // Cloud Task setup
     const project = process.env.GOOGLE_PROJECT_ID!;
     const location = 'us-central1';
-    const queue = 'video-processing';
+    const queue = 'video-processing'; // Shared queue
     const taskApiUrl = `https://cloudtasks.googleapis.com/v2/projects/${project}/locations/${location}/queues/${queue}/tasks`;
 
     const accessToken = await cloudTasksAuth.getAccessToken();
@@ -97,19 +89,11 @@ export async function POST(req: Request) {
       },
     };
 
-    const taskResponse = await fetch(taskApiUrl, {
+    await fetch(taskApiUrl, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(taskPayload),
     });
-
-    if (!taskResponse.ok) {
-      const errorText = await taskResponse.text();
-      throw new Error(`Cloud Task Creation Failed: ${taskResponse.status} - ${errorText}`);
-    }
 
     return new Response(null, { status: 200, headers: { 'X-Post-Id': post.id } });
 

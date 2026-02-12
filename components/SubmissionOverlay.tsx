@@ -26,14 +26,48 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
   const router = useRouter();
   const started = useRef(false);
 
-  const handleSuccess = useCallback((postId: string) => {
-    setIsComplete(true);
-    setProgress(100);
-    setMessage('Redirecting...');
-    setTimeout(() => router.push(`/post/${postId}`), 800);
-  }, [router]);
+  // --- POLLING HELPER (Checks JSON file via Proxy) ---
+  const pollStatus = async (postId: string) => {
+    let attempts = 0;
+    const maxAttempts = 300; // Approx 10 minutes timeout (300 * 2s)
 
-  // Real Progress Upload Helper using XMLHttpRequest
+    while (attempts < maxAttempts) {
+      try {
+        //hit the 'checkStatus' action on internal API route
+        const res = await fetch('/api/video/final', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'checkStatus', postId })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          
+          if (data.status === 'READY' || data.status === 'SUCCESS') {
+            return true;
+          }
+          if (data.status === 'FAILED') {
+            throw new Error(data.error || "Processing failed");
+          }
+          // Update progress bar based on backend calculation if available
+          if (data.progress) {
+             // Map backend progress (5-100) to UI progress (50-100)
+             const uiProgress = 50 + (data.progress * 0.5);
+             setProgress(uiProgress);
+          }
+        }
+      } catch (e) {
+        console.warn("Poll check skipped:", e);
+      }
+
+      // Wait 2 seconds
+      await new Promise(r => setTimeout(r, 2000));
+      attempts++;
+    }
+    throw new Error("Timed out waiting for video rendering.");
+  };
+
+  // --- UPLOAD HELPER ---
   const uploadWithProgress = (url: string, file: File, onProgress: (pct: number) => void): Promise<void> => {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -50,6 +84,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
     });
   };
 
+  // --- MAIN LOGIC ---
   const runSubmission = useCallback(async () => {
     if (started.current) return;
     started.current = true;
@@ -57,36 +92,44 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
     try {
       let postId = '';
 
-      // --- CASE A: VIDEO POSTS ---
+      // === VIDEO PIPELINE ===
       if (postType === 'video') {
         setMessage('Preparing cloud storage...');
         setProgress(5);
 
         const sessionId = `session_${Date.now()}`;
+        
+        // 1. Get Signed URLs
         const urlRes = await fetch('/api/video/final', {
           method: 'POST',
-          body: JSON.stringify({ action: 'getUploadUrls', videoCount: videoFiles.length, sessionId })
+          body: JSON.stringify({ 
+            action: 'getUploadUrls', 
+            videoCount: videoFiles.length, 
+            sessionId,
+            fileTypes: videoFiles.map(f => f.type)
+          })
         });
 
         const data = await urlRes.json();
         if (!urlRes.ok || !data.uploadUrls) throw new Error(data.error || "Failed to get upload URLs");
-
         const { uploadUrls, filePaths } = data;
 
-        // Upload phase: 5% to 45%
+        // 2. Upload Files (Progress: 5% -> 45%)
         for (let i = 0; i < videoFiles.length; i++) {
           const file = videoFiles[i];
           const info = uploadUrls.find((u: any) => u.index === i);
           
           await uploadWithProgress(info.url, file, (pct) => {
             const stepWeight = 40 / videoFiles.length;
-            setProgress(Math.round(5 + (i * stepWeight) + (pct / 100 * stepWeight)));
-            setMessage(`Uploading clip ${i + 1} of ${videoFiles.length}... ${Math.round(pct)}%`);
+            const baseProgress = 5 + (i * stepWeight);
+            const addedProgress = (pct / 100) * stepWeight;
+            setProgress(Math.round(baseProgress + addedProgress));
+            setMessage(`Uploading clip ${i + 1} of ${videoFiles.length}...`);
           });
         }
 
-        // Trigger Phase: Tells Next.js to create the DB record and ping GCR
-        setMessage('Starting final render...');
+        // 3. Trigger Cloud Task
+        setMessage('Starting render...');
         setProgress(50);
         
         const payload = Object.fromEntries(formData);
@@ -104,31 +147,16 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
         if (!triggerRes.ok) throw new Error("Failed to initialize server-side processing.");
         postId = triggerRes.headers.get('X-Post-Id') || '';
 
-        // Polling Phase: 50% to 99%
-        let attempts = 0;
-        while (attempts < 100) { // Max 5 mins approx
-          const statusRes = await fetch(`/api/posts/${postId}/status`);
-          const statusData = await statusRes.json();
+        // 4. Poll JSON Status (Progress: 50% -> 100%)
+        setMessage('Rendering video...');
+        await pollStatus(postId);
+        
+        setIsComplete(true);
+        setProgress(100);
+        setMessage('Redirecting...');
+        setTimeout(() => router.push(`/post/${postId}`), 800);
 
-          if (statusData.status === 'READY') {
-            handleSuccess(postId);
-            return;
-          } 
-          
-          if (statusData.status === 'FAILED') {
-            throw new Error(statusData.error || "Video processing failed.");
-          }
-
-          // Slow progress creep to show life
-          setProgress(prev => Math.min(prev + 0.5, 98));
-          setMessage('Rendering video fragments...');
-          
-          await new Promise(r => setTimeout(r, 3000));
-          attempts++;
-        }
-        throw new Error("Rendering took too long. It might still finish; check your profile in a moment.");
-
-      // --- CASE B: IMAGE POSTS ---
+      // === IMAGE PIPELINE ===
       } else if (postType === 'image') {
         setMessage('Creating post record...');
         setProgress(10);
@@ -142,7 +170,6 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
         const imageFiles: { file: File, index: string }[] = [];
         formData.forEach((v, k) => { if (v instanceof File && k.startsWith('img')) imageFiles.push({ file: v, index: k.replace('img', '') }); });
 
-        // Upload phase: 10% to 90%
         for (let i = 0; i < imageFiles.length; i++) {
           const { file, index } = imageFiles[i];
           const fileName = `${postId}${index}.png`;
@@ -156,15 +183,23 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
             setMessage(`Uploading image ${i + 1} of ${imageFiles.length}...`);
           });
         }
-        handleSuccess(postId);
+        
+        setIsComplete(true);
+        setProgress(100);
+        setMessage('Redirecting...');
+        setTimeout(() => router.push(`/post/${postId}`), 800);
 
-      // --- CASE C: TEXT POSTS ---
+      // === TEXT PIPELINE ===
       } else {
         setMessage('Saving post...');
         setProgress(40);
         const resultId = await newList(formData);
         if (!resultId) throw new Error("Failed to save post.");
-        handleSuccess(resultId);
+        
+        setIsComplete(true);
+        setProgress(100);
+        setMessage('Redirecting...');
+        setTimeout(() => router.push(`/post/${resultId}`), 800);
       }
 
     } catch (err: any) {
@@ -172,7 +207,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
       setError(err.message || "An unexpected error occurred.");
       started.current = false;
     }
-  }, [formData, videoFiles, postType, handleSuccess]);
+  }, [formData, videoFiles, postType, router]);
 
   useEffect(() => {
     runSubmission();
