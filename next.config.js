@@ -20,7 +20,7 @@ const nextConfig = {
             value: 'ranktop.net',
           },
         ],
-        destination: 'https://www.ranktop.net/:path*',
+        destination: 'https://ranktop.net/:path*',
         permanent: true,
       },
     ]
