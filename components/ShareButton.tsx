@@ -9,12 +9,14 @@ interface ShareButtonProps {
   postTitle: string;
   postDescription?: string | null;
   postRanks: (string | null)[];
+  rankNotes: (string | null)[];
+  username: string;
   videoUrl: string | null;
 }
 
 type ImageFormat = 'square' | 'twitter' | 'story';
 
-export function ShareButton({ postId, postTitle, postDescription, postRanks, videoUrl }: ShareButtonProps) {
+export function ShareButton({ postId, postTitle, postDescription, postRanks, rankNotes, username, videoUrl }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -89,9 +91,7 @@ export function ShareButton({ postId, postTitle, postDescription, postRanks, vid
       const { width, height } = dimensions[format];
 
       // Use your existing OG image endpoint but with custom dimensions
-      const imageUrl = `/api/og?title=${encodeURIComponent(postTitle)}&description=${encodeURIComponent(postDescription || '')}&ranks=${encodeURIComponent(postRanks.filter(Boolean).join(','))}&width=${width}&height=${height}&format=${format}`;
-
-      // Fetch the image
+const imageUrl = `/api/og?title=${encodeURIComponent(postTitle)}&description=${encodeURIComponent(postDescription || '')}&username=${encodeURIComponent(username || '')}${postRanks.filter(Boolean).map((rank, i) => `&rank=${encodeURIComponent(rank as string)}`).join('')}${rankNotes.filter(Boolean).map((note, i) => `&rank_note=${encodeURIComponent(note as string)}`).join('')}&width=${width}&height=${height}&format=${format}`;      // Fetch the image
       const response = await fetch(imageUrl);
       if (!response.ok) throw new Error('Failed to generate image');
 

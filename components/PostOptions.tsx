@@ -10,6 +10,8 @@ interface OptionalSettingsSectionProps {
   signedin: boolean;
   usergroups: any;
   descref: React.RefObject<HTMLTextAreaElement>;
+  showRankNotes: boolean;
+  onToggleRankNotes: (e: any) => void;
 }
 
 export default function OptionalSettingsSection({
@@ -17,7 +19,9 @@ export default function OptionalSettingsSection({
   onToggleSettingsAction,
   signedin,
   usergroups,
-  descref
+  descref,
+  showRankNotes,
+  onToggleRankNotes
 }: OptionalSettingsSectionProps) {
   return (
     <div className="bg-slate-700 bg-opacity-30 rounded-md">
@@ -32,6 +36,25 @@ export default function OptionalSettingsSection({
         <FontAwesomeIcon icon={settingsToggle ? faAngleUp : faAngleDown} className="h-5" />
       </button>
       <div className={`${settingsToggle ? 'block' : 'hidden'} px-4 pb-4 space-y-4 border-t border-slate-600`}>
+        
+        {/* Rank Notes Toggle */}
+        <div className="pt-4">
+          <label className="flex items-center justify-between cursor-pointer">
+            <span className="text-lg font-medium">Add rank notes</span>
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={showRankNotes}
+                onChange={onToggleRankNotes}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-600 rounded-full peer peer-checked:bg-blue-600 transition-colors"></div>
+              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+            </div>
+          </label>
+          <p className="text-sm text-slate-400 mt-1">Add optional context for each rank (max 50 characters)</p>
+        </div>
+
         {/* Description */}
         <div>
           <label className="block text-lg font-medium mb-2">Description</label>

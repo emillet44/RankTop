@@ -150,7 +150,9 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
                 postId={params.id} 
                 postTitle={post.title} 
                 postDescription={post.description} 
-                postRanks={[post.rank1, post.rank2, post.rank3, post.rank4, post.rank5]} 
+                postRanks={[post.rank1, post.rank2, post.rank3, post.rank4, post.rank5]}
+                rankNotes={[post.rank1_note, post.rank2_note, post.rank3_note, post.rank4_note, post.rank5_note]}
+                username={post.username || ""}
                 videoUrl={post.metadata?.videoUrl} 
               />
               {yours && !editable && <Delete id={params.id} />}

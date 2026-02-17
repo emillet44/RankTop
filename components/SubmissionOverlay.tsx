@@ -11,13 +11,17 @@ interface SubmissionOverlayProps {
   videoFiles: File[];
   postType: 'text' | 'image' | 'video';
   onClose: () => void;
+  previousSessionId?: string | null;
+  previousFilePaths?: string[] | null;
 }
 
 export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
   formData,
   videoFiles,
   postType,
-  onClose
+  onClose,
+  previousSessionId,
+  previousFilePaths
 }) => {
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState('Initializing...');
@@ -26,209 +30,203 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
   const router = useRouter();
   const started = useRef(false);
 
- // Helper to handle completion redirect
-  const handleSuccess = useCallback((postId: string) => {
-    setIsComplete(true);
-    setProgress(100);
-    setMessage('Redirecting...');
-    
-    setTimeout(() => router.push(`/post/${postId}`), 500);
-}, [router]);
+  // --- POLLING HELPER (Checks JSON file via Proxy) ---
+  const pollStatus = async (postId: string) => {
+    let attempts = 0;
+    const maxAttempts = 300; // Approx 10 minutes timeout (300 * 2s)
 
+    while (attempts < maxAttempts) {
+      try {
+        //hit the 'checkStatus' action on internal API route
+        const res = await fetch('/api/video/final', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'checkStatus', postId })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+
+          if (data.status === 'READY' || data.status === 'SUCCESS') {
+            return true;
+          }
+          if (data.status === 'FAILED') {
+            throw new Error(data.error || "Processing failed");
+          }
+          // Update progress bar based on backend calculation if available
+          if (data.progress) {
+            // Map backend progress (5-100) to UI progress (50-100)
+            const uiProgress = 50 + (data.progress * 0.5);
+            setProgress(uiProgress);
+          }
+        }
+      } catch (e) {
+        console.warn("Poll check skipped:", e);
+      }
+
+      // Wait 2 seconds
+      await new Promise(r => setTimeout(r, 2000));
+      attempts++;
+    }
+    throw new Error("Timed out waiting for video rendering.");
+  };
+
+  // --- UPLOAD HELPER ---
+  const uploadWithProgress = (url: string, file: File, onProgress: (pct: number) => void): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', url);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          onProgress((e.loaded / e.total) * 100);
+        }
+      };
+      xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload status ${xhr.status}`)));
+      xhr.onerror = () => reject(new Error('Network error during upload'));
+      xhr.send(file);
+    });
+  };
+
+  // --- MAIN LOGIC ---
   const runSubmission = useCallback(async () => {
     if (started.current) return;
     started.current = true;
 
     try {
-      // PHASE 1: VIDEO UPLOADS (If needed)
-      // If we have a sessionId from Preview, we SKIP this block
-      if (postType === 'video' && !formData.has('sessionId')) {
-        setMessage('Preparing cloud storage...');
-        setProgress(5);
+      let postId = '';
 
-        const sessionId = `session_${Date.now()}`;
+      if (postType === 'video') {
 
-        const urlRes = await fetch('/api/video/final', {
-          method: 'POST',
-          body: JSON.stringify({ action: 'getUploadUrls', videoCount: videoFiles.length, sessionId })
-        });
+        let sessionId = previousSessionId;
+        let filePaths = previousFilePaths;
 
-        const data = await urlRes.json();
-        if (!urlRes.ok || !data.uploadUrls) throw new Error(data.error || "Failed to get upload URLs");
+        // 1. Check if we need to upload
+        if (sessionId && filePaths && filePaths.length > 0) {
+          // SKIP UPLOAD: Reuse existing files from Preview
+          setMessage('Using existing video uploads...');
+          setProgress(45); // Jump straight to 45%
+          await new Promise(r => setTimeout(r, 800)); // Small delay for UX transition
+        }
+        else {
+          // FULL UPLOAD: No preview was done, or data missing
+          setMessage('Preparing cloud storage...');
+          setProgress(5);
 
-        const { uploadUrls, filePaths } = data;
+          sessionId = `session_${Date.now()}`;
 
-        for (let i = 0; i < videoFiles.length; i++) {
-          const file = videoFiles[i];
-          setMessage(`Uploading clip ${i + 1} of ${videoFiles.length}...`);
-
-          const info = uploadUrls.find((u: any) => u.index === i);
-          if (!info) throw new Error(`Upload config missing for clip ${i + 1}`);
-
-          const uploadRes = await fetch(info.url, {
-            method: 'PUT',
-            body: file,
-            headers: { 'Content-Type': file.type }
+          const urlRes = await fetch('/api/video/final', {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'getUploadUrls',
+              videoCount: videoFiles.length,
+              sessionId,
+              fileTypes: videoFiles.map(f => f.type)
+            })
           });
 
-          if (!uploadRes.ok) throw new Error(`Upload failed for clip ${i + 1}`);
+          const data = await urlRes.json();
+          if (!urlRes.ok || !data.uploadUrls) throw new Error(data.error || "Failed to get upload URLs");
 
-          setProgress(Math.round(10 + ((i + 1) / videoFiles.length) * 35));
+          filePaths = data.filePaths;
+          const { uploadUrls } = data;
+
+          for (let i = 0; i < videoFiles.length; i++) {
+            const file = videoFiles[i];
+            const info = uploadUrls.find((u: any) => u.index === i);
+
+            await uploadWithProgress(info.url, file, (pct) => {
+              const stepWeight = 40 / videoFiles.length;
+              const baseProgress = 5 + (i * stepWeight);
+              const addedProgress = (pct / 100) * stepWeight;
+              setProgress(Math.round(baseProgress + addedProgress));
+              setMessage(`Uploading clip ${i + 1} of ${videoFiles.length}...`);
+            });
+          }
         }
 
-        formData.append('sessionId', sessionId);
-        formData.append('filePaths', JSON.stringify(filePaths));
-      }
-
-      // PHASE 2: FINAL PROCESSING
-      if (postType === 'video') {
-        setMessage('Starting final 1080p render...');
-        setProgress(46);
+        // 2. Trigger Cloud Task (Reusing sessionId and filePaths)
+        setMessage('Starting render...');
+        setProgress(50);
 
         const payload = Object.fromEntries(formData);
-        
-        // Ensure filePaths is correctly parsed if it came from FormData strings
-        const rawFilePaths = formData.get('filePaths');
-        const filePaths = typeof rawFilePaths === 'string' ? JSON.parse(rawFilePaths) : [];
-
-        const response = await fetch('/api/video/final', {
+        const triggerRes = await fetch('/api/video/final', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...payload,
             ranks: [payload.r1, payload.r2, payload.r3, payload.r4, payload.r5].filter(Boolean),
             filePaths,
-            sessionId: formData.get('sessionId')
+            sessionId
           })
         });
 
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || `Server error: ${response.status}`);
-        }
+        if (!triggerRes.ok) throw new Error("Failed to initialize server-side processing.");
+        postId = triggerRes.headers.get('X-Post-Id') || '';
 
-        const finalPostId = response.headers.get('X-Post-Id');
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder('utf-8');
-        if (!reader) throw new Error("Processing stream unavailable");
+        // 3. Poll JSON Status
+        setMessage('Rendering video...');
+        await pollStatus(postId);
 
-        let buffer = '';
-        let lastProgress = 46;
+        setIsComplete(true);
+        setProgress(100);
+        setMessage('Redirecting...');
+        setTimeout(() => router.push(`/post/${postId}`), 800);
 
-        while (true) {
-          const { done, value } = await reader.read();
-          
-          if (value) {
-            buffer += decoder.decode(value, { stream: true });
-          }
-
-          // Process full lines
-          const lines = buffer.split('\n');
-          // Keep the last segment in the buffer (it might be incomplete)
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (!trimmedLine.startsWith('data: ')) continue;
-
-            try {
-              const data = JSON.parse(trimmedLine.slice(6));
-              if (data.error) throw new Error(data.error);
-
-              const uiProg = Math.round(46 + (data.progress * 0.54));
-              if (uiProg > lastProgress) lastProgress = uiProg;
-              setProgress(uiProg);
-              
-              if (data.message) setMessage(data.message);
-
-              if (data.complete) {
-                const targetId = finalPostId || data.videoUrl?.split('/').pop()?.split('.')[0];
-                if (targetId) {
-                  await handleSuccess(targetId);
-                  return; // Exit function immediately on success
-                }
-              }
-            } catch (e) {
-              console.warn('Skipped malformed SSE frame');
-            }
-          }
-
-          if (done) {
-            // Check buffer one last time
-            if (buffer.trim().startsWith('data: ')) {
-               try {
-                  const data = JSON.parse(buffer.trim().slice(6));
-                  if (data.complete) {
-                    const targetId = finalPostId || data.videoUrl?.split('/').pop()?.split('.')[0];
-                    if (targetId) {
-                        await handleSuccess(targetId);
-                        return;
-                    }
-                  }
-               } catch (e) {}
-            }
-
-            // SAFETY CHECK: Stream closed logic
-            if (lastProgress > 80 && finalPostId) {
-                console.log("Stream closed with high progress. Assuming success.");
-                await handleSuccess(finalPostId);
-            } else {
-                throw new Error("Connection closed before completion.");
-            }
-            break;
-          }
-        }
+        // === IMAGE PIPELINE ===
       } else if (postType === 'image') {
-        // Image Post Logic
         setMessage('Creating post record...');
-        setProgress(20);
+        setProgress(10);
+
         const metadataOnly = new FormData();
-        formData.forEach((value, key) => {
-          if (!(value instanceof File)) metadataOnly.append(key, value);
-        });
-        const resultId = await newList(metadataOnly);
-        if (!resultId) throw new Error("Failed to create post record.");
+        formData.forEach((val, key) => { if (!(val instanceof File)) metadataOnly.append(key, val); });
+
+        postId = await newList(metadataOnly);
+        if (!postId) throw new Error("Could not save post metadata.");
 
         const imageFiles: { file: File, index: string }[] = [];
-        formData.forEach((value, key) => {
-          if (value instanceof File && key.startsWith('img')) {
-            imageFiles.push({ file: value, index: key.replace('img', '') });
-          }
-        });
+        formData.forEach((v, k) => { if (v instanceof File && k.startsWith('img')) imageFiles.push({ file: v, index: k.replace('img', '') }); });
 
-        setMessage(`Uploading ${imageFiles.length} images...`);
         for (let i = 0; i < imageFiles.length; i++) {
           const { file, index } = imageFiles[i];
-          const fileName = `${resultId}${index}.png`;
+          const fileName = `${postId}${index}.png`;
           const uploadUrl = await getSignedGCSUrl('ranktop-i', fileName, 'write', 5);
-          if (!uploadUrl) throw new Error(`Could not generate upload permission for image ${index}`);
-          const uploadRes = await fetch(uploadUrl, {
-            method: 'PUT',
-            body: file,
-            headers: { 'Content-Type': 'image/png' }
+
+          if (!uploadUrl) throw new Error("Failed to get signed upload URL.");
+
+          await uploadWithProgress(uploadUrl, file, (pct) => {
+            const stepWeight = 80 / imageFiles.length;
+            setProgress(Math.round(10 + (i * stepWeight) + (pct / 100 * stepWeight)));
+            setMessage(`Uploading image ${i + 1} of ${imageFiles.length}...`);
           });
-          if (!uploadRes.ok) throw new Error(`Image ${index} failed to upload.`);
-          setProgress(20 + Math.round(((i + 1) / imageFiles.length) * 75));
         }
-        await handleSuccess(resultId);
+
+        setIsComplete(true);
+        setProgress(100);
+        setMessage('Redirecting...');
+        setTimeout(() => router.push(`/post/${postId}`), 800);
+
+        // === TEXT PIPELINE ===
       } else {
-        // Text Post Logic
         setMessage('Saving post...');
-        setProgress(70);
+        setProgress(40);
         const resultId = await newList(formData);
-        await handleSuccess(resultId);
+        if (!resultId) throw new Error("Failed to save post.");
+
+        setIsComplete(true);
+        setProgress(100);
+        setMessage('Redirecting...');
+        setTimeout(() => router.push(`/post/${resultId}`), 800);
       }
 
     } catch (err: any) {
       console.error("Submission error:", err);
-      setError(err.message || "An unexpected error occurred during submission.");
+      setError(err.message || "An unexpected error occurred.");
       started.current = false;
     }
-  }, [formData, videoFiles, postType, handleSuccess]);
+  }, [formData, videoFiles, postType, router, previousSessionId, previousFilePaths]);
 
-  useEffect(() => {
-    runSubmission();
-  }, [runSubmission]);
+  useEffect(() => { runSubmission(); }, [runSubmission]);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/90 backdrop-blur-md px-4">
@@ -261,7 +259,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
               />
             </div>
             <span className="inline-block mt-4 text-xs font-mono text-slate-500 uppercase tracking-widest">
-              {progress}% Processed
+              {Math.floor(progress)}% Processed
             </span>
           </>
         )}

@@ -14,6 +14,11 @@ model Posts {
   rank3       String?
   rank4       String?
   rank5       String?
+  rank1_note  String?
+  rank2_note  String?
+  rank3_note  String?
+  rank4_note  String?
+  rank5_note  String?
   authorId    String?
   username    String?
   description String?
@@ -26,14 +31,23 @@ model Posts {
   group       Groups?        @relation(fields: [groupId], references: [id])
 }
 
+enum PostStatus { 
+  UPLOADING 
+  PROCESSING 
+  READY 
+  FAILED 
+}
+
 model Post_Metadata {
-  postId String   @unique
-  images Boolean  @default(false)
-  videos Boolean  @default(false)
-  likes  Int      @default(0)
-  views  Int      @default(0)
-  date   DateTime @default(now())
-  post   Posts    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId          String     @unique
+  images          Boolean    @default(false)
+  videos          Boolean    @default(false)
+  status          PostStatus @default(READY) 
+  processingError String?  
+  likes           Int        @default(0)
+  views           Int        @default(0)
+  date            DateTime   @default(now())
+  post            Posts      @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model Account {
