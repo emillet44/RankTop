@@ -25,9 +25,12 @@ export async function POST(req: Request) {
   const serviceUrl = process.env.VIDEO_PREVIEW_SERVICE_URL;
 
   try {
-    // 1. Proxy standard HTTP requests (getUploadUrls, checkStatus)
-    // We use ID tokens to call the Cloud Function directly
-    if (body.action === 'getUploadUrls' || body.action === 'checkStatus') {
+    // 1. Proxy standard HTTP requests (getUploadUrls, getUploadUrl, checkStatus)
+    if (
+      body.action === 'getUploadUrls' ||
+      body.action === 'getUploadUrl' ||  // pre-edited: single file upload URL
+      body.action === 'checkStatus'
+    ) {
       const client = await cloudRunAuth.getIdTokenClient(serviceUrl!);
       const response = await client.request({
         url: serviceUrl,
@@ -38,17 +41,14 @@ export async function POST(req: Request) {
       return NextResponse.json(response.data);
     }
 
-    // 2. Trigger Processing via Cloud Task
-    // This offloads the long-running request to Google's queue
+    const project = process.env.GOOGLE_PROJECT_ID!;
+    const location = 'us-central1';
+    const queue = 'video-processing';
+    const taskApiUrl = `https://cloudtasks.googleapis.com/v2/projects/${project}/locations/${location}/queues/${queue}/tasks`;
+    const accessToken = await cloudTasksAuth.getAccessToken();
+
+    // 2a. Trigger auto-stitch preview via Cloud Task
     if (body.action === 'trigger') {
-      const project = process.env.GOOGLE_PROJECT_ID!;
-      const location = 'us-central1';
-      const queue = 'video-processing'; // Ensure this queue exists
-      const taskApiUrl = `https://cloudtasks.googleapis.com/v2/projects/${project}/locations/${location}/queues/${queue}/tasks`;
-
-      const accessToken = await cloudTasksAuth.getAccessToken();
-
-      // The task will call GCR with action='process'
       const taskPayload = {
         task: {
           httpRequest: {
@@ -60,28 +60,52 @@ export async function POST(req: Request) {
               sessionId: body.sessionId,
               title: body.title,
               ranks: body.ranks,
-              filePaths: body.filePaths
+              filePaths: body.filePaths,
             })).toString('base64'),
-            oidcToken: {
-              serviceAccountEmail: process.env.GOOGLE_CLIENT_EMAIL,
-            },
+            oidcToken: { serviceAccountEmail: process.env.GOOGLE_CLIENT_EMAIL },
           },
         },
       };
 
       const taskResponse = await fetch(taskApiUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(taskPayload),
       });
 
-      if (!taskResponse.ok) {
-        throw new Error(`Cloud Task Failed: ${taskResponse.statusText}`);
-      }
+      if (!taskResponse.ok) throw new Error(`Cloud Task Failed: ${taskResponse.statusText}`);
+      return NextResponse.json({ status: 'QUEUED' });
+    }
 
+    // 2b. Trigger pre-edited preview via Cloud Task
+    if (body.action === 'triggerPreEdited') {
+      const taskPayload = {
+        task: {
+          httpRequest: {
+            httpMethod: 'POST',
+            url: serviceUrl,
+            headers: { 'Content-Type': 'application/json' },
+            body: Buffer.from(JSON.stringify({
+              action: 'processPreEdited',
+              sessionId: body.sessionId,
+              title: body.title,
+              ranks: body.ranks,
+              filePath: body.filePath,
+              timestamps: body.timestamps,
+              endTime: body.endTime,
+            })).toString('base64'),
+            oidcToken: { serviceAccountEmail: process.env.GOOGLE_CLIENT_EMAIL },
+          },
+        },
+      };
+
+      const taskResponse = await fetch(taskApiUrl, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(taskPayload),
+      });
+
+      if (!taskResponse.ok) throw new Error(`Cloud Task Failed: ${taskResponse.statusText}`);
       return NextResponse.json({ status: 'QUEUED' });
     }
 

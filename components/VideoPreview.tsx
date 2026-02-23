@@ -3,14 +3,31 @@ import React, { useState, useCallback, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner, faExclamationTriangle, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 
+interface Timestamp {
+  rankIndex: number;
+  time: number;
+}
+
 interface VideoPreviewProps {
   videoFiles: File[];
   ranks: string[];
   title: string;
   onSessionCreated?: (sessionId: string, filePaths: string[]) => void;
+  // Pre-edited mode props
+  videoMode?: 'auto' | 'pre-edited';
+  timestamps?: Timestamp[];
+  endTime?: number | null;
 }
 
-const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, onSessionCreated }) => {
+const VideoPreview: React.FC<VideoPreviewProps> = ({
+  videoFiles,
+  ranks,
+  title,
+  onSessionCreated,
+  videoMode = 'auto',
+  timestamps,
+  endTime,
+}) => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
@@ -33,6 +50,43 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, o
     });
   };
 
+  // Shared polling logic
+  const pollForResult = (sessionId: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const pollInterval = setInterval(async () => {
+        try {
+          attempts++;
+          const statusRes = await fetch('/api/video/preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'checkStatus', sessionId })
+          });
+          const statusData = await statusRes.json();
+
+          if (statusData.status === 'SUCCESS' && statusData.videoUrl) {
+            clearInterval(pollInterval);
+            resolve(statusData.videoUrl);
+          } else if (statusData.status === 'FAILED') {
+            clearInterval(pollInterval);
+            reject(new Error(statusData.error || 'Rendering failed'));
+          } else {
+            // Fake progress creep while waiting
+            setProgress(prev => Math.min(prev + 1, 95));
+          }
+
+          if (attempts > 60) {
+            clearInterval(pollInterval);
+            reject(new Error('Rendering timed out'));
+          }
+        } catch (e: any) {
+          clearInterval(pollInterval);
+          reject(e);
+        }
+      }, 2000);
+    });
+  };
+
   const processVideos = useCallback(async () => {
     if (processingRef.current) return;
     processingRef.current = true;
@@ -44,89 +98,115 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ videoFiles, ranks, title, o
     try {
       const sessionId = `session_${Date.now()}`;
 
-      // 1. Get Upload URLs
-      setStatusMessage('Preparing upload...');
-      const urlRes = await fetch('/api/video/preview', {
-        method: 'POST',
-        body: JSON.stringify({ action: 'getUploadUrls', videoCount: videoFiles.length, sessionId })
-      });
-      const { uploadUrls, filePaths } = await urlRes.json();
-      
-      if (onSessionCreated) onSessionCreated(sessionId, filePaths);
+      if (videoMode === 'pre-edited') {
+        // ── PRE-EDITED PREVIEW PIPELINE ──────────────────────────────────
 
-      // 2. Upload Files (0-50%)
-      setStatusMessage('Uploading clips...');
-      for (let i = 0; i < videoFiles.length; i++) {
-        const file = videoFiles[i];
-        const info = uploadUrls.find((u: any) => u.index === i);
-        await uploadWithProgress(info.url, file, (pct) => {
-            const step = 50 / videoFiles.length;
-            const currentBase = i * step;
-            setProgress(Math.round(currentBase + (pct * (step / 100))));
+        const file = videoFiles[0];
+        if (!file) throw new Error('No pre-edited video file found.');
+        if (!timestamps || timestamps.length === 0) throw new Error('No timestamps provided.');
+        if (endTime == null) throw new Error('No end time provided.');
+
+        // 1. Get signed upload URL for single source file
+        setStatusMessage('Preparing upload...');
+        setProgress(5);
+
+        const urlRes = await fetch('/api/video/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'getUploadUrl', sessionId, fileType: file.type })
         });
-      }
+        const urlData = await urlRes.json();
+        if (!urlRes.ok || !urlData.uploadUrl) throw new Error(urlData.error || 'Failed to get upload URL');
 
-      // 3. Trigger Cloud Task
-      setStatusMessage('Queuing render...');
-      setProgress(55);
-      const triggerRes = await fetch('/api/video/preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'trigger',
-          sessionId,
-          title: title || 'Ranked Post',
-          ranks: ranks.filter(r => r.trim() !== ''),
-          filePaths
-        })
-      });
+        // 2. Upload the source file
+        setStatusMessage('Uploading video...');
+        await uploadWithProgress(urlData.uploadUrl, file, (pct) => {
+          setProgress(Math.round(5 + pct * 0.45)); // 5% → 50%
+          setStatusMessage(`Uploading video... ${Math.round(pct)}%`);
+        });
 
-      if (!triggerRes.ok) throw new Error('Failed to start rendering task');
+        // 3. Trigger pre-edited render via Cloud Task
+        setStatusMessage('Queuing render...');
+        setProgress(55);
 
-      // 4. Poll for Status (55-99%)
-      setStatusMessage('Rendering preview...');
-      let attempts = 0;
-      const pollInterval = setInterval(async () => {
-        try {
-          attempts++;
-          const statusRes = await fetch('/api/video/preview', {
-             method: 'POST',
-             body: JSON.stringify({ action: 'checkStatus', sessionId })
+        const triggerRes = await fetch('/api/video/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'triggerPreEdited',
+            sessionId,
+            title: title || 'Ranked Post',
+            ranks: ranks.filter(r => r.trim() !== ''),
+            filePath: urlData.filePath,
+            timestamps,
+            endTime,
+          })
+        });
+        if (!triggerRes.ok) throw new Error('Failed to start rendering task');
+
+        // 4. Poll for result
+        setStatusMessage('Rendering preview...');
+        const resultUrl = await pollForResult(sessionId);
+
+        setVideoUrl(resultUrl);
+        setProgress(100);
+
+      } else {
+        // ── AUTO-STITCH PREVIEW PIPELINE ─────────────────────────────────
+
+        // 1. Get Upload URLs
+        setStatusMessage('Preparing upload...');
+        const urlRes = await fetch('/api/video/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'getUploadUrls', videoCount: videoFiles.length, sessionId })
+        });
+        const { uploadUrls, filePaths } = await urlRes.json();
+
+        if (onSessionCreated) onSessionCreated(sessionId, filePaths);
+
+        // 2. Upload files (0–50%)
+        setStatusMessage('Uploading clips...');
+        for (let i = 0; i < videoFiles.length; i++) {
+          const file = videoFiles[i];
+          const info = uploadUrls.find((u: any) => u.index === i);
+          await uploadWithProgress(info.url, file, (pct) => {
+            const step = 50 / videoFiles.length;
+            setProgress(Math.round((i * step) + (pct * (step / 100))));
           });
-          const statusData = await statusRes.json();
-
-          if (statusData.status === 'SUCCESS' && statusData.videoUrl) {
-            clearInterval(pollInterval);
-            setVideoUrl(statusData.videoUrl);
-            setProcessing(false);
-            setProgress(100);
-            processingRef.current = false;
-          } else if (statusData.status === 'FAILED') {
-            clearInterval(pollInterval);
-            throw new Error(statusData.error || 'Rendering failed');
-          } else {
-            // Fake progress creep while waiting
-            setProgress(prev => Math.min(prev + 1, 95));
-          }
-
-          if (attempts > 60) { // Timeout after ~2 mins
-            clearInterval(pollInterval);
-            throw new Error('Rendering timed out');
-          }
-        } catch (e: any) {
-          clearInterval(pollInterval);
-          setError(e.message);
-          setProcessing(false);
-          processingRef.current = false;
         }
-      }, 2000);
+
+        // 3. Trigger Cloud Task
+        setStatusMessage('Queuing render...');
+        setProgress(55);
+        const triggerRes = await fetch('/api/video/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'trigger',
+            sessionId,
+            title: title || 'Ranked Post',
+            ranks: ranks.filter(r => r.trim() !== ''),
+            filePaths
+          })
+        });
+        if (!triggerRes.ok) throw new Error('Failed to start rendering task');
+
+        // 4. Poll for result
+        setStatusMessage('Rendering preview...');
+        const resultUrl = await pollForResult(sessionId);
+
+        setVideoUrl(resultUrl);
+        setProgress(100);
+      }
 
     } catch (err: any) {
       setError(err.message);
+    } finally {
       setProcessing(false);
       processingRef.current = false;
     }
-  }, [videoFiles, ranks, title, onSessionCreated]);
+  }, [videoFiles, ranks, title, onSessionCreated, videoMode, timestamps, endTime]);
 
   return (
     <div className="w-full max-w-[400px] mx-auto bg-slate-700/30 rounded-lg p-4">

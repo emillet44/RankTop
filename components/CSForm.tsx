@@ -23,6 +23,17 @@ interface VideoData {
   duration?: number;
 }
 
+interface Timestamp {
+  rankIndex: number;
+  time: number;
+}
+
+interface PreEditedData {
+  file: File | null;
+  endTime: number | null;
+  timestamps: Timestamp[];
+}
+
 export function CSForm({ signedin, username, userid, usergroups }: { signedin: boolean, username: string, userid: string, usergroups: any }) {
 
   const [ranks, setRanks] = useState(2);
@@ -46,6 +57,9 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
   const [videoFilePaths, setVideoFilePaths] = useState<string[]>([]);
   const [submissionData, setSubmissionData] = useState<{ formData: FormData; videoFiles: File[] } | null>(null);
 
+  const [videoMode, setVideoMode] = useState<'auto' | 'pre-edited'>('auto');
+  const [preEditedData, setPreEditedData] = useState<PreEditedData>({ file: null, endTime: null, timestamps: [] });
+
   const updateImageData = (index: number, newData: Partial<ImageData>) => {
     setImageData(prevData => {
       const newArray = [...prevData];
@@ -65,6 +79,14 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
       return newArray;
     });
   }
+
+  const handlePreEditedDataChange = (
+    timestamps: Timestamp[],
+    endTime: number | null,
+    file: File | null
+  ) => {
+    setPreEditedData({ file, timestamps, endTime });
+  };
 
   const swapImages = (index1: number, index2: number) => {
     setImageData(prevData => {
@@ -156,6 +178,9 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
       return uploadedImages === ranks;
     }
     if (postType === 'video') {
+      if (videoMode === 'pre-edited') {
+        return preEditedData.file !== null && preEditedData.timestamps.length === ranks;
+      }
       const uploadedVideos = videoData.filter(vid => vid.file !== null).length;
       return uploadedVideos === ranks;
     }
@@ -193,11 +218,23 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
       });
     }
     else if (postType === 'video') {
-      // If the user ALREADY generated a preview, attach that session info
-      // The Smart Overlay will see these and skip the upload phase automatically
-      if (videoSessionId && videoFilePaths.length > 0) {
-        formData.append('sessionId', videoSessionId);
-        formData.append('filePaths', JSON.stringify(videoFilePaths));
+      formData.append('videoMode', videoMode);
+
+      if (videoMode === 'pre-edited') {
+        // Attach the single pre-edited file and its rank timestamps
+        if (preEditedData.file) {
+          formData.append('preEditedVideo', preEditedData.file);
+        }
+        formData.append('timestamps', JSON.stringify(preEditedData.timestamps));
+        if (preEditedData.endTime !== null) {
+          formData.append('endTime', String(preEditedData.endTime));
+        }
+      } else {
+        // Auto-stitch
+        if (videoSessionId && videoFilePaths.length > 0) {
+          formData.append('sessionId', videoSessionId);
+          formData.append('filePaths', JSON.stringify(videoFilePaths));
+        }
       }
     }
 
@@ -205,7 +242,9 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
     // We pass the raw video files so the overlay can upload them if no sessionId exists
     setSubmissionData({
       formData,
-      videoFiles: videoData.filter(v => v.file).map(v => v.file as File)
+      videoFiles: videoMode === 'pre-edited'
+        ? (preEditedData.file ? [preEditedData.file] : [])
+        : videoData.filter(v => v.file).map(v => v.file as File)
     });
   };
 
@@ -257,6 +296,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
       }
       updatePreviewData();
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setShowPreview(!showPreview);
   }
 
@@ -296,18 +336,17 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
       <form id="newpost" onSubmit={subHandler} className="flex flex-col items-center justify-center pt-[130px] md:pt-[82px] px-6 pb-10 gap-6 w-full">
         <div className="relative overflow-visible p-5 rounded-xl shadow-black shadow-lg bg-slate-500 bg-opacity-10 w-full max-w-2xl flex flex-col">
           <div className="relative overflow-visible flex flex-col">
-            <div className={`transition-all duration-300 ease-in-out ${showPreview ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'} grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 pt-6`}>
-              <div className="flex justify-between items-center mb-2">
-                <header className="text-3xl font-bold">New Post</header>
-                <div className="flex flex-row gap-2">
-                  <label htmlFor="rank" className="text-xl font-semibold pr-2">Ranks</label>
-                  <div className="flex flex-row outline outline-2 outline-slate-700 rounded-md w-18 h-8 items-center gap-1">
-                    <button onClick={changeRank} disabled={ranks === 2} className="text-2xl w-6 bg-slate-50 bg-opacity-5 hover:bg-opacity-10">-</button>
-                    <span className="text-xl w-6 py-1 flex justify-center bg-slate-50 bg-opacity-5">{ranks}</span>
-                    <button onClick={changeRank} disabled={ranks === 5} className="text-2xl w-6 bg-slate-50 bg-opacity-5 hover:bg-opacity-10">+</button>
-                  </div>
+            <div className={`transition-all duration-300 ease-in-out ${showPreview ? '-translate-x-full opacity-0 h-0 overflow-hidden' : 'translate-x-0 opacity-100'} grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 pt-6`}>              <div className="flex justify-between items-center mb-2">
+              <header className="text-3xl font-bold">New Post</header>
+              <div className="flex flex-row gap-2">
+                <label htmlFor="rank" className="text-xl font-semibold pr-2">Ranks</label>
+                <div className="flex flex-row outline outline-2 outline-slate-700 rounded-md w-18 h-8 items-center gap-1">
+                  <button onClick={changeRank} disabled={ranks === 2} className="text-2xl w-6 bg-slate-50 bg-opacity-5 hover:bg-opacity-10">-</button>
+                  <span className="text-xl w-6 py-1 flex justify-center bg-slate-50 bg-opacity-5">{ranks}</span>
+                  <button onClick={changeRank} disabled={ranks === 5} className="text-2xl w-6 bg-slate-50 bg-opacity-5 hover:bg-opacity-10">+</button>
                 </div>
               </div>
+            </div>
 
               {/* Post Type Selection */}
               <PostTypeSelector postType={postType} signedin={signedin} onToggleVideosAction={toggleVideos} onToggleImagesAction={toggleImages} onToggleModalAction={toggleModal} />
@@ -319,7 +358,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                   <div key={index} className="mb-2">
                     <div className="flex items-center space-x-2 mb-1">
                       <label className="text-xl">{index + 1}.</label>
-                      <input 
+                      <input
                         name={`r${index + 1}`}
                         className="flex-1 text-xl bg-transparent border-b border-transparent outline-none focus:border-blue-500 pb-1 w-11/12"
                         required
@@ -345,20 +384,45 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
 
               {/* Video Upload Section */}
               {postType === 'video' && (
-                <VideoInputSection ranks={ranks} videoData={videoData} onVideoChangeAction={handleVideoChange} onRemoveVideoAction={removeVideo} onDragStartAction={handleDragStart} onDragOverAction={handleDragOver} onDropAction={handleDrop} />
+                <VideoInputSection
+                  ranks={ranks}
+                  videoData={videoData}
+                  videoMode={videoMode}
+                  onVideoModeChange={setVideoMode}
+                  onVideoChangeAction={handleVideoChange}
+                  onRemoveVideoAction={removeVideo}
+                  onDragStartAction={handleDragStart}
+                  onDragOverAction={handleDragOver}
+                  onDropAction={handleDrop}
+                  onPreEditedDataChange={handlePreEditedDataChange}
+                />
               )}
 
               {/* Image Upload Section */}
               {postType === 'image' &&
-                <ImageUploadSection ranks={ranks} imageData={imageData} onFileChangeAction={handleFileChange} onRemoveImageAction={removeImg} onDragStartAction={handleDragStart} onDragOverAction={handleDragOver} onDropAction={handleDrop} />
+                <ImageUploadSection
+                  ranks={ranks}
+                  imageData={imageData}
+                  onFileChangeAction={handleFileChange}
+                  onRemoveImageAction={removeImg}
+                  onDragStartAction={handleDragStart}
+                  onDragOverAction={handleDragOver}
+                  onDropAction={handleDrop} />
               }
 
               {/* Optional Settings */}
-              <OptionalSettingsSection settingsToggle={settingsToggle} onToggleSettingsAction={toggleSettings} onToggleRankNotes={toggleRankNotes} signedin={signedin} usergroups={usergroups} descref={descref} showRankNotes={showRankNotes} />
+              <OptionalSettingsSection
+                settingsToggle={settingsToggle}
+                onToggleSettingsAction={toggleSettings}
+                onToggleRankNotes={toggleRankNotes}
+                signedin={signedin}
+                usergroups={usergroups}
+                descref={descref}
+                showRankNotes={showRankNotes} />
             </div>
 
             {/* Preview Section */}
-            <div className={`absolute inset-0 transition-all duration-300 ease-in-out px-1 ${showPreview ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
+            <div className={`transition-all duration-300 ease-in-out px-1 ${showPreview ? 'relative translate-x-0 opacity-100' : 'absolute inset-0 translate-x-full opacity-0'}`}>
               <div className="h-full flex flex-col justify-center">
                 <div>
                   <h2 className="text-3xl text-center font-bold mb-3">Post Preview</h2>
@@ -414,11 +478,17 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
 
                     {postType === 'video' && (
                       <VideoPreview
-                        videoFiles={videoData.filter(v => v.file).map(v => v.file as File)}
+                        videoFiles={videoMode === 'pre-edited'
+                          ? (preEditedData.file ? [preEditedData.file] : [])
+                          : videoData.filter(v => v.file).map(v => v.file as File)}
                         ranks={previewData.ranks.slice(0, ranks)}
                         title={previewData.title}
                         onSessionCreated={handleSessionCreated}
-                      />)}
+                        videoMode={videoMode}
+                        timestamps={preEditedData.timestamps}
+                        endTime={preEditedData.endTime}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
