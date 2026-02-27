@@ -90,7 +90,7 @@ export default function VideoUploadSection({
       {/* Mode description */}
       <p className="text-xs text-slate-500 mb-4 -mt-2">
         {videoMode === 'auto'
-          ? "Upload one clip per rank — we'll stitch them together automatically."
+          ? "Upload one clip per rank, they'll be stitched together automatically."
           : "Upload a single edited video and mark where each rank starts."}
       </p>
 
