@@ -11,6 +11,7 @@ import ImageUploadSection from "./ImageUpload"
 import VideoInputSection from "./VideoInput"
 import OptionalSettingsSection from "./PostOptions"
 import { SubmissionOverlay } from "./SubmissionOverlay"
+import { VideoStyleSection } from "./VideoStyleSection"
 
 interface ImageData {
   file: File | null;
@@ -60,12 +61,23 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
   const [videoMode, setVideoMode] = useState<'auto' | 'pre-edited'>('auto');
   const [preEditedData, setPreEditedData] = useState<PreEditedData>({ file: null, endTime: null, timestamps: [] });
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPreviewData(prev => {
+      const next = { ...prev };
+      if (name === 'title') next.title = value;
+      if (name.startsWith('r') && !name.includes('_')) {
+        const idx = parseInt(name.replace('r', '')) - 1;
+        next.ranks[idx] = value;
+      }
+      return next;
+    });
+  };
+
   const updateImageData = (index: number, newData: Partial<ImageData>) => {
     setImageData(prevData => {
       const newArray = [...prevData];
-      if (index >= 0 && index < newArray.length) {
-        newArray[index] = { ...newArray[index], ...newData };
-      }
+      if (index >= 0 && index < newArray.length) newArray[index] = { ...newArray[index], ...newData };
       return newArray;
     });
   }
@@ -73,18 +85,12 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
   const updateVideoData = (index: number, newData: Partial<VideoData>) => {
     setVideoData(prevData => {
       const newArray = [...prevData];
-      if (index >= 0 && index < newArray.length) {
-        newArray[index] = { ...newArray[index], ...newData };
-      }
+      if (index >= 0 && index < newArray.length) newArray[index] = { ...newArray[index], ...newData };
       return newArray;
     });
   }
 
-  const handlePreEditedDataChange = (
-    timestamps: Timestamp[],
-    endTime: number | null,
-    file: File | null
-  ) => {
+  const handlePreEditedDataChange = (timestamps: Timestamp[], endTime: number | null, file: File | null) => {
     setPreEditedData({ file, timestamps, endTime });
   };
 
@@ -112,125 +118,72 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
     e.dataTransfer.setData('text/plain', index.toString());
     draggedIndex.current = index;
   }
-
-  const handleDragOver = (e: any) => {
-    e.preventDefault();
-  }
-
+  const handleDragOver = (e: any) => { e.preventDefault(); }
   const handleDrop = (e: any, dropIndex: number) => {
     e.preventDefault();
     if (draggedIndex.current !== null && draggedIndex.current !== dropIndex) {
-      if (postType === 'image') {
-        swapImages(draggedIndex.current, dropIndex);
-      } else if (postType === 'video') {
-        swapVideos(draggedIndex.current, dropIndex);
-      }
+      if (postType === 'image') swapImages(draggedIndex.current, dropIndex);
+      else if (postType === 'video') swapVideos(draggedIndex.current, dropIndex);
     }
     draggedIndex.current = null;
   }
 
   const handleFileChange = (e: any, index: number) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      updateImageData(index, { file, url });
-    }
+    if (file) updateImageData(index, { file, url: URL.createObjectURL(file) });
   }
 
   const handleVideoChange = (e: any, index: number) => {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
-
-      // Get video duration
-      const video = document.createElement('video');
-      video.preload = 'metadata';
-      video.onloadedmetadata = () => {
-        updateVideoData(index, { file, url, duration: video.duration });
-      };
-      video.src = url;
+      const v = document.createElement('video');
+      v.preload = 'metadata';
+      v.onloadedmetadata = () => updateVideoData(index, { file, url, duration: v.duration });
+      v.src = url;
     }
   }
 
-  const removeImg = (e: any, index: number) => {
-    e.preventDefault();
-    updateImageData(index, { file: null, url: null });
-  }
+  const removeImg = (e: any, index: number) => { e.preventDefault(); updateImageData(index, { file: null, url: null }); }
+  const removeVideo = (e: any, index: number) => { e.preventDefault(); updateVideoData(index, { file: null, url: null, duration: 0 }); }
+  const toggleSettings = (e: any) => { e.preventDefault(); setSettingsToggle(!settingsToggle); };
+  const toggleRankNotes = (e: any) => { setShowRankNotes(e.target.checked); };
 
-  const removeVideo = (e: any, index: number) => {
-    e.preventDefault();
-    updateVideoData(index, { file: null, url: null, duration: 0 });
-  }
-
-  const toggleSettings = (e: any) => {
-    e.preventDefault();
-    setSettingsToggle(!settingsToggle);
-  };
-
-  const toggleRankNotes = (e: any) => {
-    setShowRankNotes(e.target.checked);
-  };
-
-  // Helper to check if preview is allowed
   const canPreview = () => {
-    if (postType === 'image') {
-      const uploadedImages = imageData.filter(img => img.file !== null).length;
-      return uploadedImages === ranks;
-    }
+    if (postType === 'image') return imageData.filter(img => img.file !== null).length === ranks;
     if (postType === 'video') {
-      if (videoMode === 'pre-edited') {
-        return preEditedData.file !== null && preEditedData.timestamps.length === ranks;
-      }
-      const uploadedVideos = videoData.filter(vid => vid.file !== null).length;
-      return uploadedVideos === ranks;
+      if (videoMode === 'pre-edited') return preEditedData.file !== null && preEditedData.timestamps.length === ranks;
+      return videoData.filter(vid => vid.file !== null).length === ranks;
     }
-    return true; // text posts can always preview
+    return true;
   };
 
   const subHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // 1. Initialize FormData from the form
     const formData = new FormData(e.currentTarget);
 
-    // 2. Add defaults and post metadata
-    if (!formData.has("category")) {
-      formData.append("category", "None");
-    }
+    if (!formData.has("category")) formData.append("category", "None");
     formData.append("postType", postType);
     formData.append("username", username);
     formData.append("userid", userid);
 
-    // 3. Handle Description (Logic from your previous script)
     if (descref.current !== null) {
       formData.append("description", descref.current.value);
     } else {
       formData.append("description", descvalue.current);
     }
 
-    // 4. Handle Post-Type Specific Data
     if (postType === 'image') {
       imageData.forEach((data, index) => {
-        if (data.file !== null) {
-          // Appending the file directly is better than a Blob for GCS uploads
-          formData.append(`img${index + 1}`, data.file);
-        }
+        if (data.file !== null) formData.append(`img${index + 1}`, data.file);
       });
-    }
-    else if (postType === 'video') {
+    } else if (postType === 'video') {
       formData.append('videoMode', videoMode);
-
       if (videoMode === 'pre-edited') {
-        // Attach the single pre-edited file and its rank timestamps
-        if (preEditedData.file) {
-          formData.append('preEditedVideo', preEditedData.file);
-        }
+        if (preEditedData.file) formData.append('preEditedVideo', preEditedData.file);
         formData.append('timestamps', JSON.stringify(preEditedData.timestamps));
-        if (preEditedData.endTime !== null) {
-          formData.append('endTime', String(preEditedData.endTime));
-        }
+        if (preEditedData.endTime !== null) formData.append('endTime', String(preEditedData.endTime));
       } else {
-        // Auto-stitch
         if (videoSessionId && videoFilePaths.length > 0) {
           formData.append('sessionId', videoSessionId);
           formData.append('filePaths', JSON.stringify(videoFilePaths));
@@ -238,8 +191,6 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
       }
     }
 
-    // 5. Trigger the submission overlay
-    // We pass the raw video files so the overlay can upload them if no sessionId exists
     setSubmissionData({
       formData,
       videoFiles: videoMode === 'pre-edited'
@@ -250,41 +201,22 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
 
   const toggleImages = (e: any) => {
     e.preventDefault();
-    if (postType === 'image') {
-      setPostType('text');
-      setImage(false);
-    } else {
-      setPostType('image');
-      setImage(true);
-      setVideo(false);
-    }
+    if (postType === 'image') { setPostType('text'); setImage(false); }
+    else { setPostType('image'); setImage(true); setVideo(false); }
   }
 
   const toggleVideos = (e: any) => {
     e.preventDefault();
-    if (postType === 'video') {
-      setPostType('text');
-      setVideo(false);
-    } else {
-      setPostType('video');
-      setVideo(true);
-      setImage(false);
-    }
+    if (postType === 'video') { setPostType('text'); setVideo(false); }
+    else { setPostType('video'); setVideo(true); setImage(false); }
   }
 
-  const toggleModal = (e: any) => {
-    e.preventDefault();
-    setModal(!modalon);
-  }
+  const toggleModal = (e: any) => { e.preventDefault(); setModal(!modalon); }
 
   const changeRank = (e: any) => {
     e.preventDefault();
-    if (e.target.textContent == "-") {
-      setRanks(ranks - 1);
-    }
-    else {
-      setRanks(ranks + 1);
-    }
+    if (e.target.textContent == "-") setRanks(ranks - 1);
+    else setRanks(ranks + 1);
   }
 
   const togglePreview = (e: any) => {
@@ -300,23 +232,16 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
     setShowPreview(!showPreview);
   }
 
-  // Function to handle image navigation in preview
   const changePreviewImage = (e: React.MouseEvent<HTMLButtonElement>, direction: "left" | "right"): void => {
     e.preventDefault();
-    if (direction === "left" && previewData.currentIndex > 0) {
-      setPreviewData(prev => ({ ...prev, currentIndex: prev.currentIndex - 1 }));
-    } else if (direction === "right" && previewData.ranks[previewData.currentIndex + 1]) {
-      setPreviewData(prev => ({ ...prev, currentIndex: prev.currentIndex + 1 }));
-    }
+    if (direction === "left" && previewData.currentIndex > 0) setPreviewData(prev => ({ ...prev, currentIndex: prev.currentIndex - 1 }));
+    else if (direction === "right" && previewData.ranks[previewData.currentIndex + 1]) setPreviewData(prev => ({ ...prev, currentIndex: prev.currentIndex + 1 }));
   };
 
-  // Update preview data when form changes
   const updatePreviewData = (): void => {
     const form = document.getElementById('newpost') as HTMLFormElement;
     if (!form) return;
-
     const formData = new FormData(form);
-
     setPreviewData({
       title: formData.get('title') as string || '',
       ranks: [formData.get('r1') as string || '', formData.get('r2') as string || '', formData.get('r3') as string || '', formData.get('r4') as string || '', formData.get('r5') as string || ''],
@@ -325,7 +250,6 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
     });
   };
 
-  //Handler for getting three important vars from VideoPreview used for video processing
   const handleSessionCreated = (sessionId: string, filePaths: string[]) => {
     setVideoSessionId(sessionId);
     setVideoFilePaths(filePaths);
@@ -336,46 +260,35 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
       <form id="newpost" onSubmit={subHandler} className="flex flex-col items-center justify-center pt-[130px] md:pt-[82px] px-6 pb-10 gap-6 w-full">
         <div className="relative overflow-visible p-5 rounded-xl shadow-black shadow-lg bg-slate-500 bg-opacity-10 w-full max-w-2xl flex flex-col">
           <div className="relative overflow-visible flex flex-col">
-            <div className={`transition-all duration-300 ease-in-out ${showPreview ? '-translate-x-full opacity-0 h-0 overflow-hidden' : 'translate-x-0 opacity-100'} grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 pt-6`}>              <div className="flex justify-between items-center mb-2">
-              <header className="text-3xl font-bold">New Post</header>
-              <div className="flex flex-row gap-2">
-                <label htmlFor="rank" className="text-xl font-semibold pr-2">Ranks</label>
-                <div className="flex flex-row outline outline-2 outline-slate-700 rounded-md w-18 h-8 items-center gap-1">
-                  <button onClick={changeRank} disabled={ranks === 2} className="text-2xl w-6 bg-slate-50 bg-opacity-5 hover:bg-opacity-10">-</button>
-                  <span className="text-xl w-6 py-1 flex justify-center bg-slate-50 bg-opacity-5">{ranks}</span>
-                  <button onClick={changeRank} disabled={ranks === 5} className="text-2xl w-6 bg-slate-50 bg-opacity-5 hover:bg-opacity-10">+</button>
+            <div className={`transition-all duration-300 ease-in-out ${showPreview ? '-translate-x-full opacity-0 h-0 overflow-hidden' : 'translate-x-0 opacity-100'} grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 pt-6`}>
+              <div className="flex justify-between items-center mb-2">
+                <header className="text-3xl font-bold">New Post</header>
+                <div className="flex flex-row gap-2">
+                  <label htmlFor="rank" className="text-xl font-semibold pr-2">Ranks</label>
+                  <div className="flex flex-row outline outline-2 outline-slate-700 rounded-md w-18 h-8 items-center gap-1">
+                    <button onClick={changeRank} disabled={ranks === 2} className="text-2xl w-6 bg-slate-50 bg-opacity-5 hover:bg-opacity-10">-</button>
+                    <span className="text-xl w-6 py-1 flex justify-center bg-slate-50 bg-opacity-5">{ranks}</span>
+                    <button onClick={changeRank} disabled={ranks === 5} className="text-2xl w-6 bg-slate-50 bg-opacity-5 hover:bg-opacity-10">+</button>
+                  </div>
                 </div>
               </div>
-            </div>
 
               {/* Post Type Selection */}
               <PostTypeSelector postType={postType} signedin={signedin} onToggleVideosAction={toggleVideos} onToggleImagesAction={toggleImages} onToggleModalAction={toggleModal} />
 
               {/* Title and Ranks Section */}
               <div className="bg-slate-700 bg-opacity-30 rounded-md p-4 mt-4">
-                <input name="title" placeholder="Title" className="text-2xl font-semibold outline-none w-full bg-transparent placeholder-slate-400 mb-4" required pattern="[^:'\\%{}]*\S[^:'\\%{}]*" maxLength={40} />
+                <input name="title" onChange={handleInputChange} placeholder="Title" className="text-2xl font-semibold outline-none w-full bg-transparent placeholder-slate-400 mb-4" required pattern="[^:'\\%{}]*\S[^:'\\%{}]*" maxLength={40} />
                 {[...Array(ranks)].map((_, index) => (
                   <div key={index} className="mb-2">
                     <div className="flex items-center space-x-2 mb-1">
                       <label className="text-xl">{index + 1}.</label>
-                      <input
-                        name={`r${index + 1}`}
-                        className="flex-1 text-xl bg-transparent border-b border-transparent outline-none focus:border-blue-500 pb-1 w-11/12"
-                        required
-                        pattern="[^:'\\%{}]*\S[^:'\\%{}]*"
-                        maxLength={80}
-                      />
+                      <input name={`r${index + 1}`} onChange={handleInputChange} className="flex-1 text-xl bg-transparent border-b border-transparent outline-none focus:border-blue-500 pb-1 w-11/12" required pattern="[^:'\\%{}]*\S[^:'\\%{}]*" maxLength={80} />
                     </div>
-                    {/* Optional rank note - only shown if toggle is on */}
                     {showRankNotes && (
                       <div className="ml-8 flex items-center">
                         <span className="text-slate-500 mr-2 text-sm">↳</span>
-                        <input
-                          name={`r${index + 1}_note`}
-                          className="flex-1 text-sm bg-slate-800 bg-opacity-40 border border-slate-600 rounded px-2 py-1 outline-none focus:border-blue-500 placeholder-slate-500 transition-colors"
-                          placeholder="Add a quick reason (optional)"
-                          maxLength={50}
-                        />
+                        <input name={`r${index + 1}_note`} className="flex-1 text-sm bg-slate-800 bg-opacity-40 border border-slate-600 rounded px-2 py-1 outline-none focus:border-blue-500 placeholder-slate-500 transition-colors" placeholder="Add a quick reason (optional)" maxLength={50} />
                       </div>
                     )}
                   </div>
@@ -398,8 +311,17 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                 />
               )}
 
+              {/* ── Video Style (only for video posts) ── */}
+              {postType === 'video' &&
+                <VideoStyleSection
+                  title={previewData.title}
+                  ranks={previewData.ranks.slice(0, ranks)}
+                  videoFile={videoMode === 'pre-edited' ? preEditedData.file : videoData[0]?.file}
+                />
+              }
+
               {/* Image Upload Section */}
-              {postType === 'image' &&
+              {postType === 'image' && (
                 <ImageUploadSection
                   ranks={ranks}
                   imageData={imageData}
@@ -407,8 +329,9 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                   onRemoveImageAction={removeImg}
                   onDragStartAction={handleDragStart}
                   onDragOverAction={handleDragOver}
-                  onDropAction={handleDrop} />
-              }
+                  onDropAction={handleDrop}
+                />
+              )}
 
               {/* Optional Settings */}
               <OptionalSettingsSection
@@ -418,7 +341,8 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                 signedin={signedin}
                 usergroups={usergroups}
                 descref={descref}
-                showRankNotes={showRankNotes} />
+                showRankNotes={showRankNotes}
+              />
             </div>
 
             {/* Preview Section */}
@@ -426,15 +350,12 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
               <div className="h-full flex flex-col justify-center">
                 <div>
                   <h2 className="text-3xl text-center font-bold mb-3">Post Preview</h2>
-
-                  {/* Preview Content Based on Post Type */}
                   <div className="flex">
                     {postType === 'image' && (
                       <div className="grid grid-cols-1 grid-flow-row auto-rows-min w-full max-w-2xl">
                         <header className="text-2xl text-ellipsis overflow-hidden text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">
                           {previewData.title || 'Your Title Here'}
                         </header>
-
                         <div className="pt-8 pb-8 rounded-xl outline outline-slate-700">
                           <header className="text-xl text-slate-400 outline-none pb-2 pl-8 w-11/12">
                             {previewData.currentIndex + 1 + ". " + (previewData.ranks[previewData.currentIndex] || 'Your rank here')}
@@ -465,7 +386,6 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                         <header className="text-2xl text-ellipsis overflow-hidden text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">
                           {previewData.title || 'Your Title Here'}
                         </header>
-
                         <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-2 sm:gap-4 list-inside list-decimal p-4 sm:p-6 rounded-xl outline outline-slate-700">
                           <li className="text-xl text-slate-400 outline-none p-2 w-11/12">{previewData.ranks[0] || 'Your first rank here'}</li>
                           <li className="text-xl text-slate-400 outline-none p-2 w-11/12">{previewData.ranks[1] || 'Your second rank here'}</li>
@@ -505,7 +425,9 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
             >
               {showPreview ? 'Back to Edit' : 'Preview Post'}
             </button>
-            <button type="submit" disabled={!!submissionData} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-md text-xl transition-colors">{submissionData ? 'Processing...' : 'Create Post'}</button>
+            <button type="submit" disabled={!!submissionData} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-md text-xl transition-colors">
+              {submissionData ? 'Processing...' : 'Create Post'}
+            </button>
           </div>
         </div>
       </form>

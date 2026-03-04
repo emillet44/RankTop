@@ -26,18 +26,20 @@ export async function POST(req: Request) {
   try {
     // 1. Proxy Actions (Upload URLs OR Check Status)
     if (body.action === 'getUploadUrls' || body.action === 'checkStatus') {
-      const client = await cloudRunAuth.getIdTokenClient(url!);
-      const response = await client.request({
-        url,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        data: body,
-      });
-      return NextResponse.json(response.data);
-    }
+    const client = await cloudRunAuth.getIdTokenClient(url!);
+    const response = await client.request({
+      url, method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    });
+    return NextResponse.json(response.data);
+  }
 
     // 2. Create Submission (DB Record + Cloud Task)
-    const { title, r1, r2, r3, r4, r5, description, category, username, userid, visibility, filePaths } = body;
+    const { title, r1, r2, r3, r4, r5, description, category, username, userid, visibility, filePaths, layoutConfig } = body;
+    
+    // Convert the stringified JSON from the hidden input back into an object
+    const parsedLayout = typeof layoutConfig === 'string' ? JSON.parse(layoutConfig) : layoutConfig;
 
     const post = await prisma.posts.create({
       data: {
@@ -81,6 +83,7 @@ export async function POST(req: Request) {
             ranks,
             filePaths,
             postId: post.id,
+            layoutConfig: parsedLayout,
           })).toString('base64'),
           oidcToken: {
             serviceAccountEmail: process.env.GOOGLE_CLIENT_EMAIL,
