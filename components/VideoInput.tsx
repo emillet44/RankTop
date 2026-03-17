@@ -51,104 +51,101 @@ export default function VideoUploadSection({
   };
 
   return (
-    <div className="bg-slate-700 bg-opacity-30 rounded-md p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-blue-200">Video Clips</h3>
-        {videoMode === 'auto' && getTotalDuration() > 0 && (
-          <span className="text-sm text-slate-300">
-            Total: {formatDuration(getTotalDuration())}
-          </span>
-        )}
-      </div>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-2 px-1">
+          <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Video Clips</h3>
+        </div>
 
-      {/* Mode Tab Switcher */}
-      <div className="flex items-center gap-1 bg-slate-800 bg-opacity-50 rounded-lg p-1 w-fit mb-4">
-        <button
-          type="button"
-          onClick={() => onVideoModeChange('auto')}
-          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200
-            ${videoMode === 'auto'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-slate-200'
-            }`}
-        >
-          Auto-stitch
-        </button>
-        <button
-          type="button"
-          onClick={() => onVideoModeChange('pre-edited')}
-          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200
-            ${videoMode === 'pre-edited'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-slate-200'
-            }`}
-        >
-          Pre-edited
-        </button>
+        {/* Mode Tab Switcher */}
+        <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+          <button
+            type="button"
+            onClick={() => onVideoModeChange('auto')}
+            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all duration-300
+              ${videoMode === 'auto'
+                ? 'bg-blue-600 text-white shadow shadow-blue-500/10'
+                : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+              }`}
+          >
+            Auto-stitch
+          </button>
+          <button
+            type="button"
+            onClick={() => onVideoModeChange('pre-edited')}
+            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all duration-300
+              ${videoMode === 'pre-edited'
+                ? 'bg-blue-600 text-white shadow shadow-blue-500/10'
+                : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+              }`}
+          >
+            Pre-edited
+          </button>
+        </div>
       </div>
 
       {/* Mode description */}
-      <p className="text-xs text-slate-500 mb-4 -mt-2">
-        {videoMode === 'auto'
-          ? "Upload one clip per rank, they'll be stitched together automatically."
-          : "Upload a single edited video and mark where each rank starts."}
-      </p>
+      <div className="px-1">
+        <p className="text-xs text-slate-500 font-medium italic">
+          {videoMode === 'auto'
+            ? "Upload one clip per rank; clips will be stitched for you."
+            : "Upload one edited video and mark the start points."}
+        </p>
+      </div>
 
       {/* Auto-stitch: existing per-rank upload UI */}
       {videoMode === 'auto' && (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[...Array(ranks)].map((_, index) => {
-              const { url, duration } = videoData[index];
-              return (
-                <div key={index} className="space-y-2" onDragOver={onDragOverAction} onDrop={(e) => onDropAction(e, index)}>
-                  <label className="text-lg font-medium">{index + 1}.</label>
-                  {url === null ? (
-                    <div className="relative border-2 border-dashed border-blue-500 hover:border-blue-400 rounded-md p-4 h-[120px] bg-blue-900 bg-opacity-10">
-                      <input
-                        type="file"
-                        accept="video/*"
-                        className="absolute inset-0 w-full h-full opacity-0 text-[0px] -indent-10 cursor-pointer z-10"
-                        onChange={(e) => onVideoChangeAction(e, index)}
-                        required
-                      />
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <FontAwesomeIcon icon={faVideo} className="h-8 w-8 text-blue-400 mb-2" />
-                        <span className="text-blue-200 text-center">Click to upload video clip</span>
-                      </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {[...Array(ranks)].map((_, index) => {
+            const { url, duration } = videoData[index];
+            return (
+              <div key={index} className="space-y-2 group" onDragOver={onDragOverAction} onDrop={(e) => onDropAction(e, index)}>
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tighter">Rank {index + 1}</span>
+                </div>
+
+                {url === null ? (
+                  <div className="relative aspect-video border-2 border-dashed border-white/5 hover:border-blue-500/30 bg-white/[0.02] hover:bg-white/[0.04] rounded-xl transition-all duration-300">
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      onChange={(e) => onVideoChangeAction(e, index)}
+                      required
+                    />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                      <FontAwesomeIcon icon={faVideo} className="text-2xl text-slate-700 group-hover:text-blue-500/50 transition-colors" />
+                      <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Select Clip</span>
                     </div>
-                  ) : (
-                    <div className="group relative border-2 border-blue-500 rounded-md overflow-hidden bg-black">
-                      <video draggable onDragStart={(e) => onDragStartAction(e, index)} src={url} className="w-full h-auto max-h-32 object-cover" controls={false} muted />
-                      {duration && duration > 0 && (
-                        <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 rounded px-2 py-1">
-                          <span className="text-xs text-white">{formatDuration(duration)}</span>
-                        </div>
-                      )}
-                      <button className="invisible group-hover:visible absolute top-2 right-2 bg-black bg-opacity-60 rounded-full p-1" onClick={(e) => onRemoveVideoAction(e, index)}>
-                        <FontAwesomeIcon icon={faCircleXmark} className="w-5 h-5 text-white" />
+                  </div>
+                ) : (
+                  <div className="group/item relative aspect-video border border-white/10 rounded-xl overflow-hidden bg-black shadow-lg">
+                    <video draggable onDragStart={(e) => onDragStartAction(e, index)} src={url} className="w-full h-full object-cover" controls={false} muted />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center justify-center">
+                      <button 
+                        type="button"
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors transform scale-75 group-hover/item:scale-100 duration-300" 
+                        onClick={(e) => onRemoveVideoAction(e, index)}
+                      >
+                        <FontAwesomeIcon icon={faCircleXmark} className="text-xl" />
                       </button>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-4 p-3 bg-blue-900 bg-opacity-20 rounded-md border border-blue-700">
-            <p className="text-sm text-blue-200">
-              <FontAwesomeIcon icon={faVideo} className="mr-2" />
-              Upload video clips for each rank. They will be automatically spliced together when you submit.
-            </p>
-          </div>
-        </>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
 
       {/* Pre-edited: single video + timestamp mapper */}
       {videoMode === 'pre-edited' && (
-        <PreEditedVideoInput
-          ranks={ranks}
-          onTimestampsChange={onPreEditedDataChange}
-        />
+        <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-2 sm:p-4">
+          <PreEditedVideoInput
+            ranks={ranks}
+            onTimestampsChange={onPreEditedDataChange}
+          />
+        </div>
       )}
     </div>
   );

@@ -27,16 +27,16 @@ export default async function Home() {
   const starter = await LoadBatchCat(0, "None");
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
       <Header />
-      <div className="flex justify-center pt-[100px] lg:pt-[52px] pb-10 sm:px-6 min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
-        <div className="grid grid-cols-1 w-full max-w-2xl">
-          <div className="grid grid-cols-1 justify-items-center auto-rows-min">
+      <main className="flex-grow pt-[52px]">
+        <div className="max-w-2xl mx-auto sm:border-x border-white/10 min-h-[calc(100vh-104px)]">
+          <div className="flex flex-col items-center">
             <PostList starter={starter} />
           </div>
         </div>
-      </div>
+      </main>
       <Footer />
-    </>
+    </div>
   )
 }

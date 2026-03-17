@@ -57,7 +57,7 @@ function checkVideoSupport(url: string): Promise<boolean> {
       resolve(false);
     }, 5000);
 
-    // If we get a loadedmetadata event with a non-zero video track, it's supported
+    // When a loadedmetadata event with a non-zero video track is received, it is supported
     video.onloadedmetadata = () => {
       clearTimeout(timer);
       const supported = video.videoWidth > 0 && video.videoHeight > 0;
@@ -115,7 +115,7 @@ export default function PreEditedVideoInput({ ranks, onTimestampsChange }: PreEd
   }, [ranks]);
 
   // Notify parent whenever timestamps, endTime, or file changes.
-  // Slot i corresponds to rankIndex (ranks - 1 - i) since we mark highest rank first.
+  // Slot i corresponds to rankIndex (ranks - 1 - i) as the highest rank is marked first.
   useEffect(() => {
     const mapped: Timestamp[] = timestamps
       .map((t, i) => ({ rankIndex: ranks - 1 - i, time: t ?? 0 }))
@@ -177,7 +177,7 @@ export default function PreEditedVideoInput({ ranks, onTimestampsChange }: PreEd
   };
 
   const loadFile = async (file: File) => {
-    // Clear any previous format error while we check the new file
+    // Clear any previous format error while the new file is checked
     setFormatError(null);
 
     // Normalize audio/* container types to video/* (some OS/browser combos

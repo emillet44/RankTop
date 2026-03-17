@@ -5,13 +5,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
 import useSWR from 'swr';
 import Image from 'next/image';
+import Link from 'next/link';
 import { fetchImageMetadata } from './serverActions/findimage';
-
-//Component that renders images for posts. 
 
 export function ListCarousel({ ranks, postid, firstimage }: { ranks: (string | null)[], postid: string, firstimage: boolean }) {
   const [index, setIndex] = useState(0);
-  
   
   const fetcher = async () => {
     const { imageUrls } = await fetchImageMetadata(postid);
@@ -21,40 +19,63 @@ export function ListCarousel({ ranks, postid, firstimage }: { ranks: (string | n
   const { data: images, error } = useSWR(`/api/imageMetadata/${postid}`, fetcher);
 
   if (error) {
-    console.error('Error fetching image metadata:', error);
-    return <div>Error loading images</div>;
+    return <div className="p-8 text-center text-red-400 bg-red-400/10 rounded-xl border border-red-400/20 text-sm">Error loading images</div>;
   }
 
   const changeImage = (e: any, direction: 'left' | 'right') => {
     e.preventDefault();
     e.stopPropagation();
-    setIndex(prevIndex => {
-      if (direction === "left") {
-        prevIndex -= 1;
-      } 
-      if (direction === "right") {
-        prevIndex += 1;
-      }
-      return prevIndex;
-    });
+    if (direction === "left" && index > 0) {
+      setIndex(index - 1);
+    } 
+    if (direction === "right" && ranks[index + 1] != null) {
+      setIndex(index + 1);
+    }
   };
 
   return (
-    <>
-      <header className="text-xl text-slate-400 outline-none pb-2 pl-8 w-11/12">{index+1 + ". " + ranks[index]}</header>
-      <div className="grid grid-cols-[auto,11fr,auto] auto-rows-auto items-center">
-        <button onClick={(e) => changeImage(e, "left")} className="w-8 h-8" disabled={index === 0}>
-          <FontAwesomeIcon icon={faChevronLeft} size="2xl" style={{ color: index === 0 ? '#4a5568' : '#fffff0' }} className="pl-0.5"/>
-        </button>
-        <div className="relative h-[341px] bg-black rounded-xl">
-          {images && images[index] &&
-            <Image src={images[index]} alt={`Image ${index + 1}`} width={1920} height={1080} priority={firstimage && index === 0} className="object-contain h-full rounded-md"/>
-          }
+    <div className="space-y-3 relative">
+      <div className="flex items-center justify-between px-4 pt-4 relative z-10">
+        <span className="text-sm font-bold text-slate-400">
+          #{index + 1} <span className="ml-1 font-medium text-slate-500 tracking-wide">{ranks[index]}</span>
+        </span>
+        <div className="flex space-x-1">
+          <button 
+            onClick={(e) => changeImage(e, "left")} 
+            disabled={index === 0}
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-slate-500 hover:text-offwhite hover:bg-white/10 disabled:opacity-20 transition-all"
+          >
+            <FontAwesomeIcon icon={faChevronLeft} className="text-[10px]" />
+          </button>
+          <button 
+            onClick={(e) => changeImage(e, "right")} 
+            disabled={ranks[index + 1] == null}
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-slate-500 hover:text-offwhite hover:bg-white/10 disabled:opacity-20 transition-all"
+          >
+            <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
+          </button>
         </div>
-        <button onClick={(e) => changeImage(e, "right")} className="w-8 h-8" disabled={ranks[index + 1] == null}>
-          <FontAwesomeIcon icon={faChevronRight} size="2xl" style={{ color: ranks[index + 1] == null ? '#4a5568' : '#fffff0' }} className="pr-0.5"/>
-        </button>
       </div>
-    </>
+      
+      <Link href={`/post/${postid}`} className="block relative aspect-video bg-black/40 overflow-hidden group/image">
+        {!images ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-6 h-6 border-2 border-blue-500/30 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : images[index] ? (
+          <Image 
+            src={images[index]} 
+            alt={`Rank ${index + 1}: ${ranks[index]}`} 
+            fill
+            priority={firstimage && index === 0} 
+            className="object-contain transition-transform duration-500 group-hover/image:scale-[1.02]"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-slate-600 text-xs font-medium uppercase tracking-widest">
+            No image
+          </div>
+        )}
+      </Link>
+    </div>
   )
 }

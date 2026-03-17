@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner, faExclamationTriangle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/navigation';
 import { newList } from '@/components/serverActions/listupload';
+import { upload } from '@/components/serverActions/imgupload';
 import { getSignedGCSUrl } from '@/lib/signedurls';
 
 interface Timestamp {
@@ -101,8 +102,6 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
     try {
       let postId = '';
       const videoMode = formData.get('videoMode') as string | null;
-      
-      // Pull the unified config object
       const layoutConfig = postType === 'video' ? getLayoutConfig(formData) : null;
 
       if (postType === 'video' && videoMode === 'pre-edited') {
@@ -111,7 +110,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
         const timestampsRaw = formData.get('timestamps');
         const timestamps: Timestamp[] = timestampsRaw ? JSON.parse(timestampsRaw as string) : [];
-        
+
         setMessage('Preparing upload...');
         setProgress(5);
         const sessionId = `pre_${Date.now()}`;
@@ -141,7 +140,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
             sessionId,
             filePath: urlData.filePath,
             timestamps,
-            layoutConfig // Send the whole object
+            layoutConfig
           })
         });
 
@@ -168,14 +167,31 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
           if (!urlRes.ok) throw new Error(data.error || 'Upload failed');
           filePaths = data.filePaths;
 
-          for (let i = 0; i < videoFiles.length; i++) {
+          // --- PARALLEL UPLOAD LOGIC START ---
+          setMessage(`Uploading ${videoFiles.length} clips...`);
+
+          // Track individual progress for each file to calculate a global average
+          const individualProgress = new Array(videoFiles.length).fill(0);
+
+          const uploadPromises = videoFiles.map((file, i) => {
             const info = data.uploadUrls.find((u: any) => u.index === i);
-            await uploadWithProgress(info.url, videoFiles[i], (pct) => {
-              const weight = 40 / videoFiles.length;
-              setProgress(Math.round(5 + (i * weight) + (pct / 100 * weight)));
-              setMessage(`Uploading clip ${i + 1}...`);
+            if (!info) return Promise.reject(new Error(`No upload URL for index ${i}`));
+
+            return uploadWithProgress(info.url, file, (pct) => {
+              individualProgress[i] = pct;
+
+              // Calculate the weighted average of all uploads
+              const totalUploadPct = individualProgress.reduce((a, b) => a + b, 0) / videoFiles.length;
+
+              // We reserve 5% for init and 40% for the upload phase (Total 45%)
+              setProgress(Math.round(5 + (totalUploadPct * 0.4)));
+              setMessage(`Uploading clips... ${Math.round(totalUploadPct)}%`);
             });
-          }
+          });
+
+          // Fire them all off at once!
+          await Promise.all(uploadPromises);
+          // --- PARALLEL UPLOAD LOGIC END ---
         }
 
         setMessage('Starting render...');
@@ -188,7 +204,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
             ranks: [payload.r1, payload.r2, payload.r3, payload.r4, payload.r5].filter(Boolean),
             filePaths,
             sessionId,
-            layoutConfig // Send the whole object
+            layoutConfig
           })
         });
 
@@ -197,13 +213,32 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
         await pollStatus(postId, 'final');
 
       } else if (postType === 'image') {
-        // (Keep image logic as is)
         setMessage('Creating post...');
         setProgress(10);
         const metadataOnly = new FormData();
         formData.forEach((val, key) => { if (!(val instanceof File)) metadataOnly.append(key, val); });
         postId = await newList(metadataOnly);
-        // ... (rest of image upload logic)
+        
+        // --- IMAGE UPLOAD LOGIC ---
+        setMessage('Uploading images...');
+        const imageEntries: { file: File, name: string }[] = [];
+        formData.forEach((val, key) => {
+          if (val instanceof File && key.startsWith('img')) {
+            const index = key.replace('img', '');
+            imageEntries.push({ file: val, name: `${postId}${index}.png` });
+          }
+        });
+
+        if (imageEntries.length > 0) {
+          const total = imageEntries.length;
+          let completed = 0;
+          await Promise.all(imageEntries.map(async (entry) => {
+            await upload(entry.file, entry.name);
+            completed++;
+            setProgress(10 + (completed / total) * 85);
+            setMessage(`Uploading images... ${completed}/${total}`);
+          }));
+        }
       } else {
         setMessage('Saving post...');
         setProgress(40);
@@ -215,10 +250,11 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
       setTimeout(() => router.push(`/post/${postId}`), 800);
 
     } catch (err: any) {
+      console.error("Submission error:", err);
       setError(err.message || 'An error occurred.');
       started.current = false;
     }
-  }, [formData, videoFiles, postType, router, previousSessionId, previousFilePaths]);
+  }, [formData, videoFiles, postType, router, previousSessionId, previousFilePaths, pollStatus, uploadWithProgress]);
 
   useEffect(() => { runSubmission(); }, [runSubmission]);
 

@@ -57,74 +57,50 @@ export function VideoDisplay({
 
   return (
     <div className="w-full">
-      {title && variant === 'preview' && (
-        <header className="text-xl text-slate-400 outline-none pb-2 pl-8 w-11/12">
-          {title}
-        </header>
-      )}
-      
-      <div className={`grid auto-rows-auto items-center ${
-        variant === 'full' ? 'grid-cols-1 justify-items-center' : 'grid-cols-[auto,11fr,auto]'
-      }`}>
-        {variant === 'preview' && <div className="w-8" />}
-
-        <div className={`relative rounded-xl overflow-hidden outline outline-slate-700 bg-black ${
-          variant === 'full' ? 'w-full aspect-video' : 'h-[341px]'
-        }`}>
-          
-          {isLoading && (
-            <div className="absolute inset-0 bg-slate-800/50 animate-pulse flex items-center justify-center z-10">
+      <div className="relative bg-black/40 aspect-video overflow-hidden">
+        {isLoading && (
+          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-10">
+            <div className="flex flex-col items-center space-y-3">
+              <div className="w-6 h-6 border-2 border-blue-500/30 border-t-transparent rounded-full animate-spin"></div>
               <div className="text-center">
-                <div className="text-slate-400 text-sm mb-1">
-                    {retryCount > 0 ? 'Syncing with cloud...' : 'Loading video...'}
+                <div className="text-slate-400 text-[11px] font-semibold uppercase tracking-wider">
+                    {retryCount > 0 ? 'Syncing...' : 'Loading...'}
                 </div>
-                {retryCount > 0 && (
-                    <div className="text-xs text-slate-500">Attempt {retryCount}/10</div>
-                )}
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            // If the poster fails to load, we don't want a broken icon
-            poster={posterError ? undefined : posterUrl}
-            controls
-            playsInline
-            preload={variant === 'preview' ? 'metadata' : 'auto'}
-            // crossOrigin is vital for the poster to work with GCS CORS
-            crossOrigin="anonymous"
-            className="w-full h-full object-contain"
-            
-            // Handlers
-            onLoadedData={() => {
-                setIsLoading(false);
-                setRetryCount(0); // Success! Reset retries.
-            }}
-            onLoadedMetadata={() => setIsLoading(false)}
-            onError={() => {
-                // Instead of stopping, we trigger the retry loop
-                console.warn(`Video load failed. Retry ${retryCount + 1}/10`);
-                setVideoError(true);
-            }}
-          >
-            Your browser does not support the video tag.
-          </video>
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          poster={posterError ? undefined : posterUrl}
+          controls
+          playsInline
+          preload={variant === 'preview' ? 'metadata' : 'auto'}
+          crossOrigin="anonymous"
+          className="w-full h-full object-contain"
+          onLoadedData={() => {
+              setIsLoading(false);
+              setRetryCount(0);
+          }}
+          onLoadedMetadata={() => setIsLoading(false)}
+          onError={() => {
+              setVideoError(true);
+          }}
+        >
+          Your browser does not support the video tag.
+        </video>
 
-          {/* Hidden Image for Poster Error Detection */}
-          <Image 
-            src={posterUrl} 
-            onError={() => setPosterError(true)} 
-            alt=""
-            width={10}
-            height={10}
-            unoptimized={true}
-            className="hidden"
-          />
-        </div>
-
-        {variant === 'preview' && <div className="w-8" />}
+        <Image 
+          src={posterUrl} 
+          onError={() => setPosterError(true)} 
+          alt=""
+          width={10}
+          height={10}
+          unoptimized={true}
+          className="hidden"
+        />
       </div>
     </div>
   );

@@ -43,7 +43,7 @@ export async function LoadAll() {
   return await addVideoUrls(aposts);
 }
 
-export async function LoadBatch(batch: number, type: string, date: string) {
+export async function LoadBatch(batch: number, sort: string, category: string, date: string) {
   const now = new Date();
   let startdate;
   switch (date) {
@@ -57,105 +57,68 @@ export async function LoadBatch(batch: number, type: string, date: string) {
       startdate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       break;
     case "This Year":
-      startdate = new Date(now.getTime() - 365 * 30 * 24 * 60 * 60 * 1000);
+      startdate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
       break;
     default:
       startdate = new Date(0);
   }
 
-  if (type == "Most Viewed") {
-    const bposts = await prisma.posts.findMany({
-      skip: 4 * batch,
-      take: 4,
-      orderBy: [
-        {
-          metadata: {
-            views: 'desc',
-          },
-        },
-      ],
-      where: {
-        metadata: {
-          date: {
-            gte: startdate,
-          },
-        },
+  // Build the WHERE clause
+  const where: any = {
+    metadata: {
+      date: {
+        gte: startdate,
       },
-      include: {
-        metadata: true,
-      },
-    });
-    return await addVideoUrls(bposts);
+    },
+  };
+
+  // Category filtering
+  if (category !== "All") {
+    if (category === "None") {
+      where.category = "";
+    } else if (category.startsWith("c")) {
+      where.category = {
+        contains: category.substring(1),
+        mode: 'insensitive',
+      };
+    } else {
+      where.category = category;
+    }
   }
-  else if (type == "Most Liked") {
-    const bposts = await prisma.posts.findMany({
-      skip: 4 * batch,
-      take: 4,
-      orderBy: [
-        {
-          metadata: {
-            likes: 'desc',
-          },
-        },
-      ],
-      where: {
-        metadata: {
-          date: {
-            gte: startdate,
-          },
-        },
-      },
-      include: {
-        metadata: true,
-      },
-    });
-    return await addVideoUrls(bposts);
+
+  // Sorting logic
+  let orderBy: any = [];
+  switch (sort) {
+    case "Most Viewed":
+      orderBy = [{ metadata: { views: 'desc' } }];
+      break;
+    case "Most Liked":
+      orderBy = [{ metadata: { likes: 'desc' } }];
+      break;
+    case "Newest":
+    default:
+      orderBy = [{ metadata: { date: 'desc' } }];
+      break;
   }
+
+  const bposts = await prisma.posts.findMany({
+    skip: 4 * batch,
+    take: 4,
+    where,
+    orderBy,
+    include: {
+      metadata: true,
+    },
+  });
+
+  return await addVideoUrls(bposts);
 }
 
+// Keep LoadBatchCat for backward compatibility or simple use cases if needed, 
+// but point it to the new LoadBatch or deprecate it. 
+// For now, let's keep it but it's redundant.
 export async function LoadBatchCat(batch: number, category: string) {
-  if (category == "None") {
-    const bposts = await prisma.posts.findMany({
-      skip: 4 * batch,
-      take: 4,
-      where: {
-        category: "",
-      },
-      include: {
-        metadata: true,
-      },
-    });
-    return await addVideoUrls(bposts);
-  }
-  else if (category.charAt(0) == "c") {
-    const bposts = await prisma.posts.findMany({
-      skip: 4 * batch,
-      take: 4,
-      where: {
-        category: {
-          contains: category.substring(1),
-          mode: 'insensitive',
-        },
-      },
-      include: {
-        metadata: true,
-      },
-    });
-    return await addVideoUrls(bposts);
-  }
-  else {
-    const bposts = await prisma.posts.findMany({
-      skip: 4 * batch,
-      take: 4,
-      where: {
-        category: category,
-      },
-      include: {
-        metadata: true,
-      },
-    });
-    return await addVideoUrls(bposts);
-  }
+  return await LoadBatch(batch, "Newest", category, "All Time");
 }
 
 export async function LoadPostResults(search: string) {

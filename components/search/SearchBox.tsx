@@ -43,47 +43,52 @@ export function Search() {
   }
 
   return (
-    <div className="outline outline-2 outline-slate-700 rounded-md flex flex-row w-[350px]">
+    <div className="border border-white/10 rounded-md flex flex-row w-full bg-white/5 transition-colors focus-within:border-white/20">
       {isOpen &&
-        <div onClick={closeMenu} className="fixed top-0 right-0 w-screen h-screen" />
+        <div onClick={closeMenu} className="fixed inset-0 z-20" />
       }
-      <div className="h-9 bg-transparent text-offwhite text-sm flex items-center px-2 border-r-2 border-slate-700 z-10 relative cursor-default" onClick={() => setIsOpen(!isOpen)}>
-        <span>{type}</span>
-        <FontAwesomeIcon icon={faChevronDown} className="ml-2 text-offwhite w-[14px]" />
+      <div className="h-[34px] flex items-center px-2 sm:px-3 border-r border-white/10 z-30 relative cursor-pointer hover:bg-white/5 transition-colors shrink-0" onClick={() => setIsOpen(!isOpen)}>
+        <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest min-w-[42px] sm:min-w-[48px] text-center">
+          <span className="hidden sm:inline">{type}</span>
+          <span className="sm:hidden">{type.charAt(0)}</span>
+        </span>
+        <FontAwesomeIcon icon={faChevronDown} className="ml-1 sm:ml-2 text-slate-500 w-[8px] sm:w-[10px]" />
         {isOpen &&
         <>
-          <div className="absolute top-full left-0 z-20 mt-0.5 bg-slate-900 rounded-md outline outline-2 outline-slate-700">
-            <div className="px-3 py-2 hover:bg-slate-800 text-offwhite text-sm" onClick={() => changeType("Posts")}>Posts</div>
-            <div className="px-3 py-2 hover:bg-slate-800 text-offwhite text-sm" onClick={() => changeType("Users")}>Users</div>
-            <div className="px-3 py-2 hover:bg-slate-800 text-offwhite text-sm" onClick={() => changeType("Groups")}>Groups</div>
+          <div className="absolute top-full left-0 z-40 mt-1.5 bg-black border border-white/10 rounded-md min-w-[120px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="px-4 py-2 hover:bg-white/5 text-slate-300 text-[11px] font-bold uppercase tracking-widest transition-colors cursor-pointer" onClick={() => changeType("Posts")}>Posts</div>
+            <div className="px-4 py-2 hover:bg-white/5 text-slate-300 text-[11px] font-bold uppercase tracking-widest transition-colors cursor-pointer" onClick={() => changeType("Users")}>Users</div>
+            <div className="px-4 py-2 hover:bg-white/5 text-slate-300 text-[11px] font-bold uppercase tracking-widest transition-colors cursor-pointer" onClick={() => changeType("Groups")}>Groups</div>
           </div>
         </>
       }
       </div>
-      <div className="w-[350px]">
+      <div className="flex-grow min-w-0">
         <InstantSearch searchClient={searchClient} indexName={type}>
           <Configure hitsPerPage={10} />
-          <SearchBox placeholder="Search" classNames={{
-            input: 'peer h-9 w-full bg-transparent outline-none indent-2 text-offwhite placeholder-offwhite [&::-webkit-search-cancel-button]:hidden [&::-ms-clear]:hidden',
+          <SearchBox placeholder={`Search ${type}...`} classNames={{
+            input: 'peer h-[34px] w-full bg-transparent outline-none px-2 sm:px-3 text-offwhite placeholder-slate-600 text-[13px] font-medium [&::-webkit-search-cancel-button]:hidden [&::-ms-clear]:hidden',
             submitIcon: 'hidden',
-            reset: 'flex items-center justify-center ml-2 peer-placeholder-shown:hidden relative z-10',
+            reset: 'flex items-center justify-center pr-2 peer-placeholder-shown:hidden relative z-10',
             root: 'w-full',
             form: 'flex items-center',
           }} 
           resetIconComponent={({ classNames }) => (
             <div className={classNames.resetIcon}>
-              <FontAwesomeIcon icon={faXmark} className="text-offwhite mr-1" />
+              <FontAwesomeIcon icon={faXmark} className="text-slate-500 w-3 hover:text-offwhite transition-colors cursor-pointer" />
             </div>
           )}
           onInput={saveQuery} onKeyDown={checkEnter} />
 
           <div className="relative">
             <EmptyQueryBoundary fallback={null}>
-              <div className="absolute grid grid-cols-1 z-10 mt-0.5 outline outline-2 outline-slate-700 empty:outline-none rounded-md bg-slate-900 text-offwhite w-full">
+              <div className="absolute grid grid-cols-1 z-30 mt-1.5 border border-white/10 empty:outline-none rounded-md bg-black text-offwhite w-full shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
                 <CustomHits />
-                <Link href={`/search/${type.toLowerCase()}/${search}`} className="block w-full hover:bg-slate-800 p-2">Search for {search}</Link>
-                <div className="p-1 w-full border-t-2 border-slate-700 flex justify-end">
-                  <div className="w-36">
+                <Link href={`/search/${type.toLowerCase()}/${search}`} className="block w-full hover:bg-white/5 p-3 text-[12px] font-bold uppercase tracking-widest border-t border-white/10 text-blue-400 transition-colors">
+                  Search for "{search}"
+                </Link>
+                <div className="p-2 w-full border-t border-white/10 bg-black/40 flex justify-end">
+                  <div className="w-20 opacity-40 hover:opacity-100 transition-opacity">
                     <PoweredBy />
                   </div>
                 </div>

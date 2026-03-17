@@ -1,8 +1,8 @@
 'use client'
 
-import { useRef, useState } from "react"
+import { useRef, useState, useCallback, useEffect } from "react"
 import Image from 'next/image'
-import { faCircleXmark, faChevronLeft, faChevronRight, faImage } from "@fortawesome/free-solid-svg-icons"
+import { faCircleXmark, faChevronLeft, faChevronRight, faImage, faPlus, faMinus } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { signIn } from "next-auth/react"
 import VideoPreview from "./VideoPreview"
@@ -215,8 +215,8 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
 
   const changeRank = (e: any) => {
     e.preventDefault();
-    if (e.target.textContent == "-") setRanks(ranks - 1);
-    else setRanks(ranks + 1);
+    if (e.target.closest('button').textContent.includes('-')) setRanks(Math.max(2, ranks - 1));
+    else setRanks(Math.min(5, ranks + 1));
   }
 
   const togglePreview = (e: any) => {
@@ -256,19 +256,41 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
   };
 
   return (
-    <div className="min-h-screen bg-gradient-radial from-gray-950 to-stone-950 bg-fixed text-offwhite flex flex-col">
-      <form id="newpost" onSubmit={subHandler} className="flex flex-col items-center justify-center pt-[130px] md:pt-[82px] px-6 pb-10 gap-6 w-full">
-        <div className="relative overflow-visible p-5 rounded-xl shadow-black shadow-lg bg-slate-500 bg-opacity-10 w-full max-w-2xl flex flex-col">
+    <div className="flex flex-col min-h-[calc(100vh-52px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed text-offwhite overflow-x-hidden">
+      <form id="newpost" onSubmit={subHandler} className="flex flex-col items-center pt-[130px] md:pt-[82px] px-3 sm:px-6 pb-12 gap-8 w-full">
+        <div className="relative overflow-visible p-5 sm:p-8 rounded-2xl border border-white/15 bg-black/25 backdrop-blur-md w-full max-w-2xl flex flex-col">
           <div className="relative overflow-visible flex flex-col">
-            <div className={`transition-all duration-300 ease-in-out ${showPreview ? '-translate-x-full opacity-0 h-0 overflow-hidden' : 'translate-x-0 opacity-100'} grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 pt-6`}>
-              <div className="flex justify-between items-center mb-2">
-                <header className="text-3xl font-bold">New Post</header>
-                <div className="flex flex-row gap-2">
-                  <label htmlFor="rank" className="text-xl font-semibold pr-2">Ranks</label>
-                  <div className="flex flex-row outline outline-2 outline-slate-700 rounded-md w-18 h-8 items-center gap-1">
-                    <button onClick={changeRank} disabled={ranks === 2} className="text-2xl w-6 bg-slate-50 bg-opacity-5 hover:bg-opacity-10">-</button>
-                    <span className="text-xl w-6 py-1 flex justify-center bg-slate-50 bg-opacity-5">{ranks}</span>
-                    <button onClick={changeRank} disabled={ranks === 5} className="text-2xl w-6 bg-slate-50 bg-opacity-5 hover:bg-opacity-10">+</button>
+            <div className={`transition-all duration-300 ease-in-out ${showPreview ? '-translate-x-full opacity-0 h-0 overflow-hidden' : 'translate-x-0 opacity-100'} grid grid-cols-1 gap-8 pt-2`}>
+              
+              {/* Form Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-8 gap-4">
+                <div className="min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-slate-100 tracking-tight truncate">Create Post</h1>
+                  <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Share your rankings</p>
+                </div>
+                
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <label className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ranks</label>
+                  <div className="flex items-center bg-white/10 border border-white/10 rounded-lg overflow-hidden h-9">
+                    <button 
+                      type="button"
+                      onClick={changeRank} 
+                      disabled={ranks === 2} 
+                      className="w-10 h-full flex items-center justify-center text-xl text-slate-300 hover:bg-white/10 disabled:opacity-20 transition-all border-r border-white/10"
+                    >
+                      <FontAwesomeIcon icon={faMinus} className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="w-10 h-full flex items-center justify-center font-bold text-slate-100 bg-white/5">
+                      {ranks}
+                    </span>
+                    <button 
+                      type="button"
+                      onClick={changeRank} 
+                      disabled={ranks === 5} 
+                      className="w-10 h-full flex items-center justify-center text-xl text-slate-300 hover:bg-white/10 disabled:opacity-20 transition-all border-l border-white/10"
+                    >
+                      <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -277,22 +299,49 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
               <PostTypeSelector postType={postType} signedin={signedin} onToggleVideosAction={toggleVideos} onToggleImagesAction={toggleImages} onToggleModalAction={toggleModal} />
 
               {/* Title and Ranks Section */}
-              <div className="bg-slate-700 bg-opacity-30 rounded-md p-4 mt-4">
-                <input name="title" onChange={handleInputChange} placeholder="Title" className="text-2xl font-semibold outline-none w-full bg-transparent placeholder-slate-400 mb-4" required pattern="[^:'\\%{}]*\S[^:'\\%{}]*" maxLength={40} />
-                {[...Array(ranks)].map((_, index) => (
-                  <div key={index} className="mb-2">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <label className="text-xl">{index + 1}.</label>
-                      <input name={`r${index + 1}`} onChange={handleInputChange} className="flex-1 text-xl bg-transparent border-b border-transparent outline-none focus:border-blue-500 pb-1 w-11/12" required pattern="[^:'\\%{}]*\S[^:'\\%{}]*" maxLength={80} />
-                    </div>
-                    {showRankNotes && (
-                      <div className="ml-8 flex items-center">
-                        <span className="text-slate-500 mr-2 text-sm">↳</span>
-                        <input name={`r${index + 1}_note`} className="flex-1 text-sm bg-slate-800 bg-opacity-40 border border-slate-600 rounded px-2 py-1 outline-none focus:border-blue-500 placeholder-slate-500 transition-colors" placeholder="Add a quick reason (optional)" maxLength={50} />
+              <div className="space-y-6">
+                <div className="relative group">
+                  <label className="absolute -top-2 left-2 px-1 bg-[#0a0a0a] text-[10px] font-bold text-slate-400 uppercase tracking-widest z-10">Title</label>
+                  <input 
+                    name="title" 
+                    onChange={handleInputChange} 
+                    placeholder="What are you ranking?" 
+                    className="text-lg md:text-2xl font-semibold outline-none w-full bg-white/[0.02] border border-white/15 rounded-xl px-4 py-3 placeholder-slate-600 focus:border-blue-500/50 transition-all" 
+                    required 
+                    pattern="[^:'\\%{}]*\S[^:'\\%{}]*" 
+                    maxLength={40} 
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  {[...Array(ranks)].map((_, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="relative flex items-center group w-full">
+                        <span className="absolute left-4 text-[10px] font-bold text-blue-400 uppercase tracking-widest">#{index + 1}</span>
+                        <input 
+                          name={`r${index + 1}`} 
+                          onChange={handleInputChange} 
+                          placeholder={`Rank ${index + 1}`}
+                          className="w-full text-base md:text-xl font-semibold bg-white/[0.05] border border-white/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:border-blue-500/40 focus:bg-white/[0.08] transition-all text-slate-100 placeholder-slate-600" 
+                          required 
+                          pattern="[^:'\\%{}]*\S[^:'\\%{}]*" 
+                          maxLength={80} 
+                        />
                       </div>
-                    )}
-                  </div>
-                ))}
+                      {showRankNotes && (
+                        <div className="pl-4 flex items-center gap-3">
+                          <div className="w-px h-6 bg-white/20 ml-6" />
+                          <input 
+                            name={`r${index + 1}_note`} 
+                            className="flex-1 text-xs bg-transparent border-b border-white/10 pb-1 outline-none focus:border-blue-400/50 transition-all text-slate-300 placeholder-slate-600" 
+                            placeholder="Add a quick note..." 
+                            maxLength={50} 
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Video Upload Section */}
@@ -346,35 +395,35 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
             </div>
 
             {/* Preview Section */}
-            <div className={`transition-all duration-300 ease-in-out px-1 ${showPreview ? 'relative translate-x-0 opacity-100' : 'absolute inset-0 translate-x-full opacity-0'}`}>
+            <div className={`transition-all duration-300 ease-in-out px-0 sm:px-1 ${showPreview ? 'relative translate-x-0 opacity-100' : 'absolute inset-0 translate-x-full opacity-0'}`}>
               <div className="h-full flex flex-col justify-center">
-                <div>
-                  <h2 className="text-3xl text-center font-bold mb-3">Post Preview</h2>
-                  <div className="flex">
+                <div className="w-full">
+                  <h2 className="text-2xl sm:text-3xl text-center font-bold mb-6">Post Preview</h2>
+                  <div className="flex w-full">
                     {postType === 'image' && (
-                      <div className="grid grid-cols-1 grid-flow-row auto-rows-min w-full max-w-2xl">
-                        <header className="text-2xl text-ellipsis overflow-hidden text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">
+                      <div className="grid grid-cols-1 grid-flow-row auto-rows-min w-full max-w-2xl mx-auto">
+                        <header className="text-xl sm:text-2xl text-ellipsis overflow-hidden text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">
                           {previewData.title || 'Your Title Here'}
                         </header>
-                        <div className="pt-8 pb-8 rounded-xl outline outline-slate-700">
-                          <header className="text-xl text-slate-400 outline-none pb-2 pl-8 w-11/12">
+                        <div className="pt-6 pb-6 sm:pt-8 sm:pb-8 rounded-xl outline outline-slate-700 w-full overflow-hidden">
+                          <header className="text-lg sm:text-xl text-slate-400 outline-none pb-2 pl-4 sm:pl-8 w-11/12 truncate">
                             {previewData.currentIndex + 1 + ". " + (previewData.ranks[previewData.currentIndex] || 'Your rank here')}
                           </header>
-                          <div className="grid grid-cols-[auto,11fr,auto] auto-rows-auto items-center">
-                            <button onClick={(e) => changePreviewImage(e, "left")} className="w-8 h-8" disabled={previewData.currentIndex === 0}>
-                              <FontAwesomeIcon icon={faChevronLeft} size="2xl" style={{ color: previewData.currentIndex === 0 ? '#4a5568' : '#fffff0' }} className="pl-0.5" />
+                          <div className="grid grid-cols-[auto,1fr,auto] auto-rows-auto items-center gap-1 sm:gap-2">
+                            <button onClick={(e) => changePreviewImage(e, "left")} className="w-8 h-8 flex items-center justify-center" disabled={previewData.currentIndex === 0}>
+                              <FontAwesomeIcon icon={faChevronLeft} className="w-5 h-5" style={{ color: previewData.currentIndex === 0 ? '#4a5568' : '#fffff0' }} />
                             </button>
-                            <div className="relative h-[341px] bg-black rounded-xl">
+                            <div className="relative aspect-[9/16] sm:h-[341px] bg-black rounded-xl overflow-hidden">
                               {previewData.images && previewData.images[previewData.currentIndex] ? (
-                                <Image src={previewData.images[previewData.currentIndex] || ""} alt={`Image ${previewData.currentIndex + 1}`} width={1920} height={1080} className="object-contain h-full rounded-md" />
+                                <Image src={previewData.images[previewData.currentIndex] || ""} alt={`Image ${previewData.currentIndex + 1}`} width={1080} height={1920} className="object-contain w-full h-full" />
                               ) : (
                                 <div className="flex items-center justify-center h-full text-slate-500">
-                                  <FontAwesomeIcon icon={faImage} className="h-16 w-16" />
+                                  <FontAwesomeIcon icon={faImage} className="w-12 h-12 sm:w-16 sm:h-16" />
                                 </div>
                               )}
                             </div>
-                            <button onClick={(e) => changePreviewImage(e, "right")} className="w-8 h-8" disabled={!previewData.ranks[previewData.currentIndex + 1]}>
-                              <FontAwesomeIcon icon={faChevronRight} size="2xl" style={{ color: !previewData.ranks[previewData.currentIndex + 1] ? '#4a5568' : '#fffff0' }} className="pr-0.5" />
+                            <button onClick={(e) => changePreviewImage(e, "right")} className="w-8 h-8 flex items-center justify-center" disabled={!previewData.ranks[previewData.currentIndex + 1]}>
+                              <FontAwesomeIcon icon={faChevronRight} className="w-5 h-5" style={{ color: !previewData.ranks[previewData.currentIndex + 1] ? '#4a5568' : '#fffff0' }} />
                             </button>
                           </div>
                         </div>
@@ -382,16 +431,16 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                     )}
 
                     {postType === 'text' && (
-                      <div className="grid grid-cols-1 grid-flow-row auto-rows-min w-full max-w-2xl">
-                        <header className="text-2xl text-ellipsis overflow-hidden text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">
+                      <div className="grid grid-cols-1 grid-flow-row auto-rows-min w-full max-w-2xl mx-auto">
+                        <header className="text-xl sm:text-2xl text-ellipsis overflow-hidden text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">
                           {previewData.title || 'Your Title Here'}
                         </header>
-                        <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-2 sm:gap-4 list-inside list-decimal p-4 sm:p-6 rounded-xl outline outline-slate-700">
-                          <li className="text-xl text-slate-400 outline-none p-2 w-11/12">{previewData.ranks[0] || 'Your first rank here'}</li>
-                          <li className="text-xl text-slate-400 outline-none p-2 w-11/12">{previewData.ranks[1] || 'Your second rank here'}</li>
-                          <li className={`text-xl text-slate-400 outline-none p-2 w-11/12 ${!previewData.ranks[2] ? 'hidden' : ''}`}>{previewData.ranks[2] || ''}</li>
-                          <li className={`text-xl text-slate-400 outline-none p-2 w-11/12 ${!previewData.ranks[3] ? 'hidden' : ''}`}>{previewData.ranks[3] || ''}</li>
-                          <li className={`text-xl text-slate-400 outline-none p-2 w-11/12 ${!previewData.ranks[4] ? 'hidden' : ''}`}>{previewData.ranks[4] || ''}</li>
+                        <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-2 sm:gap-4 list-inside list-decimal p-4 sm:p-6 rounded-xl outline outline-slate-700 w-full">
+                          <li className="text-lg sm:text-xl text-slate-400 outline-none p-1 sm:p-2 w-11/12 truncate">{previewData.ranks[0] || 'Your first rank here'}</li>
+                          <li className="text-lg sm:text-xl text-slate-400 outline-none p-1 sm:p-2 w-11/12 truncate">{previewData.ranks[1] || 'Your second rank here'}</li>
+                          <li className={`text-lg sm:text-xl text-slate-400 outline-none p-1 sm:p-2 w-11/12 truncate ${!previewData.ranks[2] ? 'hidden' : ''}`}>{previewData.ranks[2] || ''}</li>
+                          <li className={`text-lg sm:text-xl text-slate-400 outline-none p-1 sm:p-2 w-11/12 truncate ${!previewData.ranks[3] ? 'hidden' : ''}`}>{previewData.ranks[3] || ''}</li>
+                          <li className={`text-lg sm:text-xl text-slate-400 outline-none p-1 sm:p-2 w-11/12 truncate ${!previewData.ranks[4] ? 'hidden' : ''}`}>{previewData.ranks[4] || ''}</li>
                         </ul>
                       </div>
                     )}
@@ -416,16 +465,26 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
           </div>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3 pt-6">
+          <div className="grid grid-cols-2 gap-4 pt-8 border-t border-white/10 mt-2">
             <button
               type="button"
               onClick={togglePreview}
               disabled={!showPreview && !canPreview()}
-              className={`w-full ${!showPreview && !canPreview() ? 'bg-slate-500 cursor-not-allowed opacity-60' : 'bg-slate-600 hover:bg-slate-700'} text-white font-bold py-4 px-6 rounded-md text-xl transition-colors`}
+              className={`w-full py-4 px-6 rounded-xl text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${
+                showPreview 
+                  ? 'bg-white/10 text-slate-200 hover:bg-white/20 border border-white/10' 
+                  : !canPreview() 
+                    ? 'bg-white/5 text-slate-600 border border-white/5 cursor-not-allowed' 
+                    : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10 hover:border-white/20'
+              }`}
             >
-              {showPreview ? 'Back to Edit' : 'Preview Post'}
+              {showPreview ? 'Edit Details' : 'Preview Post'}
             </button>
-            <button type="submit" disabled={!!submissionData} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-md text-xl transition-colors">
+            <button 
+              type="submit" 
+              disabled={!!submissionData} 
+              className="w-full py-4 px-6 rounded-xl text-[11px] font-bold uppercase tracking-[0.2em] bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               {submissionData ? 'Processing...' : 'Create Post'}
             </button>
           </div>

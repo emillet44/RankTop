@@ -1,22 +1,21 @@
 import Link from "next/link";
 
-//This function just holds the links to common pages like About, FAQ, and Report Bugs, and is the same size as the header.
 export function Footer() {
   return (
-    <>
-      <footer className="py-3 w-full text-center text-offwhite bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
-        <div className="grid grid-flow-col justify-center gap-10 sm:gap-40 h-10">
-          <Link href="/about" className="w-20 py-2">
-            <header>About</header>
+    <footer className="w-full h-[52px] border-t border-white/10 bg-gradient-to-t from-stone-900/80 to-stone-950/90 backdrop-blur-md relative">
+      <div className="w-full h-full px-6 flex items-center justify-center">
+        <div className="flex items-center justify-center gap-x-12 sm:gap-x-20 text-[13px] font-bold text-slate-400 uppercase tracking-widest h-full">
+          <Link href="/about" className="hover:text-offwhite transition-colors flex items-center h-full pt-0.5">
+            About
           </Link>
-          <Link href="/faq" className="w-16 py-2">
-            <header>FAQ</header>
+          <Link href="/faq" className="hover:text-offwhite transition-colors flex items-center h-full pt-0.5">
+            FAQ
           </Link>
-          <Link href="/feedback" className="w-36 py-2">
-            <header>Site Feedback</header>
+          <Link href="/feedback" className="hover:text-offwhite transition-colors flex items-center h-full pt-0.5">
+            Site Feedback
           </Link>
         </div>
-      </footer>
-    </>
+      </div>
+    </footer>
   )
 }

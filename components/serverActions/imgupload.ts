@@ -25,5 +25,5 @@ export async function upload(blob: Blob, imgname: String) {
     await storage.bucket(bucketName).file(imgname).save(buffer);
   }
 
-  uploadFile().catch(console.error);
+  await uploadFile();
 }

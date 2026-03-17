@@ -63,7 +63,7 @@ export default function UsernameForm({ userid, currentUsername }: UsernameFormPr
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 flex items-center justify-center p-4">
+    <div className="min-h-[calc(100vh-52px)] bg-gradient-radial from-gray-950 to-stone-950 flex items-center justify-center p-4">
       <div className="outline outline-slate-700 bg-slate-900 rounded-xl w-full max-w-sm p-8 shadow-2xl">
 
         {!confirmopen && !notunique && (

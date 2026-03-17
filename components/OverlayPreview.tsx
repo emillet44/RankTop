@@ -331,7 +331,7 @@ export function OverlayPreview({ config, videoFile, title, ranks }: PreviewProps
   }, [config, frameLoaded, fontStatus, title, ranks]);
 
   return (
-    <div className="relative w-full aspect-[9/16] max-w-[280px] mx-auto bg-black rounded-lg overflow-hidden border-2 border-slate-700 shadow-2xl">
+    <div className="relative w-full aspect-[9/16] max-w-[280px] mx-auto bg-black rounded-lg overflow-hidden border-2 border-slate-700">
       <canvas ref={canvasRef} width={1080} height={1920} className="w-full h-full object-cover" />
     </div>
   );

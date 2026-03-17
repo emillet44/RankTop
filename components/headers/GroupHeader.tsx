@@ -2,58 +2,58 @@ import Link from "next/link"
 import { getSessionData } from "@/lib/auth-helpers";
 import { Search } from "../search/SearchBox"
 import { ProfileMenu } from "../ProfileMenu";
+import { CompressedMenu } from "../CompressedMenu";
 
 /**
- * Main Header
- * Uses getSessionData (optimized for NextAuth) to determine if a user
- * is authenticated and passes the username/userid to the ProfileMenu.
+ * Group Header
+ * Mirror of main Header but used in Group-related pages.
  */
 export async function Header() {
   const { signedin, username, userid } = await getSessionData();
 
   return (
-    <div className="fixed w-screen flex justify-center pt-14 pb-2 md:py-2 bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80% z-[100]">
-      <div className="grid grid-flow-col min-w-[300px] h-9 justify-center items-center">
-        {/* Logo */}
-        <Link href="/home">
-          <button className="absolute left-2 top-1.5 text-3xl sm:top-3 sm:text-4xl/7 text-offwhite tracking-tighter hover:text-blue-400 transition-colors">
-            RankTop
-          </button>
-        </Link>
+    <nav className="fixed top-0 left-0 right-0 h-[52px] flex items-center bg-gradient-to-b from-stone-900/80 to-stone-950/90 backdrop-blur-md border-b border-white/10 z-[100] shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+      <div className="w-full px-4 md:px-6 flex items-center justify-between relative h-full">
+        {/* Left: Logo - Switches to "R" on tiny screens */}
+        <div className="flex-1 flex items-center min-w-0">
+          <Link href="/home" className="text-2xl md:text-3xl text-offwhite tracking-tighter hover:text-blue-400 transition-colors font-normal">
+            <span className="hidden min-[450px]:inline">RankTop</span>
+            <span className="min-[450px]:hidden font-bold">R</span>
+          </Link>
+        </div>
 
-        {/* Global Search Component */}
-        <Search />
+        {/* Center: Search - More flexible scaling */}
+        <div className="flex-none w-full max-w-[200px] min-[400px]:max-w-[280px] sm:max-w-[380px] md:max-w-[420px] mx-2">
+          <Search />
+        </div>
 
-        {signedin ? (
-          /* AUTHENTICATED STATE */
-          <div className="w-[calc(100vw-140px)] md:min-w-[230px] md:w-[calc(50vw-160px)] absolute justify-end flex-row right-2 2xl:right-4 md:top-1 top-[7px] items-center flex gap-2">
-            <Link href="/newpost">
-              <button className="hover:outline outline-1 outline-slate-700 py-2 px-3 rounded-md text-sm sm:text-base text-offwhite whitespace-nowrap bg-white/5 transition-all">
-                New Post
-              </button>
+        {/* Right: Actions */}
+        <div className="flex-1 flex items-center justify-end gap-x-2 md:gap-x-3">
+          <div className="hidden md:flex items-center gap-x-2 md:gap-x-3">
+            <Link 
+              href="/newpost" 
+              className="h-8 flex items-center px-4 rounded text-[13px] font-bold bg-white/5 border border-white/10 text-offwhite hover:bg-white/10 transition-all uppercase tracking-wider"
+            >
+              New Post
             </Link>
-            
-            <div className="z-[110]">
-              {/* ProfileMenu now receives actual username from session */}
-              <ProfileMenu username={username} userid={userid} />
-            </div>
+            {signedin ? (
+              <div className="relative z-[110]">
+                <ProfileMenu username={username} userid={userid} />
+              </div>
+            ) : (
+              <Link href="/signin">
+                <button className="h-8 flex items-center px-5 rounded bg-blue-600 hover:bg-blue-500 text-white transition-all font-bold text-[13px] uppercase tracking-wider border border-transparent">
+                  Sign In
+                </button>
+              </Link>
+            )}
           </div>
-        ) : (
-          /* GUEST STATE */
-          <div className="absolute right-2 top-1.5 flex gap-2">
-            <Link href="/newpost">
-              <button className="hidden sm:block hover:outline outline-1 outline-slate-700 py-2 px-3 rounded-md text-offwhite bg-white/5 transition-all">
-                New Post
-              </button>
-            </Link>
-            <Link href="/signin">
-              <button className="hover:bg-blue-600 outline outline-1 outline-blue-600 py-2 px-4 rounded-md text-offwhite transition-all font-semibold">
-                Sign In
-              </button>
-            </Link>
+
+          <div className="md:hidden">
+            <CompressedMenu signedin={signedin} username={username} />
           </div>
-        )}
+        </div>
       </div>
-    </div>
+    </nav>
   );
 }

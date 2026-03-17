@@ -27,7 +27,7 @@ export default function Loading() {
         </div>
       </div>
 
-      <main className="flex flex-col items-center justify-center bg-gradient-radial from-gray-950 to-stone-950 bg-fixed min-h-[calc(100vh-64px)] text-white px-6" />
+      <main className="flex flex-col items-center justify-center bg-gradient-radial from-gray-950 to-stone-950 bg-fixed min-h-[calc(100vh-52px)] text-white px-6" />
 
       <footer className="py-3 w-full text-center bg-gradient-to-r from-black from-20% via-slate-950 via-50% to-black to-80%">
         <div className="grid grid-flow-col justify-center gap-10 sm:gap-40 h-10">

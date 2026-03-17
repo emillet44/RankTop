@@ -216,7 +216,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
           onClick={processVideos}
           disabled={processing}
           className={`px-3 py-2 rounded-md transition-all text-sm font-medium ${
-            processing ? 'opacity-50 cursor-not-allowed bg-slate-600' : 'bg-blue-600 hover:bg-blue-700 shadow-lg'
+            processing ? 'opacity-50 cursor-not-allowed bg-slate-600' : 'bg-blue-600 hover:bg-blue-700'
           }`}
         >
           {processing ? 'Processing' : videoUrl ? 'Refresh' : 'Generate'}

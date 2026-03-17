@@ -11,50 +11,36 @@ export default function PostsList({ starter }: { starter: any }) {
   const [loading, setLoading] = useState(false);
   const [end, setEnd] = useState(false);
   const [lockcat, setLockCat] = useState("");
-  const [category, setCategory] = useState("None");
-  const [sort, setSort] = useState("Category");
-  const [date, setDate] = useState("Today");
+  const [category, setCategory] = useState("All");
+  const [sort, setSort] = useState("Newest");
+  const [date, setDate] = useState("All Time");
   const batch = useRef(0);
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  const addPostsCat = useCallback(async (category: string) => {
+  const fetchPosts = useCallback(async (currentBatch: number, currentSort: string, currentCat: string, currentDate: string, isInitial: boolean = false) => {
     try {
-      // batch.current is a Ref, so it doesn't need to be in the dependency array
-      const posts = await LoadBatchCat(batch.current, category);
+      setLoading(true);
+      const categoryToLoad = currentCat === "Custom" ? "c" + lockcat : currentCat;
+      const newPosts = await LoadBatch(currentBatch, currentSort, categoryToLoad, currentDate);
 
-      setPosts((prevPosts: any) => [...prevPosts, ...posts]);
+      if (isInitial) {
+        setPosts(newPosts);
+      } else {
+        setPosts((prevPosts: any) => [...prevPosts, ...newPosts]);
+      }
 
-      if (posts.length === 0) {
+      if (newPosts.length === 0) {
         setEnd(true);
+      } else {
+        setEnd(false);
       }
     } catch (error) {
-      console.error("Error loading more posts:", error);
+      console.error("Error loading posts:", error);
     } finally {
       setLoading(false);
     }
-  }, []); // Empty array because it doesn't rely on any props or state variables
-
-  const addPosts = async (type: string, date: string) => {
-    try {
-      const posts = await LoadBatch(batch.current, type, date);
-      if (posts) {
-        setPosts((prevPosts: any) => [...prevPosts, ...posts]);
-
-        if (posts.length === 0) {
-          setEnd(true);
-        }
-      }
-      else {
-        throw ("Post metadata couldn't be read.");
-      }
-
-    } catch (error) {
-      console.error("Error loading more posts:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [lockcat]);
 
   useEffect(() => {
     if (observer.current) {
@@ -63,26 +49,14 @@ export default function PostsList({ starter }: { starter: any }) {
     observer.current = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !loading && !end) {
-          setLoading(true);
           batch.current += 1;
-          if (sort == "Category") {
-            if (category != "Custom") {
-              addPostsCat(category);
-            }
-            else {
-              addPostsCat("c" + lockcat);
-            }
-          }
-          else {
-            addPosts(sort, date);
-          }
+          fetchPosts(batch.current, sort, category, date);
         }
       },
       { threshold: 0.1 }
     );
 
     const currentObserver = observer.current;
-
     if (observerRef.current) {
       currentObserver.observe(observerRef.current);
     }
@@ -92,19 +66,32 @@ export default function PostsList({ starter }: { starter: any }) {
         observer.current.disconnect();
       }
     };
-  }, [loading, end, category, date, lockcat, sort, addPostsCat]);
+  }, [loading, end, category, date, sort, fetchPosts]);
 
-  const loadCategory = (e: any) => {
-    if (lockcat != "") {
-      setLockCat("");
+  const handleFilterChange = (type: 'category' | 'sort' | 'date', value: string) => {
+    let nextCat = category;
+    let nextSort = sort;
+    let nextDate = date;
+
+    if (type === 'category') {
+      nextCat = value;
+      setCategory(value);
+      if (value !== 'Custom') setLockCat("");
+    } else if (type === 'sort') {
+      nextSort = value;
+      setSort(value);
+    } else if (type === 'date') {
+      nextDate = value;
+      setDate(value);
     }
-    setCategory(e.target.value);
-    setPosts([]);
-    if (e.target.value != "Custom") {
-      batch.current = 0;
-      setEnd(false);
-      setLoading(true);
-      addPostsCat(e.target.value);
+
+    // Reset and fetch
+    batch.current = 0;
+    setEnd(false);
+    if (value !== 'Custom' || type !== 'category') {
+      fetchPosts(0, nextSort, nextCat, nextDate, true);
+    } else {
+      setPosts([]);
     }
   }
 
@@ -114,33 +101,7 @@ export default function PostsList({ starter }: { starter: any }) {
     setLockCat(inputvalue);
     batch.current = 0;
     setEnd(false);
-    setLoading(true);
-    setPosts([]);
-    addPostsCat("c" + inputvalue);
-  }
-
-  const loadSort = (e: any) => {
-    setSort(e.target.value);
-    setPosts([]);
-    setEnd(false);
-    setLoading(true);
-    batch.current = 0;
-    if (e.target.value == "Category") {
-      setCategory("None");
-      addPostsCat("None");
-    }
-    else {
-      addPosts(e.target.value, date);
-    }
-  }
-
-  const loadDate = (e: any) => {
-    setDate(e.target.value);
-    setPosts([]);
-    setEnd(false);
-    setLoading(true);
-    batch.current = 0;
-    addPosts(sort, e.target.value);
+    fetchPosts(0, sort, "c" + inputvalue, date, true);
   }
 
   const getPostDate = (postDate: Date): string => {
@@ -162,122 +123,163 @@ export default function PostsList({ starter }: { starter: any }) {
   }
 
   return (
-    <>
-      <div className="sm:border-x border-b p-8 w-full border-slate-700">
-        <div className="flex flex-row space-y-3">
-          <label className="text-xl text-slate-400 pr-1 flex pt-4">Sort by:</label>
-          <select onChange={loadSort} className="w-[133px] p-2 pr-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
-            <option className="text-black">Category</option>
-            <option className="text-black">Most Viewed</option>
-            <option className="text-black">Most Liked</option>
-          </select>
+    <div className="w-full">
+      {/* Sorting & Filtering UI - Seamless Header */}
+      <div className="sticky top-[52px] bg-black/95 backdrop-blur-md border-b border-white/10 z-50 px-3 sm:px-4 py-2 flex overflow-x-auto no-scrollbar items-center justify-start gap-x-3 sm:gap-x-6">
+        
+        {/* Category Filter */}
+        <div className="flex items-center space-x-1 shrink-0">
+          <label className="inline-block text-[10px] font-bold text-slate-500 uppercase tracking-widest translate-y-[0.5px]">Topic</label>
+          <div className="relative">
+            <select 
+              value={category}
+              onChange={(e) => handleFilterChange('category', e.target.value)}
+              className="bg-transparent border-none text-[12px] text-slate-300 focus:outline-none focus:ring-0 cursor-pointer font-bold uppercase tracking-wider p-0 pr-4 appearance-none leading-tight"
+            >
+              <option value="All" className="bg-slate-900">All</option>
+              <option value="None" className="bg-slate-900">None</option>
+              <option value="Gaming" className="bg-slate-900">Gaming</option>
+              <option value="Music" className="bg-slate-900">Music</option>
+              <option value="Movies" className="bg-slate-900">Movies</option>
+              <option value="TV Shows" className="bg-slate-900">TV Shows</option>
+              <option value="Tech" className="bg-slate-900">Tech</option>
+              <option value="Sports" className="bg-slate-900">Sports</option>
+              <option value="Memes" className="bg-slate-900">Memes</option>
+              <option value="Fashion" className="bg-slate-900">Fashion</option>
+              <option value="Food & Drink" className="bg-slate-900">Food</option>
+              <option value="Celebrities" className="bg-slate-900">Stars</option>
+              <option value="Lifestyle" className="bg-slate-900">Life</option>
+              <option value="Books" className="bg-slate-900">Books</option>
+              <option value="Science & Nature" className="bg-slate-900">Nature</option>
+              <option value="Education" className="bg-slate-900">Learn</option>
+              <option value="Custom" className="bg-slate-900">Custom</option>
+            </select>
+          </div>
         </div>
-        {sort == "Category" &&
-          <div className={`flex ${category === 'Custom' ? 'flex-wrap' : 'flex-row'} space-y-3`}>
-            <label className="text-xl text-slate-400 pr-1 flex pt-4">Category:</label>
-            <select onChange={loadCategory} className="w-[165px] p-2 pr-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
-              <option className="text-black">None</option>
-              <option className="text-black">Gaming</option>
-              <option className="text-black">Music</option>
-              <option className="text-black">Movies</option>
-              <option className="text-black">TV Shows</option>
-              <option className="text-black">Tech</option>
-              <option className="text-black">Sports</option>
-              <option className="text-black">Memes</option>
-              <option className="text-black">Fashion</option>
-              <option className="text-black">Food & Drink</option>
-              <option className="text-black">Celebrities</option>
-              <option className="text-black">Lifestyle</option>
-              <option className="text-black">Books</option>
-              <option className="text-black">Science & Nature</option>
-              <option className="text-black">Education</option>
-              <option className="text-black">Custom</option>
-            </select>
-            {category == "Custom" &&
-              <>
-                {!lockcat &&
-                  <div className=" pl-2 flex items-center space-x-2">
-                    <input maxLength={16} className="text-xl text-slate-400 outline-none border-b border-slate-400 bg-transparent placeholder:text-slate-400 w-48" />
-                    <button onClick={lockCategory} className="outline outline-2 outline-slate-700 rounded-md p-1 bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">Search</button>
-                  </div>
-                }
-                {lockcat &&
-                  <label className="pl-2 flex items-center text-xl text-slate-400">{lockcat}</label>
-                }
-              </>
-            }
-          </div>
-        }
-        {sort != "Category" &&
-          <div className="flex flex-row space-y-3">
-            <label className="text-xl text-slate-400 pr-1 flex pt-4">Date:</label>
-            <select onChange={loadDate} className="w-[119px] p-2 pr-1 outline outline-2 outline-slate-700 rounded-md bg-slate-50 hover:bg-opacity-10 bg-opacity-5 text-slate-400">
-              <option className="text-black">Today</option>
-              <option className="text-black">This Week</option>
-              <option className="text-black">This Month</option>
-              <option className="text-black">This Year</option>
-              <option className="text-black">All Time</option>
+
+        {/* Sort Order */}
+        <div className="flex items-center space-x-1 border-l border-white/10 pl-2 sm:pl-4 shrink-0">
+          <label className="inline-block text-[10px] font-bold text-slate-500 uppercase tracking-widest translate-y-[0.5px]">Rank</label>
+          <div className="relative">
+            <select 
+              value={sort}
+              onChange={(e) => handleFilterChange('sort', e.target.value)}
+              className="bg-transparent border-none text-[12px] text-slate-300 focus:outline-none focus:ring-0 cursor-pointer font-bold uppercase tracking-wider p-0 pr-4 appearance-none leading-tight"
+            >
+              <option value="Newest" className="bg-slate-900">New</option>
+              <option value="Most Viewed" className="bg-slate-900">Views</option>
+              <option value="Most Liked" className="bg-slate-900">Likes</option>
             </select>
           </div>
-        }
+        </div>
+
+        {/* Date Range */}
+        <div className="flex items-center space-x-1 border-l border-white/10 pl-2 sm:pl-4 shrink-0">
+          <label className="inline-block text-[10px] font-bold text-slate-500 uppercase tracking-widest translate-y-[0.5px]">Time</label>
+          <div className="relative">
+            <select 
+              value={date}
+              onChange={(e) => handleFilterChange('date', e.target.value)}
+              className="bg-transparent border-none text-[12px] text-slate-300 focus:outline-none focus:ring-0 cursor-pointer font-bold uppercase tracking-wider p-0 pr-4 appearance-none leading-tight"
+            >
+              <option value="All Time" className="bg-slate-900">All</option>
+              <option value="Today" className="bg-slate-900">Day</option>
+              <option value="This Week" className="bg-slate-900">Week</option>
+              <option value="This Month" className="bg-slate-900">Month</option>
+              <option value="This Year" className="bg-slate-900">Year</option>
+            </select>
+          </div>
+        </div>
+
+        {category === "Custom" && !lockcat && (
+          <div className="flex items-center space-x-2 flex-grow sm:flex-grow-0 border-l border-white/10 pl-3 sm:pl-4 shrink-0">
+            <input 
+              maxLength={16} 
+              placeholder="..."
+              className="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[11px] text-slate-300 focus:outline-none focus:border-blue-500/50 transition-all w-16 uppercase font-bold tracking-wider"
+            />
+            <button 
+              onClick={lockCategory} 
+              className="text-[10px] font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase tracking-widest"
+            >
+              Go
+            </button>
+          </div>
+        )}
+
+        {category === "Custom" && lockcat && (
+          <div className="flex items-center border-l border-white/10 pl-4 shrink-0">
+            <span className="text-[11px] font-bold text-blue-500 uppercase border border-blue-500/30 px-2 py-0.5 rounded tracking-widest">
+              {lockcat}
+            </span>
+          </div>
+        )}
       </div>
-      {posts?.map((list: any, index: number) => (
-        <Link href={`/post/${list.id}`} className="w-full" key={list.id}>
-          {/* Video posts */}
-          {list.metadata?.videos && list.metadata.videoUrl ? (
-            <div className="pt-8 pb-4 sm:border-x border-b border-slate-700">
-              <header className="pl-8 text-4xl line-clamp-2 leading-tight text-slate-400 font-semibold pb-2">{list.title}</header>
-              <VideoDisplay videoUrl={list.metadata.videoUrl} title={list.title} postId={list.id} variant="preview" />
-              <div className="flex flex-row justify-between items-center border-t border-slate-100 pt-4 mx-8 mt-8">
-                <div>
-                  <label className="text-xl text-slate-400">{list.metadata.likes} likes</label>
-                  <label className="ml-6 text-xl text-slate-400">{list.metadata.views} views</label>
+
+      {/* Posts List - Seamless Feed */}
+      <div className="flex flex-col">
+        {posts?.map((list: any, index: number) => (
+          <article key={list.id} className="relative border-b border-white/10 hover:bg-white/[0.02] transition-colors group">
+            {/* Background Link for "outer border" redirect */}
+            <Link href={`/post/${list.id}`} className="absolute inset-0 z-0" aria-label={`View ${list.title}`} />
+            
+            <div className="relative z-10 p-4 sm:p-6 space-y-4 pointer-events-none">
+              {/* Post Header: Title */}
+              <h2 className="text-xl md:text-2xl font-semibold text-slate-100 line-clamp-2 leading-tight tracking-tight pointer-events-auto">
+                <Link href={`/post/${list.id}`} className="hover:text-blue-400 transition-colors">
+                  {list.title}
+                </Link>
+              </h2>
+
+              {/* Content Area */}
+              <div className="rounded-lg overflow-hidden border border-white/5 pointer-events-auto bg-black/20">
+                {list.metadata?.videos && list.metadata.videoUrl ? (
+                  <VideoDisplay videoUrl={list.metadata.videoUrl} title={list.title} postId={list.id} variant="preview" />
+                ) : list.metadata?.images ? (
+                  <ListCarousel ranks={[list.rank1, list.rank2, list.rank3, list.rank4, list.rank5]} postid={list.id} firstimage={index === 0} />
+                ) : (
+                  <div className="p-4 bg-white/[0.03] space-y-3">
+                    <ol className="space-y-2 list-decimal list-inside text-slate-400 text-base md:text-lg">
+                      <li className="truncate pl-2"><span className="text-slate-300">{list.rank1}</span></li>
+                      <li className="truncate pl-2"><span className="text-slate-300">{list.rank2}</span></li>
+                      {list.rank3 && <li className="truncate pl-2"><span className="text-slate-300">{list.rank3}</span></li>}
+                      {list.rank4 && <li className="truncate pl-2"><span className="text-slate-300">{list.rank4}</span></li>}
+                      {list.rank5 && <li className="truncate pl-2"><span className="text-slate-300">{list.rank5}</span></li>}
+                    </ol>
+                  </div>
+                )}
+              </div>
+
+              {/* Post Footer: Stats & Date */}
+              <div className="flex items-center justify-between text-[13px] text-slate-500 font-medium pt-1 pointer-events-auto">
+                <div className="flex items-center space-x-5">
+                  <div className="flex items-center group/stat">
+                    <span className="text-slate-400 group-hover/stat:text-blue-400 transition-colors">{list.metadata?.likes ?? 0} likes</span>
+                  </div>
+                  <div className="flex items-center group/stat">
+                    <span className="text-slate-400 group-hover/stat:text-blue-400 transition-colors">{list.metadata?.views ?? 0} views</span>
+                  </div>
                 </div>
-                <label className="text-xl text-slate-400">{getPostDate(new Date(list.metadata.date))}</label>
+                {list.metadata?.date && (
+                  <time className="text-slate-600">{getPostDate(new Date(list.metadata.date))}</time>
+                )}
               </div>
             </div>
-          ) : list.metadata?.images ? (
-            /* Image posts */
-            <div className="pt-8 pb-4 sm:border-x border-b border-slate-700">
-              <header className="pl-8 text-4xl line-clamp-2 leading-tight text-slate-400 font-semibold">{list.title}</header>
-              <ListCarousel ranks={[list.rank1, list.rank2, list.rank3, list.rank4, list.rank5]} postid={list.id} firstimage={index === 0} />
-              <div className="flex flex-row justify-between items-center border-t border-slate-100 pt-4 mx-8 mt-8">
-                <div>
-                  <label className="text-xl text-slate-400">{list.metadata.likes} likes</label>
-                  <label className="ml-6 text-xl text-slate-400">{list.metadata.views} views</label>
-                </div>
-                <label className="text-xl text-slate-400">{getPostDate(new Date(list.metadata.date))}</label>
-              </div>
-            </div>
-          ) : (
-            /* Text-only posts */
-            <div className="sm:border-x border-b border-slate-700">
-              <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8">
-                <header className="text-4xl line-clamp-2 leading-tight text-slate-400 font-semibold">{list.title}</header>
-                <li className="truncate text-xl text-slate-400">{list.rank1}</li>
-                <li className="truncate text-xl text-slate-400">{list.rank2}</li>
-                <li className="empty:hidden truncate text-xl text-slate-400">{list.rank3}</li>
-                <li className="empty:hidden truncate text-xl text-slate-400">{list.rank4}</li>
-                <li className="empty:hidden truncate text-xl text-slate-400">{list.rank5}</li>
-              </ul>
-              <div className="flex flex-row justify-between items-center border-t border-slate-100 py-4 mx-8">
-                <div>
-                  <label className="text-xl text-slate-400">{list.metadata.likes} likes</label>
-                  <label className="ml-6 text-xl text-slate-400">{list.metadata.views} views</label>
-                </div>
-                <label className="text-xl text-slate-400">{getPostDate(new Date(list.metadata.date))}</label>
-              </div>
-            </div>
-          )}
-        </Link>
-      ))}
-      <div ref={observerRef} className="h-[1px]" />
-      {loading &&
-        <header className="text-offwhite">Loading more posts...</header>
-      }
-      {end && !loading &&
-        <header className="text-offwhite">No more posts to display!</header>
-      }
-    </>
+          </article>
+        ))}
+      </div>
+
+      {/* Loading States */}
+      <div ref={observerRef} className="py-12 flex items-center justify-center">
+        {loading && (
+          <div className="w-6 h-6 border-2 border-blue-500/50 border-t-transparent rounded-full animate-spin"></div>
+        )}
+        {end && !loading && (
+          <div className="text-slate-600 text-[13px] font-semibold uppercase tracking-widest">
+            End of Feed
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

@@ -20,7 +20,7 @@ export default async function Groups() {
   return (
     <>
       <Header />
-      <div className="min-h-[calc(100vh-64px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+      <div className="min-h-[calc(100vh-52px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
         <div className="flex justify-center pt-[130px] md:pt-[82px] pb-10">
           <ul className="flex flex-row">
             <li>

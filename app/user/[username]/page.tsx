@@ -52,7 +52,7 @@ export default async function Profile(props: { params: Promise<{ username: strin
   return (
     <>
       <Header />
-      <div className="min-h-[calc(100vh-64px)] pt-[148px] lg:pt-[100px] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed flex items-center flex-col">
+      <div className="min-h-[calc(100vh-52px)] pt-[148px] lg:pt-[100px] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed flex items-center flex-col">
         <div className="max-w-7xl w-[370px] lg:w-[840px] xl:w-full flex justify-between items-start border-b border-white pb-4">
           <div className="flex flex-row items-center w-full">
             <div className="w-16 h-16 mr-4 rounded-full relative overflow-hidden border border-gray-800">
