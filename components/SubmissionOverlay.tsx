@@ -60,44 +60,44 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
   const router = useRouter();
   const started = useRef(false);
 
-  const pollStatus = async (postId: string, route: 'final' | 'pre-edited') => {
-    let attempts = 0;
-    const maxAttempts = 300;
-    while (attempts < maxAttempts) {
-      try {
-        const res = await fetch(`/api/video/${route}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'checkStatus', postId })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.status === 'READY' || data.status === 'SUCCESS') return true;
-          if (data.status === 'FAILED') throw new Error(data.error || 'Processing failed');
-          if (data.progress) setProgress(50 + (data.progress * 0.5));
-        }
-      } catch (e) { console.warn('Poll check skipped:', e); }
-      await new Promise(r => setTimeout(r, 2000));
-      attempts++;
-    }
-    throw new Error('Timed out waiting for video rendering.');
-  };
-
-  const uploadWithProgress = (url: string, file: File, onProgress: (pct: number) => void): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('PUT', url);
-      xhr.setRequestHeader('Content-Type', file.type);
-      xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress((e.loaded / e.total) * 100); };
-      xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload status ${xhr.status}`)));
-      xhr.onerror = () => reject(new Error('Network error during upload'));
-      xhr.send(file);
-    });
-  };
-
   const runSubmission = useCallback(async () => {
     if (started.current) return;
     started.current = true;
+
+    const pollStatus = async (postId: string, route: 'final' | 'pre-edited') => {
+      let attempts = 0;
+      const maxAttempts = 300;
+      while (attempts < maxAttempts) {
+        try {
+          const res = await fetch(`/api/video/${route}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'checkStatus', postId })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status === 'READY' || data.status === 'SUCCESS') return true;
+            if (data.status === 'FAILED') throw new Error(data.error || 'Processing failed');
+            if (data.progress) setProgress(50 + (data.progress * 0.5));
+          }
+        } catch (e) { console.warn('Poll check skipped:', e); }
+        await new Promise(r => setTimeout(r, 2000));
+        attempts++;
+      }
+      throw new Error('Timed out waiting for video rendering.');
+    };
+
+    const uploadWithProgress = (url: string, file: File, onProgress: (pct: number) => void): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', url);
+        xhr.setRequestHeader('Content-Type', file.type);
+        xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress((e.loaded / e.total) * 100); };
+        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload status ${xhr.status}`)));
+        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.send(file);
+      });
+    };
 
     try {
       let postId = '';
@@ -254,7 +254,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
       setError(err.message || 'An error occurred.');
       started.current = false;
     }
-  }, [formData, videoFiles, postType, router, previousSessionId, previousFilePaths, pollStatus, uploadWithProgress]);
+  }, [formData, videoFiles, postType, router, previousSessionId, previousFilePaths]);
 
   useEffect(() => { runSubmission(); }, [runSubmission]);
 

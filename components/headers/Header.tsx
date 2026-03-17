@@ -8,7 +8,7 @@ export async function Header() {
   const { signedin, username, userid } = await getSessionData();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 h-[52px] flex items-center bg-gradient-to-b from-stone-900/80 to-stone-950/90 backdrop-blur-md border-b border-white/10 z-[100] shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+    <nav className="fixed top-0 left-0 right-0 h-[52px] flex items-center bg-gray-950/50 backdrop-blur-md border-b border-white/10 z-[100] shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
       <div className="w-full px-4 md:px-6 flex items-center justify-between relative h-full">
         {/* Left: Logo - Switches to "R" on tiny screens */}
         <div className="flex-1 flex items-center min-w-0">

@@ -50,143 +50,89 @@ export function OverlayPreview({ config, videoFile, title, ranks }: PreviewProps
   const [fontStatus, setFontStatus] = useState<FontStatus>('loading');
   const [frameLoaded, setFrameLoaded] = useState(false);
 
-  // --- 2. SERVER CONSTANTS (Internal Parity) ---
-  const SERVER = {
-    titleFontSize: config.titleFontSize ?? 100,
-    titleLineSpacing: config.titleLineSpacing ?? 30,
-    titleBoxWidth: config.titleBoxWidth ?? 980,
-    titleMaxLines: config.titleMaxLines ?? 2,
-    titleBoxTopPadding: config.titleBoxTopPadding ?? 30,
-    titleBoxBottomPadding: config.titleBoxBottomPadding ?? 40,
-    subtitleFontSize: config.subtitleFontSize ?? 44,
-    subtitleTopMargin: config.subtitleTopMargin ?? 10,
-    rankFontSize: config.rankFontSize ?? 60,
-    rankSpacing: config.rankSpacing ?? 140,
-    rankPaddingY: config.rankPaddingY ?? 80,
-    rankBoxWidth: config.rankBoxWidth ?? 830,
-    textOutlineWidth: config.textOutlineWidth ?? 18,
-    watermarkFontSize: 48,
-    watermarkPadding: 20,
-    creatorWatermarkFontSize: 44,
-    creatorWatermarkBottomPadding: 80,
-  };
-
-  // --- 3. FONT LOADING BLOCKER ---
-  useEffect(() => {
-    async function loadFont() {
-      const fontName = 'CustomFont';
-      const fontUrl = '/fonts/font.ttf';
-      
-      console.log(`[Font Diagnostic] Starting FORCE load for: ${fontName}`);
-      
-      try {
-        
-        // 1. Fetch the font as a blob to ensure the network request actually happens
-        const response = await fetch(fontUrl);
-        if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
-        const fontBlob = await response.blob();
-        const fontBuffer = await fontBlob.arrayBuffer();
-        // 2. Create the font face from the array buffer instead of a URL string
-        // This bypasses many browser caching/check issues
-        const font = new FontFace(fontName, fontBuffer);
-        
-        console.log(`[Font Diagnostic] Loading font face...`);
-        const loadedFace = await font.load();
-
-        document.fonts.add(loadedFace);
-        
-        // 3. Signal the browser to finalize the layout
-        await document.fonts.ready;
-        
-        setFontStatus('ready');
-      } catch (e) {
-        setFontStatus('error');
-      }
-    }
-    loadFont();
-  }, []);
-
-  // --- 4. VIDEO FRAME SYNC ---
-  useEffect(() => {
-    if (!videoFile) {
-      videoRef.current = null;
-      setFrameLoaded(false);
-      return;
-    }
-    const url = URL.createObjectURL(videoFile);
-    const video = document.createElement('video');
-    video.src = url;
-    video.muted = true;
-    video.currentTime = 1;
-    video.onloadeddata = () => {
-      videoRef.current = video;
-      setFrameLoaded(true);
-    };
-    return () => URL.revokeObjectURL(url);
-  }, [videoFile]);
-
-  // --- 5. TYPED DRAWING HELPERS ---
-  const fitText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number, initialSize: number) => {
-    for (let size = initialSize; size >= 10; size -= 2) {
-      ctx.font = `${size}px CustomFont`;
-      const words = text.split(' ');
-      const lines: string[] = [];
-      let currentLine = '';
-      for (const word of words) {
-        const test = currentLine ? `${currentLine} ${word}` : word;
-        if (ctx.measureText(test).width <= maxWidth) {
-          currentLine = test;
-        } else {
-          lines.push(currentLine);
-          currentLine = word;
-        }
-      }
-      if (currentLine) lines.push(currentLine);
-      if (lines.length <= maxLines) return { size, lines };
-    }
-    return { size: 10, lines: [text] };
-  };
-
-  const drawColoredLine = (
-    ctx: CanvasRenderingContext2D,
-    line: string,
-    centerX: number,
-    y: number,
-    fontSize: number,
-    config: LayoutConfig
-  ): void => {
-    ctx.save();
-    ctx.font = `${fontSize}px CustomFont`;
-    ctx.textAlign = 'left';
-
-    const wordColors = config.titleWordColors || [];
-    const wordColorMap = new Map<string, string>();
-    wordColors.forEach((item) => {
-      wordColorMap.set(item.word.toLowerCase(), item.color);
-    });
-
-    const totalLineWidth = ctx.measureText(line).width;
-    let currentX = centerX - (totalLineWidth / 2);
-
-    const words = line.split(' ');
-    words.forEach((word, i) => {
-      const displayWord = i < words.length - 1 ? `${word} ` : word;
-      const color = wordColorMap.get(word.toLowerCase()) || 'white';
-
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = SERVER.textOutlineWidth;
-      ctx.strokeText(displayWord, currentX, y);
-
-      ctx.fillStyle = color;
-      ctx.fillText(displayWord, currentX, y);
-
-      currentX += ctx.measureText(displayWord).width;
-    });
-    ctx.restore();
-  };
-
   // --- 6. RENDER LOOP ---
   useEffect(() => {
+    // --- SERVER CONSTANTS (Internal Parity) ---
+    const SERVER = {
+      titleFontSize: config.titleFontSize ?? 100,
+      titleLineSpacing: config.titleLineSpacing ?? 30,
+      titleBoxWidth: config.titleBoxWidth ?? 980,
+      titleMaxLines: config.titleMaxLines ?? 2,
+      titleBoxTopPadding: config.titleBoxTopPadding ?? 30,
+      titleBoxBottomPadding: config.titleBoxBottomPadding ?? 40,
+      subtitleFontSize: config.subtitleFontSize ?? 44,
+      subtitleTopMargin: config.subtitleTopMargin ?? 10,
+      rankFontSize: config.rankFontSize ?? 60,
+      rankSpacing: config.rankSpacing ?? 140,
+      rankPaddingY: config.rankPaddingY ?? 80,
+      rankBoxWidth: config.rankBoxWidth ?? 830,
+      textOutlineWidth: config.textOutlineWidth ?? 18,
+      watermarkFontSize: 48,
+      watermarkPadding: 20,
+      creatorWatermarkFontSize: 44,
+      creatorWatermarkBottomPadding: 80,
+    };
+
+    // --- TYPED DRAWING HELPERS ---
+    const fitText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number, initialSize: number) => {
+      for (let size = initialSize; size >= 10; size -= 2) {
+        ctx.font = `${size}px CustomFont`;
+        const words = text.split(' ');
+        const lines: string[] = [];
+        let currentLine = '';
+        for (const word of words) {
+          const test = currentLine ? `${currentLine} ${word}` : word;
+          if (ctx.measureText(test).width <= maxWidth) {
+            currentLine = test;
+          } else {
+            lines.push(currentLine);
+            currentLine = word;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+        if (lines.length <= maxLines) return { size, lines };
+      }
+      return { size: 10, lines: [text] };
+    };
+
+    const drawColoredLine = (
+      ctx: CanvasRenderingContext2D,
+      line: string,
+      centerX: number,
+      y: number,
+      fontSize: number,
+      config: LayoutConfig
+    ): void => {
+      ctx.save();
+      ctx.font = `${fontSize}px CustomFont`;
+      ctx.textAlign = 'left';
+
+      const wordColors = config.titleWordColors || [];
+      const wordColorMap = new Map<string, string>();
+      wordColors.forEach((item) => {
+        wordColorMap.set(item.word.toLowerCase(), item.color);
+      });
+
+      const totalLineWidth = ctx.measureText(line).width;
+      let currentX = centerX - (totalLineWidth / 2);
+
+      const words = line.split(' ');
+      words.forEach((word, i) => {
+        const displayWord = i < words.length - 1 ? `${word} ` : word;
+        const color = wordColorMap.get(word.toLowerCase()) || 'white';
+
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = SERVER.textOutlineWidth;
+        ctx.strokeText(displayWord, currentX, y);
+
+        ctx.fillStyle = color;
+        ctx.fillText(displayWord, currentX, y);
+
+        currentX += ctx.measureText(displayWord).width;
+      });
+      ctx.restore();
+    };
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');

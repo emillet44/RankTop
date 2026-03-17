@@ -85,7 +85,7 @@ export function Search() {
               <div className="absolute grid grid-cols-1 z-30 mt-1.5 border border-white/10 empty:outline-none rounded-md bg-black text-offwhite w-full shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
                 <CustomHits />
                 <Link href={`/search/${type.toLowerCase()}/${search}`} className="block w-full hover:bg-white/5 p-3 text-[12px] font-bold uppercase tracking-widest border-t border-white/10 text-blue-400 transition-colors">
-                  Search for "{search}"
+                  Search for &quot;{search}&quot;
                 </Link>
                 <div className="p-2 w-full border-t border-white/10 bg-black/40 flex justify-end">
                   <div className="w-20 opacity-40 hover:opacity-100 transition-opacity">

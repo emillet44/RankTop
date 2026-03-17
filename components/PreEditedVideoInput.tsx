@@ -99,6 +99,13 @@ export default function PreEditedVideoInput({ ranks, onTimestampsChange }: PreEd
   const isScrubbingRef = useRef<boolean>(false);
   const markErrorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const durationRef = useRef(duration);
+
+  // Use a ref for the callback to avoid infinite loops when passed as a dependency
+  const onTimestampsChangeRef = useRef(onTimestampsChange);
+  useEffect(() => {
+    onTimestampsChangeRef.current = onTimestampsChange;
+  }, [onTimestampsChange]);
+
   useEffect(() => { durationRef.current = duration; }, [duration]);
 
   // Resize timestamps array when ranks count changes — preserve existing entries
@@ -120,8 +127,8 @@ export default function PreEditedVideoInput({ ranks, onTimestampsChange }: PreEd
     const mapped: Timestamp[] = timestamps
       .map((t, i) => ({ rankIndex: ranks - 1 - i, time: t ?? 0 }))
       .filter((_, i) => timestamps[i] !== null);
-    onTimestampsChange(mapped, endTime, videoFile);
-  }, [timestamps, endTime, videoFile]);
+    onTimestampsChangeRef.current(mapped, endTime, videoFile);
+  }, [timestamps, endTime, videoFile, ranks]);
 
   // Arrow key nudge
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
