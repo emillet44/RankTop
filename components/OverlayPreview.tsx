@@ -50,7 +50,52 @@ export function OverlayPreview({ config, videoFile, title, ranks }: PreviewProps
   const [fontStatus, setFontStatus] = useState<FontStatus>('loading');
   const [frameLoaded, setFrameLoaded] = useState(false);
 
-  // --- 6. RENDER LOOP ---
+  // --- 2. FONT LOADING ---
+  useEffect(() => {
+    let active = true;
+    const loadFont = async () => {
+      try {
+        const font = new FontFace('CustomFont', 'url(/fonts/font.ttf)');
+        await font.load();
+        if (active) {
+          document.fonts.add(font);
+          setFontStatus('ready');
+        }
+      } catch (err) {
+        console.error("Font loading failed:", err);
+        if (active) setFontStatus('error');
+      }
+    };
+    loadFont();
+    return () => { active = false; };
+  }, []);
+
+  // --- 3. VIDEO SOURCE HANDLING ---
+  useEffect(() => {
+    if (!videoFile) {
+      setFrameLoaded(false);
+      if (videoRef.current) videoRef.current.src = '';
+      return;
+    }
+
+    const url = URL.createObjectURL(videoFile);
+    if (videoRef.current) {
+      videoRef.current.src = url;
+      videoRef.current.load();
+      // Ensure we are at the first frame
+      videoRef.current.currentTime = 0.1; 
+    }
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [videoFile]);
+
+  const handleVideoLoad = () => {
+    setFrameLoaded(true);
+  };
+
+  // --- 4. RENDER LOOP ---
   useEffect(() => {
     // --- SERVER CONSTANTS (Internal Parity) ---
     const SERVER = {
@@ -279,6 +324,16 @@ export function OverlayPreview({ config, videoFile, title, ranks }: PreviewProps
   return (
     <div className="relative w-full aspect-[9/16] max-w-[280px] mx-auto bg-black rounded-lg overflow-hidden border-2 border-slate-700">
       <canvas ref={canvasRef} width={1080} height={1920} className="w-full h-full object-cover" />
+      
+      {/* Hidden Video for Frame Extraction */}
+      <video 
+        ref={videoRef} 
+        onLoadedData={handleVideoLoad}
+        onSeeked={handleVideoLoad}
+        className="hidden" 
+        muted 
+        playsInline 
+      />
     </div>
   );
 }
