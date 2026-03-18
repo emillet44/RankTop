@@ -213,10 +213,8 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
 
   const toggleModal = (e: any) => { e.preventDefault(); setModal(!modalon); }
 
-  const changeRank = (e: any) => {
-    e.preventDefault();
-    if (e.target.closest('button').textContent.includes('-')) setRanks(Math.max(2, ranks - 1));
-    else setRanks(Math.min(5, ranks + 1));
+  const changeRank = (delta: number) => {
+    setRanks(prev => Math.min(5, Math.max(2, prev + delta)));
   }
 
   const togglePreview = (e: any) => {
@@ -274,7 +272,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                   <div className="flex items-center bg-white/10 border border-white/10 rounded-lg overflow-hidden h-9">
                     <button 
                       type="button"
-                      onClick={changeRank} 
+                      onClick={() => changeRank(-1)} 
                       disabled={ranks === 2} 
                       className="w-10 h-full flex items-center justify-center text-xl text-slate-300 hover:bg-white/10 disabled:opacity-20 transition-all border-r border-white/10"
                     >
@@ -285,7 +283,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                     </span>
                     <button 
                       type="button"
-                      onClick={changeRank} 
+                      onClick={() => changeRank(1)} 
                       disabled={ranks === 5} 
                       className="w-10 h-full flex items-center justify-center text-xl text-slate-300 hover:bg-white/10 disabled:opacity-20 transition-all border-l border-white/10"
                     >
