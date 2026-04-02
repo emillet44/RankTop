@@ -50,6 +50,32 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
 
   const [imageData, setImageData] = useState<ImageData[]>(Array(5).fill({ file: null, url: null }));
   const [videoData, setVideoData] = useState<VideoData[]>(Array(5).fill({ file: null, url: null, duration: 0 }));
+
+  // Keep track of active blob URLs to clean them up properly
+  const activeUrlsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const currentUrls = new Set<string>();
+    imageData.forEach(img => { if (img.url) currentUrls.add(img.url); });
+    videoData.forEach(vid => { if (vid.url) currentUrls.add(vid.url); });
+
+    // Revoke URLs that are no longer active
+    activeUrlsRef.current.forEach(url => {
+      if (!currentUrls.has(url)) {
+        URL.revokeObjectURL(url);
+      }
+    });
+
+    activeUrlsRef.current = currentUrls;
+  }, [imageData, videoData]);
+
+  // Final cleanup on unmount
+  useEffect(() => {
+    return () => {
+      activeUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, []);
+
   const draggedIndex = useRef<number | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewData, setPreviewData] = useState<{ title: string; ranks: string[]; images: (string | null)[]; currentIndex: number; }>({ title: '', ranks: ['', '', '', '', ''], images: [null, null, null, null, null], currentIndex: 0 });
@@ -61,7 +87,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
   const [videoMode, setVideoMode] = useState<'auto' | 'pre-edited'>('auto');
   const [preEditedData, setPreEditedData] = useState<PreEditedData>({ file: null, endTime: null, timestamps: [] });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPreviewData(prev => {
       const next = { ...prev };
@@ -72,29 +98,29 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
       }
       return next;
     });
-  };
+  }, []);
 
-  const updateImageData = (index: number, newData: Partial<ImageData>) => {
+  const updateImageData = useCallback((index: number, newData: Partial<ImageData>) => {
     setImageData(prevData => {
       const newArray = [...prevData];
       if (index >= 0 && index < newArray.length) newArray[index] = { ...newArray[index], ...newData };
       return newArray;
     });
-  }
+  }, []);
 
-  const updateVideoData = (index: number, newData: Partial<VideoData>) => {
+  const updateVideoData = useCallback((index: number, newData: Partial<VideoData>) => {
     setVideoData(prevData => {
       const newArray = [...prevData];
       if (index >= 0 && index < newArray.length) newArray[index] = { ...newArray[index], ...newData };
       return newArray;
     });
-  }
+  }, []);
 
-  const handlePreEditedDataChange = (timestamps: Timestamp[], endTime: number | null, file: File | null) => {
+  const handlePreEditedDataChange = useCallback((timestamps: Timestamp[], endTime: number | null, file: File | null) => {
     setPreEditedData({ file, timestamps, endTime });
-  };
+  }, []);
 
-  const swapImages = (index1: number, index2: number) => {
+  const swapImages = useCallback((index1: number, index2: number) => {
     setImageData(prevData => {
       const newData = [...prevData];
       if (index1 >= 0 && index1 < newData.length && index2 >= 0 && index2 < newData.length) {
@@ -102,9 +128,9 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
       }
       return newData;
     });
-  }
+  }, []);
 
-  const swapVideos = (index1: number, index2: number) => {
+  const swapVideos = useCallback((index1: number, index2: number) => {
     setVideoData(prevData => {
       const newData = [...prevData];
       if (index1 >= 0 && index1 < newData.length && index2 >= 0 && index2 < newData.length) {
@@ -112,28 +138,30 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
       }
       return newData;
     });
-  }
+  }, []);
 
-  const handleDragStart = (e: any, index: number) => {
+  const handleDragStart = useCallback((e: any, index: number) => {
     e.dataTransfer.setData('text/plain', index.toString());
     draggedIndex.current = index;
-  }
-  const handleDragOver = (e: any) => { e.preventDefault(); }
-  const handleDrop = (e: any, dropIndex: number) => {
+  }, []);
+
+  const handleDragOver = useCallback((e: any) => { e.preventDefault(); }, []);
+
+  const handleDrop = useCallback((e: any, dropIndex: number) => {
     e.preventDefault();
     if (draggedIndex.current !== null && draggedIndex.current !== dropIndex) {
       if (postType === 'image') swapImages(draggedIndex.current, dropIndex);
       else if (postType === 'video') swapVideos(draggedIndex.current, dropIndex);
     }
     draggedIndex.current = null;
-  }
+  }, [postType, swapImages, swapVideos]);
 
-  const handleFileChange = (e: any, index: number) => {
+  const handleFileChange = useCallback((e: any, index: number) => {
     const file = e.target.files?.[0];
     if (file) updateImageData(index, { file, url: URL.createObjectURL(file) });
-  }
+  }, [updateImageData]);
 
-  const handleVideoChange = (e: any, index: number) => {
+  const handleVideoChange = useCallback((e: any, index: number) => {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
@@ -142,12 +170,12 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
       v.onloadedmetadata = () => updateVideoData(index, { file, url, duration: v.duration });
       v.src = url;
     }
-  }
+  }, [updateVideoData]);
 
-  const removeImg = (e: any, index: number) => { e.preventDefault(); updateImageData(index, { file: null, url: null }); }
-  const removeVideo = (e: any, index: number) => { e.preventDefault(); updateVideoData(index, { file: null, url: null, duration: 0 }); }
-  const toggleSettings = (e: any) => { e.preventDefault(); setSettingsToggle(!settingsToggle); };
-  const toggleRankNotes = (e: any) => { setShowRankNotes(e.target.checked); };
+  const removeImg = useCallback((e: any, index: number) => { e.preventDefault(); updateImageData(index, { file: null, url: null }); }, [updateImageData]);
+  const removeVideo = useCallback((e: any, index: number) => { e.preventDefault(); updateVideoData(index, { file: null, url: null, duration: 0 }); }, [updateVideoData]);
+  const toggleSettings = useCallback((e: any) => { e.preventDefault(); setSettingsToggle(prev => !prev); }, []);
+  const toggleRankNotes = useCallback((e: any) => { setShowRankNotes(e.target.checked); }, []);
 
   const canPreview = () => {
     if (postType === 'image') return imageData.filter(img => img.file !== null).length === ranks;
@@ -254,7 +282,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-52px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed text-offwhite overflow-x-hidden">
+    <div className="flex flex-col min-h-[calc(100vh-52px)] text-offwhite overflow-x-hidden">
       <form id="newpost" onSubmit={subHandler} className="flex flex-col items-center pt-[130px] md:pt-[82px] px-3 sm:px-6 pb-12 gap-8 w-full">
         <div className="relative overflow-visible p-5 sm:p-8 rounded-2xl border border-white/15 bg-black/25 backdrop-blur-md w-full max-w-2xl flex flex-col">
           <div className="relative overflow-visible flex flex-col">
@@ -302,7 +330,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                   <label className="absolute -top-2 left-2 px-1 bg-[#0a0a0a] text-[10px] font-bold text-slate-400 uppercase tracking-widest z-10">Title</label>
                   <input 
                     name="title" 
-                    onChange={handleInputChange} 
+                    onBlur={handleInputChange} 
                     placeholder="What are you ranking?" 
                     className="text-lg md:text-2xl font-semibold outline-none w-full bg-white/[0.02] border border-white/15 rounded-xl px-4 py-3 placeholder-slate-600 focus:border-blue-500/50 transition-all" 
                     required 
@@ -318,7 +346,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                         <span className="absolute left-4 text-[10px] font-bold text-blue-400 uppercase tracking-widest">#{index + 1}</span>
                         <input 
                           name={`r${index + 1}`} 
-                          onChange={handleInputChange} 
+                          onBlur={handleInputChange} 
                           placeholder={`Rank ${index + 1}`}
                           className="w-full text-base md:text-xl font-semibold bg-white/[0.05] border border-white/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:border-blue-500/40 focus:bg-white/[0.08] transition-all text-slate-100 placeholder-slate-600" 
                           required 

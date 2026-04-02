@@ -1,5 +1,4 @@
-'use client'
-
+import React, { memo } from 'react'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faVideo, faImage } from "@fortawesome/free-solid-svg-icons"
 
@@ -11,7 +10,7 @@ interface PostTypeSelectorProps {
   onToggleModalAction: (e: any) => void;
 }
 
-export default function PostTypeSelector({ 
+const PostTypeSelector = memo(function PostTypeSelector({ 
   postType, 
   signedin, 
   onToggleVideosAction, 
@@ -51,4 +50,6 @@ export default function PostTypeSelector({
       </button>
     </div>
   );
-}
+});
+
+export default PostTypeSelector;

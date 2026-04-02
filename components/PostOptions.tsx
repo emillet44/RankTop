@@ -1,6 +1,4 @@
-'use client'
-
-import { useRef } from "react"
+import React, { memo } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCog, faAngleDown, faAngleUp } from "@fortawesome/free-solid-svg-icons"
 
@@ -14,7 +12,7 @@ interface OptionalSettingsSectionProps {
   onToggleRankNotes: (e: any) => void;
 }
 
-export default function OptionalSettingsSection({
+const OptionalSettingsSection = memo(function OptionalSettingsSection({
   settingsToggle,
   onToggleSettingsAction,
   signedin,
@@ -136,4 +134,6 @@ export default function OptionalSettingsSection({
       </div>
     </div>
   );
-}
+});
+
+export default OptionalSettingsSection;

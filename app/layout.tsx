@@ -19,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <>
-
+      <div className="fixed inset-0 -z-10 bg-gradient-radial from-gray-950 to-stone-950" aria-hidden="true" />
       <html lang="en">
         <head>
           <meta name="google-site-verification" content="DVHvBfg1RjRArve45Es4EY9USwgJc3xtaCYYljYElMU" />

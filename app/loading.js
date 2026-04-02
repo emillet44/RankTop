@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+    <div className="flex flex-col min-h-screen">
       {/* Skeleton Header */}
       <nav className="fixed top-0 left-0 right-0 h-[52px] flex items-center bg-gradient-to-b from-stone-900/80 to-stone-950/90 backdrop-blur-md border-b border-white/10 z-[100] shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
         <div className="w-full px-4 md:px-6 flex items-center justify-between relative h-full">

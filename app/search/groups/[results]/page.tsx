@@ -24,7 +24,7 @@ export default async function Results(props: { params: Promise<{ results: string
   return (
     <>
       <Header />
-      <div className="min-h-[calc(100vh-52px)] pt-14 bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+      <div className="min-h-[calc(100vh-52px)] pt-14">
         <header className="text-3xl text-slate-400 pl-16 pt-16">Results</header>
         <div className="pt-4 px-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-10">
           {results?.map((group) => (

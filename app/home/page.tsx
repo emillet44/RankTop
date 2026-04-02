@@ -27,7 +27,7 @@ export default async function Home() {
   const starter = await LoadBatchCat(0, "None");
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+    <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow pt-[52px]">
         <div className="max-w-2xl mx-auto sm:border-x border-white/10 min-h-[calc(100vh-104px)]">

@@ -61,7 +61,7 @@ export function CSEditForm({ id, post, startranks }: { id: string, post: any, st
   }
 
   return (
-    <div className="min-h-[calc(100vh-52px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+    <div className="min-h-[calc(100vh-52px)]">
       <form id="editpost" action={subHandler} className="flex justify-center pt-[130px] md:pt-[82px] px-6 pb-10">
         <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 w-full max-w-2xl">
           <div className="flex justify-between">

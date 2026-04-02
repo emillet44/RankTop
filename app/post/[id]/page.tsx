@@ -72,7 +72,7 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
     return (
       <>
         <Header />
-        <div className="flex justify-center items-center py-10 px-6 min-h-[calc(100vh-52px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+        <div className="flex justify-center items-center py-10 px-6 min-h-[calc(100vh-52px)]">
           <header className="text-slate-400">This post does not exist or has been deleted.</header>
         </div>
         <Footer />
@@ -141,7 +141,7 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
       
       <Header />
 
-      <div className="flex justify-center px-6 pb-10 min-h-[calc(100vh-52px)] pt-[141px] lg:pt-[94px] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+      <div className="flex justify-center px-6 pb-10 min-h-[calc(100vh-52px)] pt-[141px] lg:pt-[94px]">
         <div className="grid grid-cols-1 grid-flow-row auto-rows-min w-full max-w-2xl h-4/5">
           <div className="max-w-2xl w-full flex justify-between items-end">
             <header className="text-2xl text-ellipsis overflow-hidden text-slate-400 font-semibold outline-none w-auto pb-2 pl-2">{post.title}</header>

@@ -1,5 +1,4 @@
-'use client'
-
+import React, { memo } from 'react'
 import Image from 'next/image'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleXmark, faImage } from "@fortawesome/free-solid-svg-icons"
@@ -19,7 +18,7 @@ interface ImageUploadSectionProps {
   onDropAction: (e: any, index: number) => void;
 }
 
-export default function ImageUploadSection({
+const ImageUploadSection = memo(function ImageUploadSection({
   ranks,
   imageData,
   onFileChangeAction,
@@ -91,4 +90,6 @@ export default function ImageUploadSection({
       </div>
     </div>
   );
-}
+});
+
+export default ImageUploadSection;

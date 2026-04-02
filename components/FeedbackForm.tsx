@@ -34,7 +34,7 @@ export function FeedbackForm() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-52px)] pt-14 bg-gradient-radial from-gray-950 to-stone-950 bg-fixed">
+    <div className="min-h-[calc(100vh-52px)] pt-14">
       {!submitted &&
         <form id="feedback" onSubmit={subHandler} className="flex justify-center pt-32 px-6">
           <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 w-full max-w-2xl">

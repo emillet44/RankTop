@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect, useCallback } from "react"
+import { useRef, useState, useEffect, useCallback, memo } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import {
   faPlay,
@@ -77,6 +77,132 @@ function checkVideoSupport(url: string): Promise<boolean> {
   });
 }
 
+interface TimelineProps {
+  duration: number;
+  currentTime: number;
+  onSeek: (time: number) => void;
+  timestamps: (number | null)[];
+  endTime: number | null;
+  ranks: number;
+}
+
+const Timeline = memo(function Timeline({ duration, currentTime, onSeek, timestamps, endTime, ranks }: TimelineProps) {
+  const timelineRef = useRef<HTMLDivElement | null>(null);
+
+  const getSeekRatio = (clientX: number): number => {
+    if (!timelineRef.current || duration === 0) return 0;
+    const rect = timelineRef.current.getBoundingClientRect();
+    return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    onSeek(getSeekRatio(e.clientX) * duration);
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      onSeek(getSeekRatio(moveEvent.clientX) * duration);
+    };
+    const onMouseUp = () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
+
+  const progress = duration > 0 ? currentTime / duration : 0;
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div
+        ref={timelineRef}
+        className="relative h-3 bg-slate-700 rounded-full cursor-pointer select-none"
+        onMouseDown={handleMouseDown}
+      >
+        <div className="absolute top-0 left-0 h-full bg-blue-500 rounded-full pointer-events-none" style={{ width: `${progress * 100}%` }} />
+        {timestamps.map((t, i) => t !== null && (
+          <div
+            key={i}
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full border-2 border-white bg-amber-400 z-10 pointer-events-none"
+            style={{ left: `${(t / duration) * 100}%` }}
+          />
+        ))}
+        {endTime !== null && duration > 0 && (
+          <div
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-sm border-2 border-white bg-red-400 z-10 pointer-events-none rotate-45"
+            style={{ left: `${(endTime / duration) * 100}%` }}
+          />
+        )}
+        <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white shadow-md pointer-events-none" style={{ left: `${progress * 100}%` }} />
+      </div>
+      <div className="flex justify-between text-xs text-slate-500 font-mono">
+        <span>{formatTime(currentTime, true)}</span>
+        <span>{formatTime(duration)}</span>
+      </div>
+    </div>
+  );
+});
+
+interface MarkerRowProps {
+  icon: React.ReactNode;
+  time: number | null;
+  isNextToBeMark: boolean;
+  pendingLabel: string;
+  onClear: () => void;
+  onPreview: () => void;
+  accentBg: string;
+  dotClass: string;
+}
+
+const MarkerRow = memo(function MarkerRow({
+  icon,
+  time,
+  isNextToBeMark,
+  pendingLabel,
+  onClear,
+  onPreview,
+  accentBg,
+  dotClass,
+}: MarkerRowProps) {
+  const hasTime = time !== null;
+  return (
+    <div
+      className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all
+        ${hasTime
+          ? "bg-slate-700 bg-opacity-60"
+          : isNextToBeMark
+            ? `${accentBg} border border-opacity-40`
+            : "bg-slate-800 bg-opacity-30 border border-slate-700 border-opacity-40"
+        }`}
+    >
+      <div className="flex items-center gap-2">
+        <span className={`w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold ${hasTime ? dotClass : "bg-slate-600 text-slate-400"}`}>
+          {icon}
+        </span>
+        <span className={`text-sm font-mono ${hasTime ? "text-white" : isNextToBeMark ? "text-amber-300" : "text-slate-500"}`}>
+          {hasTime ? formatTime(time, true) : isNextToBeMark ? pendingLabel : "Not set"}
+        </span>
+      </div>
+      {hasTime && (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onPreview}
+            className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            Preview
+          </button>
+          <button
+            type="button"
+            onClick={onClear}
+            className="text-slate-500 hover:text-red-400 transition-colors"
+          >
+            <FontAwesomeIcon icon={faCircleXmark} className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+});
+
 export default function PreEditedVideoInput({ ranks, onTimestampsChange }: PreEditedVideoInputProps) {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -93,7 +219,6 @@ export default function PreEditedVideoInput({ ranks, onTimestampsChange }: PreEd
   const [formatError, setFormatError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const timelineRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const isScrubbingRef = useRef<boolean>(false);
@@ -329,86 +454,7 @@ export default function PreEditedVideoInput({ ranks, onTimestampsChange }: PreEd
     setCurrentTime(time);
   };
 
-  const getSeekRatio = (clientX: number): number => {
-    if (!timelineRef.current || duration === 0) return 0;
-    const rect = timelineRef.current.getBoundingClientRect();
-    return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-  };
-
-  const handleTimelineMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    isScrubbingRef.current = true;
-    seekTo(getSeekRatio(e.clientX) * duration);
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isScrubbingRef.current) return;
-      seekTo(getSeekRatio(e.clientX) * duration);
-    };
-    const onMouseUp = () => {
-      isScrubbingRef.current = false;
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-    };
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-  };
-
   const allMarked = timestamps.every(t => t !== null) && endTime !== null;
-  const progress = duration > 0 ? currentTime / duration : 0;
-
-  const markedTimestamps = timestamps
-    .map((t, i) => ({ i, t }))
-    .filter(x => x.t !== null) as { i: number; t: number }[];
-
-  const renderMarkerRow = (
-    markerKey: 'end' | number,
-    icon: React.ReactNode,
-    time: number | null,
-    isNextToBeMark: boolean,
-    pendingLabel: string,
-    onClear: () => void,
-    accentBg: string,
-    dotClass: string,
-  ) => {
-    const hasTime = time !== null;
-    return (
-      <div
-        key={String(markerKey)}
-        className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all
-          ${hasTime
-            ? "bg-slate-700 bg-opacity-60"
-            : isNextToBeMark
-              ? `${accentBg} border border-opacity-40`
-              : "bg-slate-800 bg-opacity-30 border border-slate-700 border-opacity-40"
-          }`}
-      >
-        <div className="flex items-center gap-2">
-          <span className={`w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold ${hasTime ? dotClass : "bg-slate-600 text-slate-400"}`}>
-            {icon}
-          </span>
-          <span className={`text-sm font-mono ${hasTime ? "text-white" : isNextToBeMark ? "text-amber-300" : "text-slate-500"}`}>
-            {hasTime ? formatTime(time, true) : isNextToBeMark ? pendingLabel : "Not set"}
-          </span>
-        </div>
-        {hasTime && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => seekTo(time)}
-              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              Preview
-            </button>
-            <button
-              type="button"
-              onClick={onClear}
-              className="text-slate-500 hover:text-red-400 transition-colors"
-            >
-              <FontAwesomeIcon icon={faCircleXmark} className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -476,42 +522,14 @@ export default function PreEditedVideoInput({ ranks, onTimestampsChange }: PreEd
           </div>
 
           {/* ── Timeline scrubber ── */}
-          <div className="flex flex-col gap-1">
-            <div
-              ref={timelineRef}
-              className="relative h-3 bg-slate-700 rounded-full cursor-pointer select-none"
-              onMouseDown={handleTimelineMouseDown}
-            >
-              {/* Progress fill */}
-              <div className="absolute top-0 left-0 h-full bg-blue-500 rounded-full pointer-events-none" style={{ width: `${progress * 100}%` }} />
-
-              {/* Rank markers — amber dots */}
-              {markedTimestamps.map(({ i, t }) => (
-                <div
-                  key={i}
-                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full border-2 border-white bg-amber-400 z-10 pointer-events-none"
-                  style={{ left: `${(t / duration) * 100}%` }}
-                  title={`Rank ${i + 1} — ${formatTime(t, true)}`}
-                />
-              ))}
-
-              {/* End marker */}
-              {endTime !== null && duration > 0 && (
-                <div
-                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-sm border-2 border-white bg-red-400 z-10 pointer-events-none rotate-45"
-                  style={{ left: `${(endTime / duration) * 100}%` }}
-                  title={`End — ${formatTime(endTime, true)}`}
-                />
-              )}
-
-              {/* Scrubber thumb */}
-              <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white shadow-md pointer-events-none" style={{ left: `${progress * 100}%` }} />
-            </div>
-            <div className="flex justify-between text-xs text-slate-500">
-              <span className="font-mono">{formatTime(currentTime, true)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
-          </div>
+          <Timeline
+            duration={duration}
+            currentTime={currentTime}
+            onSeek={seekTo}
+            timestamps={timestamps}
+            endTime={endTime}
+            ranks={ranks}
+          />
 
           {/* ── Playback controls ── */}
           <div className="flex items-center gap-3">
@@ -565,29 +583,32 @@ export default function PreEditedVideoInput({ ranks, onTimestampsChange }: PreEd
             </p>
             <div className="grid grid-cols-1 gap-1.5">
               {[...Array(ranks)].map((_, slot) => {
-                const rankNum = ranks - slot; // slot 0 = rank N, slot 1 = rank N-1, etc.
-                return renderMarkerRow(
-                  slot,
-                  <span>{rankNum}</span>,
-                  timestamps[slot],
-                  slot === nextToMark,
-                  "Play and press Mark...",
-                  () => clearTimestamp(slot),
-                  "bg-amber-500 bg-opacity-10 border-amber-500",
-                  "bg-amber-400 text-black",
+                const rankNum = ranks - slot;
+                return (
+                  <MarkerRow
+                    key={slot}
+                    icon={<span>{rankNum}</span>}
+                    time={timestamps[slot]}
+                    isNextToBeMark={slot === nextToMark}
+                    pendingLabel="Play and press Mark..."
+                    onClear={() => clearTimestamp(slot)}
+                    onPreview={() => seekTo(timestamps[slot] ?? 0)}
+                    accentBg="bg-amber-500 bg-opacity-10 border-amber-500"
+                    dotClass="bg-amber-400 text-black"
+                  />
                 );
               })}
 
-              {renderMarkerRow(
-                'end',
-                <FontAwesomeIcon icon={faFlagCheckered} className="w-2.5 h-2.5" />,
-                endTime,
-                true,
-                "Play and press Mark End...",
-                clearEnd,
-                "bg-red-900 bg-opacity-20 border-red-700",
-                "bg-red-400 text-white",
-              )}
+              <MarkerRow
+                icon={<FontAwesomeIcon icon={faFlagCheckered} className="w-2.5 h-2.5" />}
+                time={endTime}
+                isNextToBeMark={true}
+                pendingLabel="Play and press Mark End..."
+                onClear={clearEnd}
+                onPreview={() => seekTo(endTime ?? 0)}
+                accentBg="bg-red-900 bg-opacity-20 border-red-700"
+                dotClass="bg-red-400 text-white"
+              />
             </div>
           </div>
         </div>

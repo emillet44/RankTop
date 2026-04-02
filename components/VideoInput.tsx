@@ -1,5 +1,4 @@
-'use client'
-
+import React, { memo } from 'react'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faVideo, faCircleXmark } from "@fortawesome/free-solid-svg-icons"
 import PreEditedVideoInput from "./PreEditedVideoInput"
@@ -28,7 +27,7 @@ interface VideoUploadSectionProps {
   onPreEditedDataChange: (timestamps: Timestamp[], endTime: number | null, file: File | null) => void;
 }
 
-export default function VideoUploadSection({
+const VideoUploadSection = memo(function VideoUploadSection({
   ranks,
   videoData,
   videoMode,
@@ -149,4 +148,6 @@ export default function VideoUploadSection({
       )}
     </div>
   );
-}
+});
+
+export default VideoUploadSection;

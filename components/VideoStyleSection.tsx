@@ -1,42 +1,49 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo, memo } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronUp, faPalette, faPlus, faTrash, faRotateLeft, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChevronUp, faPalette, faPlus, faTrash, faRotateLeft, faExclamationTriangle, faXmark, faDownload, faUpload } from '@fortawesome/free-solid-svg-icons'
 import { OverlayPreview } from './OverlayPreview'
 
 // --- 1. DEBOUNCED COLOR PICKER (Optimized performance) ---
 function LazyColorPicker({ value, onChange, className }: { value: string, onChange: (val: string) => void, className?: string }) {
   const [localColor, setLocalColor] = useState(value)
+  const pendingRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     setLocalColor(value)
   }, [value])
 
+  // FIX: timeout cleanup must live inside useEffect, not inside the event handler,
+  // otherwise the returned cleanup fn is ignored by React and the timer leaks.
+  useEffect(() => {
+    return () => {
+      if (pendingRef.current !== null) clearTimeout(pendingRef.current)
+    }
+  }, [])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVal = e.target.value
     setLocalColor(newVal)
-    
-    // Canvas redraws are heavy, so debounce this update
-    const timeout = setTimeout(() => {
+    if (pendingRef.current !== null) clearTimeout(pendingRef.current)
+    pendingRef.current = setTimeout(() => {
+      pendingRef.current = null
       onChange(newVal)
     }, 50)
-    return () => clearTimeout(timeout)
   }
 
   return (
-    <input 
-      type="color" 
-      value={localColor} 
-      onChange={handleChange} 
-      className={className} 
+    <input
+      type="color"
+      value={localColor}
+      onChange={handleChange}
+      className={className}
     />
   )
 }
 
-// --- 2. DEFAULTS (Mirrored from server script) ---
+// --- 2. DEFAULTS ---
 const DEFAULT_STYLE = {
-  stylePreset: 'default',
   titleBackdrop: 'black',
   subtitle: '',
   subtitleColor: '#CCCCCC',
@@ -44,13 +51,16 @@ const DEFAULT_STYLE = {
   creatorWatermarkColor: '#FFFFFF',
   titleWordColors: [] as { word: string; color: string }[],
   titleShadowBlur: 25,
-  rankShadowBlur: 5, 
+  rankShadowBlur: 5,
+  matchRankColor: false,
+  textShadow: true,
+  rankSpacing: 140,
+  fontFamily: 'Archivo Expanded Bold',
   rankColors: ['#FFD700', '#C0C0C0', '#CD7F32', 'white', 'white'],
 }
 
-// --- 3. CUSTOM MODAL COMPONENT (Professional UI) ---
+// --- 3. RESET MODAL ---
 function ResetConfirmationModal({ isOpen, onClose, onConfirm }: { isOpen: boolean, onClose: () => void, onConfirm: () => void }) {
-  // Close modal on Escape key
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     if (isOpen) window.addEventListener('keydown', handleEsc);
@@ -60,14 +70,9 @@ function ResetConfirmationModal({ isOpen, onClose, onConfirm }: { isOpen: boolea
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950 bg-opacity-80 backdrop-blur-sm transition-opacity">
-      {/* Backdrop (clickable to close) */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950 bg-opacity-80 backdrop-blur-sm">
       <div className="absolute inset-0" onClick={onClose}></div>
-      
-      {/* Modal Card */}
-      <div className="relative w-full max-w-md bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-6 space-y-6 transform transition-all scale-100">
-        
-        {/* Header */}
+      <div className="relative w-full max-w-md bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-red-950 flex items-center justify-center border border-red-700">
@@ -79,31 +84,19 @@ function ResetConfirmationModal({ isOpen, onClose, onConfirm }: { isOpen: boolea
             <FontAwesomeIcon icon={faXmark} />
           </button>
         </div>
-
-        {/* Content */}
         <div className="space-y-2">
           <p className="text-sm text-slate-300">
-            This will revert all video style settings—presets, backdrops, shadows, subtitles, and watermarks—back to the system defaults.
+            This will revert all video style settings back to the system defaults.
           </p>
           <p className="text-sm font-semibold text-red-400 bg-red-950 bg-opacity-40 p-3 rounded border border-red-800">
             Warning: Your custom per-word title colors will be lost.
           </p>
         </div>
-
-        {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
-          <button 
-            type="button" 
-            onClick={onClose}
-            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-sm font-semibold text-white rounded-lg transition-colors border border-slate-700"
-          >
+          <button type="button" onClick={onClose} className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-sm font-semibold text-white rounded-lg transition-colors border border-slate-700">
             Keep My Styles
           </button>
-          <button 
-            type="button" 
-            onClick={onConfirm}
-            className="group flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-sm font-semibold text-white rounded-lg transition-colors"
-          >
+          <button type="button" onClick={onConfirm} className="group flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-sm font-semibold text-white rounded-lg transition-colors">
             <FontAwesomeIcon icon={faRotateLeft} className="text-xs group-hover:rotate-[-45deg] transition-transform" />
             Yes, Reset All
           </button>
@@ -113,30 +106,88 @@ function ResetConfirmationModal({ isOpen, onClose, onConfirm }: { isOpen: boolea
   );
 }
 
-// --- 4. MAIN COMPONENT ---
-export function VideoStyleSection({ title, ranks, videoFile } : {title: string, ranks: string[], videoFile: File | null}) {
+// --- 4. SECTION DIVIDER ---
+function SectionLabel({ label, hint }: { label: string; hint?: string }) {
+  return (
+    <div className="flex items-baseline gap-3 mb-4">
+      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">{label}</span>
+      {hint && <span className="text-[9px] text-slate-600 italic">{hint}</span>}
+      <div className="flex-1 h-px bg-white/[0.06]" />
+    </div>
+  )
+}
+
+// --- 5. MAIN COMPONENT ---
+export const VideoStyleSection = memo(function VideoStyleSection({ title, ranks, videoFile }: { title: string, ranks: string[], videoFile: File | null }) {
   const [open, setOpen] = useState(false)
   const [isResetModalOpen, setIsResetModalOpen] = useState(false)
-  
   const [config, setConfig] = useState(DEFAULT_STYLE)
   const [newWord, setNewWord] = useState('')
   const [newWordColor, setNewWordColor] = useState('#FFD700')
+  const uploadRef = useRef<HTMLInputElement>(null)
 
   const updateConfig = (fields: Partial<typeof config>) => {
     setConfig(prev => ({ ...prev, ...fields }))
   }
 
-  // Triggered by the "Reset" button in the header
   const handleResetRequest = (e: React.MouseEvent) => {
-    e.stopPropagation() // Stop accordion from toggling
-    setIsResetModalOpen(true) // Open custom modal
+    e.stopPropagation()
+    setIsResetModalOpen(true)
   }
 
-  // Final confirmation from inside the modal
   const confirmReset = () => {
     setConfig(DEFAULT_STYLE)
     setNewWord('')
-    setIsResetModalOpen(false) // Close modal
+    setIsResetModalOpen(false)
+  }
+
+  const downloadConfig = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const { titleWordColors, ...configToDownload } = config
+    const blob = new Blob([JSON.stringify(configToDownload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `ranktop-video-settings-${Date.now()}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const uploadConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string)
+        if (json && typeof json === 'object') {
+          const validConfig = {
+            titleBackdrop: json.titleBackdrop || DEFAULT_STYLE.titleBackdrop,
+            subtitle: json.subtitle || DEFAULT_STYLE.subtitle,
+            subtitleColor: json.subtitleColor || DEFAULT_STYLE.subtitleColor,
+            creatorWatermark: json.creatorWatermark || DEFAULT_STYLE.creatorWatermark,
+            creatorWatermarkColor: json.creatorWatermarkColor || DEFAULT_STYLE.creatorWatermarkColor,
+            titleWordColors: Array.isArray(json.titleWordColors) ? json.titleWordColors : config.titleWordColors,
+            titleShadowBlur: typeof json.titleShadowBlur === 'number' ? json.titleShadowBlur : DEFAULT_STYLE.titleShadowBlur,
+            rankShadowBlur: typeof json.rankShadowBlur === 'number' ? json.rankShadowBlur : DEFAULT_STYLE.rankShadowBlur,
+            matchRankColor: typeof json.matchRankColor === 'boolean' ? json.matchRankColor : DEFAULT_STYLE.matchRankColor,
+            textShadow: typeof json.textShadow === 'boolean' ? json.textShadow : DEFAULT_STYLE.textShadow,
+            rankSpacing: typeof json.rankSpacing === 'number' ? json.rankSpacing : DEFAULT_STYLE.rankSpacing,
+            fontFamily: json.fontFamily || DEFAULT_STYLE.fontFamily,
+            rankColors: Array.isArray(json.rankColors) ? json.rankColors : DEFAULT_STYLE.rankColors,
+          }
+          setConfig(validConfig)
+          setOpen(true)
+        }
+      } catch (err) {
+        console.error("Failed to parse settings file:", err)
+        alert("Invalid settings file. Please upload a valid Ranktop JSON configuration.")
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
   }
 
   const addWordColor = () => {
@@ -151,223 +202,337 @@ export function VideoStyleSection({ title, ranks, videoFile } : {title: string, 
   }
 
   const removeWordColor = (word: string) => {
-    const newColors = config.titleWordColors.filter(wc => wc.word !== word)
-    updateConfig({ titleWordColors: newColors })
+    updateConfig({ titleWordColors: config.titleWordColors.filter(wc => wc.word !== word) })
   }
+
+  const RANK_LABELS = ['1st', '2nd', '3rd', '4th', '5th']
+
+  // Memoize so config doesn't produce a new object
+  // on every render — without this, OverlayPreview's React.memo check always fails.
+  const previewConfig = useMemo(
+    () => config,
+    [config]
+  )
 
   return (
     <>
-      {/* 1. Reset Confirmation Modal */}
-      <ResetConfirmationModal 
-        isOpen={isResetModalOpen} 
-        onClose={() => setIsResetModalOpen(false)} 
-        onConfirm={confirmReset} 
+      <ResetConfirmationModal
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirm={confirmReset}
       />
 
-      {/* 2. Main Section Container */}
       <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/[0.03]">
-        {/* Preview Area */}
-        <div className="p-4 sm:p-8 bg-black/60 flex justify-center border-b border-white/10 relative group/preview">
-          <OverlayPreview 
-              config={config} 
-              videoFile={videoFile} 
-              title={title} 
-              ranks={ranks} 
+
+        {/* Preview */}
+        <div className="p-4 sm:p-8 bg-black/60 flex justify-center border-b border-white/10 relative">
+          <OverlayPreview
+            config={previewConfig}
+            videoFile={videoFile}
+            title={title}
+            ranks={ranks}
           />
           <div className="absolute top-4 left-4">
             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-black/70 backdrop-blur-md px-2 py-1 rounded">Live Styling</span>
           </div>
         </div>
 
-        {/* Toggle Header */}
+        {/* Header */}
         <div
           onClick={() => setOpen(o => !o)}
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.05] transition-colors text-left cursor-pointer"
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.05] transition-colors cursor-pointer"
         >
           <span className="flex items-center gap-3 text-[11px] font-bold text-slate-300 uppercase tracking-widest">
             <FontAwesomeIcon icon={faPalette} className={`text-sm transition-colors ${open ? 'text-blue-400' : 'text-slate-500'}`} />
             Video Style
           </span>
-          
-          <div className="flex items-center gap-4">
-            {/* Custom styled Reset Trigger */}
+
+          <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+            {/* Upload */}
+            <label
+              title="Upload settings"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-green-400 hover:bg-white/5 transition-all cursor-pointer"
+            >
+              <FontAwesomeIcon icon={faUpload} className="text-[11px]" />
+              <input ref={uploadRef} type="file" accept=".json" onChange={uploadConfig} className="hidden" />
+            </label>
+            {/* Download */}
             <button
               type="button"
-              onClick={handleResetRequest}
-              className="group flex items-center gap-1.5 text-[9px] uppercase tracking-[0.2em] font-bold text-slate-500 hover:text-red-400 transition-colors"
+              title="Download settings"
+              onClick={downloadConfig}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-blue-400 hover:bg-white/5 transition-all"
             >
-              <FontAwesomeIcon icon={faRotateLeft} className="text-[8px] group-hover:rotate-[-45deg] transition-transform" />
-              Reset
+              <FontAwesomeIcon icon={faDownload} className="text-[11px]" />
             </button>
-            <FontAwesomeIcon icon={open ? faChevronUp : faChevronDown} className="text-slate-500 text-[10px]" />
+            {/* Reset */}
+            <button
+              type="button"
+              title="Reset to defaults"
+              onClick={handleResetRequest}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-white/5 transition-all"
+            >
+              <FontAwesomeIcon icon={faRotateLeft} className="text-[11px]" />
+            </button>
+
+            {/* Divider */}
+            <div className="w-px h-4 bg-white/10 mx-1" onClick={e => e.stopPropagation()} />
+
+            {/* Chevron — clicking this toggles accordion */}
+            <button
+              type="button"
+              onClick={() => setOpen(o => !o)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all"
+            >
+              <FontAwesomeIcon icon={open ? faChevronUp : faChevronDown} className="text-[10px]" />
+            </button>
           </div>
         </div>
 
-        {/* Hidden input for Form submission */}
+        {/* Hidden input for form submission */}
         <input type="hidden" name="layoutConfig" value={JSON.stringify(config)} />
 
-        {/* Accordion Content */}
+        {/* Accordion Content — single scrollable layout, no tabs */}
         {open && (
-          <div className="px-4 sm:px-6 py-6 sm:py-8 border-t border-white/10 space-y-8 bg-white/[0.02]">
-            
-            {/* Preset & Backdrop */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
-              <div className="space-y-2">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Style Preset</label>
-                <div className="relative">
-                  <select 
-                    value={config.stylePreset}
-                    onChange={e => updateConfig({ stylePreset: e.target.value })}
-                    className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-200 outline-none focus:border-blue-500/40 appearance-none cursor-pointer"
+          <div className="px-5 sm:px-7 py-7 border-t border-white/10 space-y-9 bg-white/[0.02]">
+
+            {/* ── SECTION: CANVAS ── */}
+            <div>
+              <SectionLabel label="Canvas" />
+              <div className="space-y-6">
+
+                {/* Backdrop + Font on one row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Title Backdrop</span>
+                    <div className="flex gap-1 bg-white/[0.06] p-1 rounded-xl border border-white/10">
+                      {['none', 'black', 'white', 'blurred'].map((b) => (
+                        <button
+                          key={b}
+                          type="button"
+                          onClick={() => updateConfig({ titleBackdrop: b as any })}
+                          className={`flex-1 py-2 text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all ${
+                            config.titleBackdrop === b
+                              ? 'bg-blue-600 text-white shadow-lg'
+                              : 'text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          {b}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Font</span>
+                    <div className="relative">
+                      <select
+                        value={config.fontFamily}
+                        onChange={e => updateConfig({ fontFamily: e.target.value })}
+                        className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-200 outline-none focus:border-blue-500/40 appearance-none cursor-pointer"
+                      >
+                        <option value="Archivo Expanded Bold" className="bg-slate-900">Archivo Expanded Bold</option>
+                        <option value="Arial Regular" className="bg-slate-900">Arial Regular</option>
+                      </select>
+                      <FontAwesomeIcon icon={faChevronDown} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[10px] text-slate-500" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Shadows & Toggles */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Shadow Blur</span>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-3 bg-white/[0.03] border border-white/[0.07] rounded-xl p-4">
+                      {[
+                        { label: 'Title', key: 'titleShadowBlur' as const },
+                        { label: 'Rank',  key: 'rankShadowBlur'  as const },
+                      ].map(({ label, key }) => (
+                        <div key={key} className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[9px] text-slate-500">{label}</span>
+                            <span className="text-[10px] font-mono text-blue-400 tabular-nums w-5 text-right">{config[key]}</span>
+                          </div>
+                          <input
+                            type="range" min="0" max="60" step="5"
+                            value={config[key]}
+                            onChange={e => updateConfig({ [key]: parseInt(e.target.value) })}
+                            className="w-full accent-blue-500 h-1 bg-white/10 rounded-full appearance-none cursor-pointer"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div
+                    className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.07] rounded-xl cursor-pointer hover:border-white/[0.12] transition-colors self-end"
+                    onClick={() => updateConfig({ textShadow: !config.textShadow })}
                   >
-                    <option value="default" className="bg-slate-900">Default</option>
-                    <option value="viral" className="bg-slate-900">Viral</option>
-                    <option value="minimal" className="bg-slate-900">Minimal</option>
-                    <option value="dark" className="bg-slate-900">Dark</option>
-                  </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-500" />
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-300">Text Outline</p>
+                      <p className="text-[9px] text-slate-500">Enable black text borders</p>
+                    </div>
+                    <div className={`w-10 h-5 rounded-full transition-all duration-300 relative shrink-0 ${config.textShadow ? 'bg-blue-600' : 'bg-white/10'}`}>
+                      <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${config.textShadow ? 'left-6' : 'left-1'}`} />
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              <div className="space-y-2">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Title Backdrop</label>
-                <div className="flex gap-1 bg-white/10 p-1 rounded-xl border border-white/10 h-[46px]">
-                  {['black', 'white', 'blurred'].map((b) => (
+            </div>
+
+            {/* ── SECTION: TEXT ── */}
+            <div>
+              <SectionLabel label="Text Overlays" hint="subtitle · watermark · accent words" />
+              <div className="space-y-4">
+
+                {/* Subtitle + Watermark stacked cleanly */}
+                {[
+                  { label: 'Subtitle', field: 'subtitle' as const, colorField: 'subtitleColor' as const, placeholder: '"subscribe!" or "wait for it..."' },
+                  { label: 'Watermark', field: 'creatorWatermark' as const, colorField: 'creatorWatermarkColor' as const, placeholder: '@yourname' },
+                ].map(({ label, field, colorField, placeholder }) => (
+                  <div key={field} className="flex items-center gap-3">
+                    <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider w-20 shrink-0">{label}</span>
+                    <input
+                      type="text"
+                      value={config[field]}
+                      onChange={e => updateConfig({ [field]: e.target.value })}
+                      placeholder={placeholder}
+                      className="flex-1 bg-white/[0.05] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-blue-500/40 transition-all min-w-0"
+                    />
+                    <LazyColorPicker
+                      value={config[colorField]}
+                      onChange={val => updateConfig({ [colorField]: val })}
+                      className="w-10 h-10 rounded-xl border border-white/10 bg-white/10 cursor-pointer p-1 shrink-0"
+                    />
+                  </div>
+                ))}
+
+                {/* Accent Words */}
+                <div className="pt-1 space-y-3">
+                  <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Accent Words</span>
+
+                  {/* Existing word pills */}
+                  {config.titleWordColors.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {config.titleWordColors.map(wc => (
+                        <span
+                          key={wc.word}
+                          className="group flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border"
+                          style={{ color: wc.color, borderColor: `${wc.color}40`, background: `${wc.color}12` }}
+                        >
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ background: wc.color }}
+                          />
+                          {wc.word}
+                          <button
+                            type="button"
+                            onClick={() => removeWordColor(wc.word)}
+                            className="ml-0.5 opacity-40 hover:opacity-100 hover:text-red-400 transition-all"
+                          >
+                            <FontAwesomeIcon icon={faXmark} className="text-[9px]" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add word row */}
+                  <div className="flex items-center gap-2">
+                    {/* Color swatch that opens the picker — compact */}
+                    <label className="relative cursor-pointer shrink-0" title="Pick accent color">
+                      <div
+                        className="w-8 h-8 rounded-lg border-2 border-white/20 shadow-inner"
+                        style={{ background: newWordColor }}
+                      />
+                      <LazyColorPicker
+                        value={newWordColor}
+                        onChange={val => setNewWordColor(val)}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                      />
+                    </label>
+                    <input
+                      type="text"
+                      value={newWord}
+                      onChange={e => setNewWord(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addWordColor())}
+                      placeholder="Type a word to highlight…"
+                      className="flex-1 bg-white/[0.05] border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-blue-500/40 transition-all"
+                    />
                     <button
-                      key={b}
                       type="button"
-                      onClick={() => updateConfig({ titleBackdrop: b as any })}
-                      className={`flex-1 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all duration-300 ${
-                        config.titleBackdrop === b 
-                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' 
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                      }`}
+                      onClick={addWordColor}
+                      disabled={!newWord.trim()}
+                      className="w-9 h-9 flex items-center justify-center bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl transition-all active:scale-90 shrink-0"
                     >
-                      {b}
+                      <FontAwesomeIcon icon={faPlus} className="text-sm" />
                     </button>
-                  ))}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Shadows */}
-            <div className="p-4 sm:p-6 bg-white/[0.03] rounded-xl border border-white/10 space-y-6">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Shadow Intensity</label>
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 sm:gap-6">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight w-12">Title</span>
-                  <input 
-                    type="range" min="0" max="60" 
-                    value={config.titleShadowBlur} 
-                    onChange={e => updateConfig({ titleShadowBlur: parseInt(e.target.value) })}
-                    className="flex-1 accent-blue-500 h-1 bg-white/10 rounded-full appearance-none cursor-pointer"
-                  />
-                  <span className="text-[10px] font-mono text-blue-400 w-4 text-right">{config.titleShadowBlur}</span>
-                </div>
-                <div className="flex items-center gap-3 sm:gap-6">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight w-12">Ranks</span>
-                  <input 
-                    type="range" min="0" max="60" 
-                    value={config.rankShadowBlur} 
-                    onChange={e => updateConfig({ rankShadowBlur: parseInt(e.target.value) })}
-                    className="flex-1 accent-blue-500 h-1 bg-white/20 rounded-full appearance-none cursor-pointer"
-                  />
-                  <span className="text-[10px] font-mono text-blue-500 w-4 text-right">{config.rankShadowBlur}</span>
-                </div>
-              </div>
-            </div>
+            {/* ── SECTION: RANKS ── */}
+            <div>
+              <SectionLabel label="Rank List" />
+              <div className="space-y-5">
 
-            {/* Subtitle */}
-            <div className="space-y-2">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Subtitle Overlay</label>
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={config.subtitle}
-                  onChange={e => updateConfig({ subtitle: e.target.value })}
-                  placeholder='"subscribe!" or "wait for it..."'
-                  className="flex-1 bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-blue-500/40 transition-all"
-                />
-                <div className="relative group/color">
-                  <LazyColorPicker 
-                    value={config.subtitleColor} 
-                    onChange={val => updateConfig({ subtitleColor: val })} 
-                    className="w-11 h-11 rounded-xl border border-white/10 bg-white/10 cursor-pointer p-1" 
-                  />
+                {/* Row spacing + Match color toggle side by side */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Row Spacing</span>
+                      <span className="text-[10px] font-mono text-blue-400 tabular-nums">{config.rankSpacing}px</span>
+                    </div>
+                    <input
+                      type="range" min="80" max="240" step="5"
+                      value={config.rankSpacing}
+                      onChange={e => updateConfig({ rankSpacing: parseInt(e.target.value) })}
+                      className="w-full accent-blue-500 h-1 bg-white/10 rounded-full appearance-none cursor-pointer"
+                    />
+                  </div>
+
+                  <div
+                    className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.07] rounded-xl cursor-pointer hover:border-white/[0.12] transition-colors"
+                    onClick={() => updateConfig({ matchRankColor: !config.matchRankColor })}
+                  >
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-300">Match Text Color</p>
+                      <p className="text-[9px] text-slate-500">Apply rank color to label text</p>
+                    </div>
+                    <div className={`w-10 h-5 rounded-full transition-all duration-300 relative shrink-0 ${config.matchRankColor ? 'bg-blue-600' : 'bg-white/10'}`}>
+                      <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${config.matchRankColor ? 'left-6' : 'left-1'}`} />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Creator Watermark */}
-            <div className="space-y-2">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Watermark</label>
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={config.creatorWatermark}
-                  onChange={e => updateConfig({ creatorWatermark: e.target.value })}
-                  placeholder="@yourname"
-                  className="flex-1 bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-blue-500/40 transition-all"
-                />
-                <LazyColorPicker 
-                  value={config.creatorWatermarkColor} 
-                  onChange={val => updateConfig({ creatorWatermarkColor: val })} 
-                  className="w-11 h-11 rounded-xl border border-white/10 bg-white/10 cursor-pointer p-1" 
-                />
-              </div>
-            </div>
-
-            {/* Per-Word Coloring */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between ml-1">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Title Accent Words</label>
-                <span className="text-[9px] text-slate-500 font-medium italic">Type word & press enter</span>
-              </div>
-              
-              {config.titleWordColors.length > 0 && (
-                <div className="flex flex-wrap gap-2 p-3 bg-white/[0.04] border border-white/10 rounded-xl">
-                  {config.titleWordColors.map(wc => (
-                    <span
-                      key={wc.word}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-black border border-white/10"
-                      style={{ color: wc.color, borderColor: `${wc.color}30` }}
-                    >
-                      {wc.word}
-                      <button
-                        type="button"
-                        onClick={() => removeWordColor(wc.word)}
-                        className="text-slate-500 hover:text-red-400 transition-colors"
-                      >
-                        <FontAwesomeIcon icon={faTrash} className="text-[9px]" />
-                      </button>
-                    </span>
-                  ))}
+                {/* Rank colors — labeled row, larger swatches */}
+                <div className="space-y-2">
+                  <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Rank Number Colors</span>
+                  <div className="flex gap-3">
+                    {config.rankColors.map((color, i) => (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                        <label className="relative cursor-pointer w-full">
+                          <div
+                            className="w-full aspect-square rounded-xl border-2 transition-all"
+                            style={{ background: color, borderColor: `${color}60` }}
+                          />
+                          <LazyColorPicker
+                            value={color}
+                            onChange={val => {
+                              const newColors = [...config.rankColors]
+                              newColors[i] = val
+                              updateConfig({ rankColors: newColors })
+                            }}
+                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                          />
+                        </label>
+                        <span className="text-[8px] font-bold text-slate-600 uppercase">{RANK_LABELS[i]}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              )}
 
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={newWord}
-                  onChange={e => setNewWord(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addWordColor())}
-                  placeholder="Specific word..."
-                  className="flex-1 bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-blue-500/40 transition-all"
-                />
-                <LazyColorPicker
-                  value={newWordColor}
-                  onChange={val => setNewWordColor(val)}
-                  className="w-11 h-11 rounded-xl border border-white/10 bg-white/10 cursor-pointer p-1"
-                />
-                <button
-                  type="button"
-                  onClick={addWordColor}
-                  className="w-11 h-11 flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-300 active:scale-90"
-                >
-                  <FontAwesomeIcon icon={faPlus} className="text-sm" />
-                </button>
               </div>
             </div>
 
@@ -376,4 +541,4 @@ export function VideoStyleSection({ title, ranks, videoFile } : {title: string, 
       </div>
     </>
   )
-}
+})

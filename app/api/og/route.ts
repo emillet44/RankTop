@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
 
     const customWidth = searchParams.get('width');
     const customHeight = searchParams.get('height');
+    const showWatermark = searchParams.get('watermark') !== 'false';
 
     // ─── Canvas ──────────────────────────────────────────────────────────────
     let width = 1200;
@@ -248,7 +249,7 @@ export async function GET(request: NextRequest) {
         ),
 
         // ── Footer (Watermark) ──────────────────────────────────────────────
-        createElement(
+        showWatermark ? createElement(
           'div',
           {
             style: {
@@ -267,7 +268,7 @@ export async function GET(request: NextRequest) {
               opacity: 0.45,
             },
           }, 'RANKTOP.NET')
-        )
+        ) : null
       ),
       {
         width,

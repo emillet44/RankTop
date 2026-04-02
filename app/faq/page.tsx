@@ -8,7 +8,7 @@ export default async function FAQ() {
   return (
     <>
       <Header />
-      <div className="min-h-[calc(100vh-52px)] bg-gradient-radial from-gray-950 to-stone-950 bg-fixed flex items-center justify-center pt-14">
+      <div className="min-h-[calc(100vh-52px)] flex items-center justify-center pt-14">
         <div className="p-5 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5 max-w-5xl w-full h-fit text-xl text-slate-400 space-y-6">
           <dl>
             <dt>{"Q: What can I do on this site if I'm not signed in?"}</dt>

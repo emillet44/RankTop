@@ -22,6 +22,7 @@ export function ShareButton({ postId, postTitle, postDescription, postRanks, ran
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [generatingFormats, setGeneratingFormats] = useState<Set<ImageFormat>>(new Set());
   const [isDownloadingVideo, setIsDownloadingVideo] = useState(false);
+  const [watermark, setWatermark] = useState(true);
 
   const shareUrl = `https://ranktop.net/post/${postId}`;
 
@@ -91,7 +92,8 @@ export function ShareButton({ postId, postTitle, postDescription, postRanks, ran
       const { width, height } = dimensions[format];
 
       // Use your existing OG image endpoint but with custom dimensions
-const imageUrl = `/api/og?title=${encodeURIComponent(postTitle)}&description=${encodeURIComponent(postDescription || '')}&username=${encodeURIComponent(username || '')}${postRanks.filter(Boolean).map((rank, i) => `&rank=${encodeURIComponent(rank as string)}`).join('')}${rankNotes.filter(Boolean).map((note, i) => `&rank_note=${encodeURIComponent(note as string)}`).join('')}&width=${width}&height=${height}&format=${format}`;      // Fetch the image
+      const imageUrl = `/api/og?title=${encodeURIComponent(postTitle)}&description=${encodeURIComponent(postDescription || '')}&username=${encodeURIComponent(username || '')}${postRanks.filter(Boolean).map((rank, i) => `&rank=${encodeURIComponent(rank as string)}`).join('')}${rankNotes.filter(Boolean).map((note, i) => `&rank_note=${encodeURIComponent(note as string)}`).join('')}&width=${width}&height=${height}&format=${format}&watermark=${watermark}`;
+      // Fetch the image
       const response = await fetch(imageUrl);
       if (!response.ok) throw new Error('Failed to generate image');
 
@@ -223,6 +225,24 @@ const imageUrl = `/api/og?title=${encodeURIComponent(postTitle)}&description=${e
           {/* Export menu */}
           {isExportOpen && (
             <div className="absolute right-0 top-12 z-50 bg-slate-800 border border-slate-700 rounded-md shadow-lg min-w-64 p-2">
+
+              {/* Special Toggle for Cinnamon */}
+              {username === 'Cinnamon' && !videoUrl && (
+                <div className="px-3 py-2 border-b border-slate-700 mb-2">
+                  <label className="flex items-center justify-between cursor-pointer group">
+                    <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">Watermark</span>
+                    <div className="relative inline-flex items-center">
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer" 
+                        checked={watermark} 
+                        onChange={() => setWatermark(!watermark)} 
+                      />
+                      <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                    </div>
+                  </label>
+                </div>
+              )}
 
               {/* CASE 1: VIDEO POST */}
               {videoUrl ? (

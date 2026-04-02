@@ -15,7 +15,7 @@ export default function Home() {
   return (
     <>
       <Header />
-      <main className="flex flex-col items-center justify-center bg-gradient-radial from-gray-950 to-stone-950 bg-fixed min-h-[calc(100vh-52px)] text-white px-6">
+      <main className="flex flex-col items-center justify-center min-h-[calc(100vh-52px)] text-white px-6">
         <section className="w-full max-w-4xl text-center pt-32 pb-20">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">Rank Anything. Discover Everything.</h1>
           <p className="text-lg md:text-xl text-gray-300 mb-8">
