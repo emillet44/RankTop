@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from "@/lib/prisma"
+import { syncPostToAlgolia } from "@/lib/AlgoliaSync"
 
 //This server action uploads the list to the database, and it also loads the sign in state to determine whether to add an author to the post or not.
 
@@ -11,6 +12,7 @@ export async function newList(formData: FormData) {
   // 2. Determine if it's an image post
   // Check the postType appended in the subHandler
   const isImagePost = data.postType === 'image';
+  const isPrivate = data.visibility === "Private";
 
   // 3. Construct the Prisma data object
   const createData: any = {
@@ -49,8 +51,15 @@ export async function newList(formData: FormData) {
   // 5. Execute the Database Creation
   try {
     const List = await prisma.posts.create({
-      data: createData
+      data: createData,
+      include: { metadata: true }
     });
+
+    // 6. Sync to Algolia ONLY if the post is not private
+    if (!isPrivate) {
+      const postUsername = (data.username as string) || null;
+      await syncPostToAlgolia(List, postUsername, List.metadata);
+    }
 
     // Return the ID so the SubmissionOverlay can use it for file naming
     return List.id;

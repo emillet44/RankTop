@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 //Can't lie, this one is all Claude 3.7. Generally what it's doing is checking the date of the newest post from Algolia, then fetching all posts from the database that are newer
 //than that date, formatting them, then sending them. There's a some error handling for a failed prisma query which is probably not necessary but its a loop call script so it might be
 //useful. Then there is something that allows it to run from console, not really sure how but it does I guess. Leaving the inline comments until I work on this myself.
+//You bum this thing is useless. Now using AlgoliaSync.ts to update Algolia indices on post creation instead of in batches, since the amount is very low and Algolia only warns of 
+//updating on creation when the amount is like, thousands per second.
 
 export async function AlgoliaUpdate() {
   const algoliasearch = require('algoliasearch');

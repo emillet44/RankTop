@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef, useMemo, memo } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronUp, faPalette, faPlus, faTrash, faRotateLeft, faExclamationTriangle, faXmark, faDownload, faUpload } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChevronUp, faPalette, faPlus, faRotateLeft, faExclamationTriangle, faXmark, faDownload, faUpload } from '@fortawesome/free-solid-svg-icons'
 import { OverlayPreview } from './OverlayPreview'
+
+import { DEFAULT_VIDEO_STYLE, VideoLayoutConfig } from '@/lib/video-settings'
 
 // --- 1. DEBOUNCED COLOR PICKER (Optimized performance) ---
 function LazyColorPicker({ value, onChange, className }: { value: string, onChange: (val: string) => void, className?: string }) {
@@ -40,23 +42,6 @@ function LazyColorPicker({ value, onChange, className }: { value: string, onChan
       className={className}
     />
   )
-}
-
-// --- 2. DEFAULTS ---
-const DEFAULT_STYLE = {
-  titleBackdrop: 'black',
-  subtitle: '',
-  subtitleColor: '#CCCCCC',
-  creatorWatermark: '',
-  creatorWatermarkColor: '#FFFFFF',
-  titleWordColors: [] as { word: string; color: string }[],
-  titleShadowBlur: 25,
-  rankShadowBlur: 5,
-  matchRankColor: false,
-  textShadow: true,
-  rankSpacing: 140,
-  fontFamily: 'Archivo Expanded Bold',
-  rankColors: ['#FFD700', '#C0C0C0', '#CD7F32', 'white', 'white'],
 }
 
 // --- 3. RESET MODAL ---
@@ -121,12 +106,12 @@ function SectionLabel({ label, hint }: { label: string; hint?: string }) {
 export const VideoStyleSection = memo(function VideoStyleSection({ title, ranks, videoFile }: { title: string, ranks: string[], videoFile: File | null }) {
   const [open, setOpen] = useState(false)
   const [isResetModalOpen, setIsResetModalOpen] = useState(false)
-  const [config, setConfig] = useState(DEFAULT_STYLE)
+  const [config, setConfig] = useState<VideoLayoutConfig>(DEFAULT_VIDEO_STYLE)
   const [newWord, setNewWord] = useState('')
   const [newWordColor, setNewWordColor] = useState('#FFD700')
   const uploadRef = useRef<HTMLInputElement>(null)
 
-  const updateConfig = (fields: Partial<typeof config>) => {
+  const updateConfig = (fields: Partial<VideoLayoutConfig>) => {
     setConfig(prev => ({ ...prev, ...fields }))
   }
 
@@ -136,7 +121,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({ title, ranks,
   }
 
   const confirmReset = () => {
-    setConfig(DEFAULT_STYLE)
+    setConfig(DEFAULT_VIDEO_STYLE)
     setNewWord('')
     setIsResetModalOpen(false)
   }
@@ -163,20 +148,13 @@ export const VideoStyleSection = memo(function VideoStyleSection({ title, ranks,
       try {
         const json = JSON.parse(event.target?.result as string)
         if (json && typeof json === 'object') {
-          const validConfig = {
-            titleBackdrop: json.titleBackdrop || DEFAULT_STYLE.titleBackdrop,
-            subtitle: json.subtitle || DEFAULT_STYLE.subtitle,
-            subtitleColor: json.subtitleColor || DEFAULT_STYLE.subtitleColor,
-            creatorWatermark: json.creatorWatermark || DEFAULT_STYLE.creatorWatermark,
-            creatorWatermarkColor: json.creatorWatermarkColor || DEFAULT_STYLE.creatorWatermarkColor,
-            titleWordColors: Array.isArray(json.titleWordColors) ? json.titleWordColors : config.titleWordColors,
-            titleShadowBlur: typeof json.titleShadowBlur === 'number' ? json.titleShadowBlur : DEFAULT_STYLE.titleShadowBlur,
-            rankShadowBlur: typeof json.rankShadowBlur === 'number' ? json.rankShadowBlur : DEFAULT_STYLE.rankShadowBlur,
-            matchRankColor: typeof json.matchRankColor === 'boolean' ? json.matchRankColor : DEFAULT_STYLE.matchRankColor,
-            textShadow: typeof json.textShadow === 'boolean' ? json.textShadow : DEFAULT_STYLE.textShadow,
-            rankSpacing: typeof json.rankSpacing === 'number' ? json.rankSpacing : DEFAULT_STYLE.rankSpacing,
-            fontFamily: json.fontFamily || DEFAULT_STYLE.fontFamily,
-            rankColors: Array.isArray(json.rankColors) ? json.rankColors : DEFAULT_STYLE.rankColors,
+          // Robustly merge: Defaults -> JSON -> Exclude titleWordColors (accent words)
+          // This ensures any new or optional features in the file are preserved.
+          const { titleWordColors: _ignored, ...savedConfig } = json;
+          const validConfig: VideoLayoutConfig = {
+            ...DEFAULT_VIDEO_STYLE,
+            ...savedConfig,
+            titleWordColors: DEFAULT_VIDEO_STYLE.titleWordColors, // Keep accent words excluded
           }
           setConfig(validConfig)
           setOpen(true)
@@ -364,10 +342,34 @@ export const VideoStyleSection = memo(function VideoStyleSection({ title, ranks,
                     </div>
                   </div>
 
-                  <div
-                    className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.07] rounded-xl cursor-pointer hover:border-white/[0.12] transition-colors self-end"
-                    onClick={() => updateConfig({ textShadow: !config.textShadow })}
-                  >
+                  <div className="space-y-2">
+                    <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Font Sizes</span>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-3 bg-white/[0.03] border border-white/[0.07] rounded-xl p-4">
+                      {[
+                        { label: 'Title', key: 'titleFontSize' as const, min: 40, max: 100 },
+                        { label: 'Rank',  key: 'rankFontSize'  as const, min: 20, max: 100 },
+                      ].map(({ label, key, min, max }) => (
+                        <div key={key} className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[9px] text-slate-500">{label}</span>
+                            <span className="text-[10px] font-mono text-blue-400 tabular-nums w-5 text-right">{config[key] ?? DEFAULT_VIDEO_STYLE[key]}</span>
+                          </div>
+                          <input
+                            type="range" min={min} max={max} step="5"
+                            value={config[key] ?? DEFAULT_VIDEO_STYLE[key]}
+                            onChange={e => updateConfig({ [key]: parseInt(e.target.value) })}
+                            className="w-full accent-blue-500 h-1 bg-white/10 rounded-full appearance-none cursor-pointer"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.07] rounded-xl cursor-pointer hover:border-white/[0.12] transition-colors"
+                  onClick={() => updateConfig({ textShadow: !config.textShadow })}
+                >
                     <div>
                       <p className="text-[11px] font-bold text-slate-300">Text Outline</p>
                       <p className="text-[9px] text-slate-500">Enable black text borders</p>
@@ -375,7 +377,6 @@ export const VideoStyleSection = memo(function VideoStyleSection({ title, ranks,
                     <div className={`w-10 h-5 rounded-full transition-all duration-300 relative shrink-0 ${config.textShadow ? 'bg-blue-600' : 'bg-white/10'}`}>
                       <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${config.textShadow ? 'left-6' : 'left-1'}`} />
                     </div>
-                  </div>
                 </div>
               </div>
             </div>

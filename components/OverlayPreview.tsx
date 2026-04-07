@@ -1,53 +1,16 @@
 'use client'
 import React, { useEffect, useRef, useState, useCallback, useMemo, memo } from 'react'
+import { getDerivedVideoSettings, VIDEO_DIMENSIONS, FONT_MAP, VideoLayoutConfig } from '@/lib/video-settings'
 
 // --- 1. STRICT INTERFACES ---
-interface WordColor {
-  word: string;
-  color: string;
-}
-
-interface LayoutConfig {
-  titleBackdrop: string;
-  subtitle: string;
-  subtitleColor: string;
-  creatorWatermark: string;
-  creatorWatermarkColor: string;
-  titleWordColors: WordColor[];
-  titleShadowBlur: number;
-  rankShadowBlur: number;
-  matchRankColor?: boolean;
-  textShadow?: boolean;
-  rankSpacing?: number;
-  fontFamily?: string;
-  subtitleFontSize?: number;
-  subtitleTopMargin?: number;
-  titleFontSize?: number;
-  titleLineSpacing?: number;
-  titleBoxWidth?: number;
-  titleMaxLines?: number;
-  titleBoxTopPadding?: number;
-  titleBoxBottomPadding?: number;
-  rankFontSize?: number;
-  rankPaddingY?: number;
-  rankBoxWidth?: number;
-  textOutlineWidth?: number;
-  rankColors?: string[];
-}
-
 interface PreviewProps {
-  config: LayoutConfig;
+  config: VideoLayoutConfig;
   videoFile?: File | null;
   title: string;
   ranks: string[];
 }
 
 type FontStatus = 'loading' | 'ready' | 'error';
-
-const FONT_MAP: Record<string, string> = {
-  'Archivo Expanded Bold': 'font.ttf',
-  'Arial Regular': 'Arial-Regular.ttf'
-};
 
 // --- 2. fitText CACHE ---
 const fitTextCache = new Map<string, { size: number; lines: string[] }>();
@@ -94,8 +57,8 @@ function invalidateFitTextCache() {
 }
 
 // --- 3. LAYER CONSTANTS ---
-const W = 540;
-const H = 960;
+const W = VIDEO_DIMENSIONS.WIDTH;
+const H = VIDEO_DIMENSIONS.HEIGHT;
 
 export const OverlayPreview = memo(function OverlayPreview({
   config,
@@ -183,27 +146,7 @@ export const OverlayPreview = memo(function OverlayPreview({
   // ─────────────────────────────────────────────────────────────────────────
   // SERVER CONSTANTS (Explicitly halving config values to match 540x960)
   // ─────────────────────────────────────────────────────────────────────────
-  const SERVER = useMemo(() => ({
-    titleFontSize:                 (config.titleFontSize          ?? 100) * 0.5,
-    titleLineSpacing:              (config.titleLineSpacing       ?? 30)  * 0.5,
-    titleBoxWidth:                 (config.titleBoxWidth          ?? 980) * 0.5,
-    titleMaxLines:                 config.titleMaxLines                   ?? 2,
-    titleBoxTopPadding:            (config.titleBoxTopPadding     ?? 30)  * 0.5,
-    titleBoxBottomPadding:         (config.titleBoxBottomPadding  ?? 40)  * 0.5,
-    subtitleFontSize:              (config.subtitleFontSize       ?? 44)  * 0.5,
-    subtitleTopMargin:             (config.subtitleTopMargin      ?? 10)  * 0.5,
-    rankFontSize:                  (config.rankFontSize           ?? 60)  * 0.5,
-    rankSpacing:                   (config.rankSpacing            ?? 140) * 0.5,
-    rankPaddingY:                  (config.rankPaddingY           ?? 80)  * 0.5,
-    rankNumX:                      22.5, // 45 / 2
-    rankTextX:                     62.5, // 125 / 2
-    rankBoxWidth:                  (config.rankBoxWidth           ?? 830) * 0.5,
-    textOutlineWidth:              (config.textOutlineWidth       ?? 18)  * 0.5,
-    watermarkFontSize:             24,   // 48 / 2
-    watermarkPadding:              10,   // 20 / 2
-    creatorWatermarkFontSize:      22,   // 44 / 2
-    creatorWatermarkBottomPadding: 40,   // 80 / 2
-  }), [config]);
+  const SERVER = useMemo(() => getDerivedVideoSettings(config, 0.5), [config]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // LAYER A — Background / video frame

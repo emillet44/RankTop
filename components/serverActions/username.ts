@@ -2,12 +2,11 @@
 
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
+import { syncUserToAlgolia } from "@/lib/AlgoliaSync"
 
 export async function UniqueUsername(username: string) {
   // Case-insensitive check for reserved names
-  if (username.toLowerCase() === "guest") {
-    return true;
-  }
+  if (username.toLowerCase() === "guest") return true;
 
   // Case-insensitive uniqueness check
   const unique = await prisma.user.findFirst({
@@ -26,7 +25,7 @@ export async function UniqueUsername(username: string) {
 export async function CreateUsername(username: string, userid: string) {
   const normalizedUsername = username.trim();
   try {
-    await prisma.$transaction(async (tx) => {
+    const updatedUser = await prisma.$transaction(async (tx) => {
       // 1. Double-check uniqueness inside the transaction for safety
       const exists = await tx.user.findFirst({
         where: { 
@@ -39,16 +38,13 @@ export async function CreateUsername(username: string, userid: string) {
 
       if (exists && exists.id !== userid) throw new Error("Username taken");
 
-      // 2. Update the User (Removed the 'username: null' check so it works for 
-      // users changing their auto-generated handles)
-      await tx.user.update({
+      // 2. Update user record
+      const user = await tx.user.update({
         where: { id: userid },
         data: { username: normalizedUsername },
       });
 
-      // 3. Update associated content
-      // We check for username: null OR just update all by authorId 
-      // to ensure consistency across the site.
+      // 3. Keep username consistent on posts and comments
       await tx.posts.updateMany({
         where: { authorId: userid },
         data: { username: normalizedUsername },
@@ -58,10 +54,23 @@ export async function CreateUsername(username: string, userid: string) {
         where: { userId: userid },
         data: { username: normalizedUsername },
       });
+
+      return user;
     });
+
+    // 4. Update the Algolia search index
+    if (updatedUser) {
+      try {
+        await syncUserToAlgolia(updatedUser);
+      } catch (algoliaError) {
+        // We log Algolia errors separately so the DB success still counts
+        console.error("Algolia User Sync Error:", algoliaError);
+      }
+    }
 
     revalidatePath(`/user/${normalizedUsername}`);
     revalidatePath('/');
+    
     return true;
   } catch (error) {
     console.error("Transaction Error:", error);

@@ -335,7 +335,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                     className="text-lg md:text-2xl font-semibold outline-none w-full bg-white/[0.02] border border-white/15 rounded-xl px-4 py-3 placeholder-slate-600 focus:border-blue-500/50 transition-all" 
                     required 
                     pattern="[^:'\\%{}]*\S[^:'\\%{}]*" 
-                    maxLength={40} 
+                    maxLength={55} 
                   />
                 </div>
 

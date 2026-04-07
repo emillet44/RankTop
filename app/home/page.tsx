@@ -1,6 +1,5 @@
 import { Header } from "../../components/headers/Header";
 import { Footer } from "@/components/Footer";
-import { AlgoliaUpdate } from "@/components/search/AlgoliaUpdate";
 import { LoadBatchCat } from "@/components/serverActions/loadposts";
 import { Metadata } from 'next'
 import PostList from "@/components/PostList";
@@ -21,11 +20,9 @@ export const metadata: Metadata = {
 //page should also host the "Sort by" selector with options for views, likes, and categories in the future.
 export default async function Home() {
 
-  //AlgoliaUpdate();
   //UpdatePostViews();
 
   const starter = await LoadBatchCat(0, "None");
-
   return (
     <div className="flex flex-col min-h-screen">
       <Header />

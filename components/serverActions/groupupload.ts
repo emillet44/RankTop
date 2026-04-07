@@ -2,12 +2,14 @@
 
 import { prisma } from "@/lib/prisma"
 import { upload } from "./imgupload";
+import { syncGroupToAlgolia } from "@/lib/AlgoliaSync";
 
-//This server action will fetch any image blobs uploaded by the user based on their urls(already created for generating image previews), and send them to imgupload for uploading.
-//Then it uploads the list to the database, and it also loads the sign in state to determine whether to add an author to the post or not.
-
+/**
+ * Server action to handle the creation of a new group.
+ * It creates the group in the database, connects the admin, 
+ * handles image uploads, and syncs to Algolia if the group is public.
+ */
 export async function newGroup(formData: FormData) {
-
   const images: Record<string, Blob> = {};
 
   formData.forEach((value, key) => {
@@ -16,28 +18,42 @@ export async function newGroup(formData: FormData) {
     }
   })
 
-  const data = JSON.stringify(Object.fromEntries(formData));
-  const formDataObj = JSON.parse(data);
+  // Extract form data
+  const data = Object.fromEntries(formData);
+  const isPrivate = data.visibility === "private";
 
+  // 1. Create the Group in Prisma
   const Group = await prisma.groups.create({
     data: {
-      name: formDataObj.groupname,
-      password: formDataObj.password,
+      name: data.groupname as string,
+      password: data.password as string,
       invite: false,
-      private: formDataObj.visibility === "private",
+      private: isPrivate,
       bannerimg: images["bannerimage"] != null,
       profileimg: images["profileimage"] != null,
     }
   });
+
+  // 2. Connect the creator as an admin
   const updatedGroup = await prisma.groups.update({
     where: { id: Group.id },
     data: {
       admins: {
-        connect: { id: formDataObj.userid }
+        connect: { id: data.userid as string }
       },
     },
   });
 
+  // 3. Sync to Algolia ONLY if the group is not private
+  if (!isPrivate) {
+    try {
+      await syncGroupToAlgolia(Group);
+    } catch (error) {
+      console.error("Failed to sync group to Algolia:", error);
+    }
+  }
+
+  // 4. Handle image uploads if present
   if(images["bannerimage"] != null) {
     upload(images["bannerimage"], Group.id + "banner.png");
   }
@@ -45,5 +61,5 @@ export async function newGroup(formData: FormData) {
     upload(images["profileimage"], Group.id + "profile.png");
   }
 
-  return (Group.id);
+  return Group.id;
 }
