@@ -103,7 +103,17 @@ function SectionLabel({ label, hint }: { label: string; hint?: string }) {
 }
 
 // --- 5. MAIN COMPONENT ---
-export const VideoStyleSection = memo(function VideoStyleSection({ title, ranks, videoFile }: { title: string, ranks: string[], videoFile: File | null }) {
+export const VideoStyleSection = memo(function VideoStyleSection({ 
+  title, 
+  ranks, 
+  videoFile,
+  onConfigChange
+}: { 
+  title: string, 
+  ranks: string[], 
+  videoFile: File | null,
+  onConfigChange?: (config: VideoLayoutConfig) => void
+}) {
   const [open, setOpen] = useState(false)
   const [isResetModalOpen, setIsResetModalOpen] = useState(false)
   const [config, setConfig] = useState<VideoLayoutConfig>(DEFAULT_VIDEO_STYLE)
@@ -112,7 +122,11 @@ export const VideoStyleSection = memo(function VideoStyleSection({ title, ranks,
   const uploadRef = useRef<HTMLInputElement>(null)
 
   const updateConfig = (fields: Partial<VideoLayoutConfig>) => {
-    setConfig(prev => ({ ...prev, ...fields }))
+    setConfig(prev => {
+      const next = { ...prev, ...fields };
+      if (onConfigChange) onConfigChange(next);
+      return next;
+    })
   }
 
   const handleResetRequest = (e: React.MouseEvent) => {
@@ -121,7 +135,9 @@ export const VideoStyleSection = memo(function VideoStyleSection({ title, ranks,
   }
 
   const confirmReset = () => {
-    setConfig(DEFAULT_VIDEO_STYLE)
+    const next = DEFAULT_VIDEO_STYLE;
+    setConfig(next)
+    if (onConfigChange) onConfigChange(next);
     setNewWord('')
     setIsResetModalOpen(false)
   }
@@ -157,6 +173,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({ title, ranks,
             titleWordColors: DEFAULT_VIDEO_STYLE.titleWordColors, // Keep accent words excluded
           }
           setConfig(validConfig)
+          if (onConfigChange) onConfigChange(validConfig);
           setOpen(true)
         }
       } catch (err) {

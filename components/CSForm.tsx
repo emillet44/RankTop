@@ -12,6 +12,7 @@ import VideoInputSection from "./VideoInput"
 import OptionalSettingsSection from "./PostOptions"
 import { SubmissionOverlay } from "./SubmissionOverlay"
 import { VideoStyleSection } from "./VideoStyleSection"
+import { DEFAULT_VIDEO_STYLE, VideoLayoutConfig } from "@/lib/video-settings"
 
 interface ImageData {
   file: File | null;
@@ -86,6 +87,12 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
 
   const [videoMode, setVideoMode] = useState<'auto' | 'pre-edited'>('auto');
   const [preEditedData, setPreEditedData] = useState<PreEditedData>({ file: null, endTime: null, timestamps: [] });
+
+  const [config, setConfig] = useState<VideoLayoutConfig>(DEFAULT_VIDEO_STYLE);
+
+  const handleConfigChange = useCallback((newConfig: VideoLayoutConfig) => {
+    setConfig(newConfig);
+  }, []);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -392,6 +399,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                   title={previewData.title}
                   ranks={previewData.ranks.slice(0, ranks)}
                   videoFile={videoMode === 'pre-edited' ? preEditedData.file : videoData[0]?.file}
+                  onConfigChange={handleConfigChange}
                 />
               }
 
@@ -482,6 +490,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                         videoMode={videoMode}
                         timestamps={preEditedData.timestamps}
                         endTime={preEditedData.endTime}
+                        layoutConfig={config}
                       />
                     )}
                   </div>

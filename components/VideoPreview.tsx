@@ -1,7 +1,8 @@
 'use client'
 import React, { useState, useCallback, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSpinner, faExclamationTriangle, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner, faExclamationTriangle, faPlayCircle, faSync } from '@fortawesome/free-solid-svg-icons';
+import { VideoLayoutConfig } from '@/lib/video-settings';
 
 interface Timestamp {
   rankIndex: number;
@@ -17,6 +18,7 @@ interface VideoPreviewProps {
   videoMode?: 'auto' | 'pre-edited';
   timestamps?: Timestamp[];
   endTime?: number | null;
+  layoutConfig: VideoLayoutConfig;
 }
 
 const VideoPreview: React.FC<VideoPreviewProps> = ({
@@ -27,6 +29,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
   videoMode = 'auto',
   timestamps,
   endTime,
+  layoutConfig,
 }) => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -75,7 +78,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
             setProgress(prev => Math.min(prev + 1, 95));
           }
 
-          if (attempts > 60) {
+          if (attempts > 90) { // Increased timeout for potentially heavier renders
             clearInterval(pollInterval);
             reject(new Error('Rendering timed out'));
           }
@@ -99,14 +102,11 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
       const sessionId = `session_${Date.now()}`;
 
       if (videoMode === 'pre-edited') {
-        // ── PRE-EDITED PREVIEW PIPELINE ──────────────────────────────────
-
         const file = videoFiles[0];
         if (!file) throw new Error('No pre-edited video file found.');
         if (!timestamps || timestamps.length === 0) throw new Error('No timestamps provided.');
         if (endTime == null) throw new Error('No end time provided.');
 
-        // 1. Get signed upload URL for single source file
         setStatusMessage('Preparing upload...');
         setProgress(5);
 
@@ -118,14 +118,12 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
         const urlData = await urlRes.json();
         if (!urlRes.ok || !urlData.uploadUrl) throw new Error(urlData.error || 'Failed to get upload URL');
 
-        // 2. Upload the source file
         setStatusMessage('Uploading video...');
         await uploadWithProgress(urlData.uploadUrl, file, (pct) => {
-          setProgress(Math.round(5 + pct * 0.45)); // 5% → 50%
+          setProgress(Math.round(5 + pct * 0.45));
           setStatusMessage(`Uploading video... ${Math.round(pct)}%`);
         });
 
-        // 3. Trigger pre-edited render via Cloud Task
         setStatusMessage('Queuing render...');
         setProgress(55);
 
@@ -140,11 +138,11 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
             filePath: urlData.filePath,
             timestamps,
             endTime,
+            layoutConfig,
           })
         });
         if (!triggerRes.ok) throw new Error('Failed to start rendering task');
 
-        // 4. Poll for result
         setStatusMessage('Rendering preview...');
         const resultUrl = await pollForResult(sessionId);
 
@@ -152,20 +150,21 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
         setProgress(100);
 
       } else {
-        // ── AUTO-STITCH PREVIEW PIPELINE ─────────────────────────────────
-
-        // 1. Get Upload URLs
         setStatusMessage('Preparing upload...');
         const urlRes = await fetch('/api/video/preview', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'getUploadUrls', videoCount: videoFiles.length, sessionId })
+          body: JSON.stringify({ 
+            action: 'getUploadUrls', 
+            videoCount: videoFiles.length, 
+            sessionId,
+            fileTypes: videoFiles.map(f => f.type)
+          })
         });
         const { uploadUrls, filePaths } = await urlRes.json();
 
         if (onSessionCreated) onSessionCreated(sessionId, filePaths);
 
-        // 2. Upload files (0–50%)
         setStatusMessage('Uploading clips...');
         for (let i = 0; i < videoFiles.length; i++) {
           const file = videoFiles[i];
@@ -176,7 +175,6 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
           });
         }
 
-        // 3. Trigger Cloud Task
         setStatusMessage('Queuing render...');
         setProgress(55);
         const triggerRes = await fetch('/api/video/preview', {
@@ -187,12 +185,12 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
             sessionId,
             title: title || 'Ranked Post',
             ranks: ranks.filter(r => r.trim() !== ''),
-            filePaths
+            filePaths,
+            layoutConfig,
           })
         });
         if (!triggerRes.ok) throw new Error('Failed to start rendering task');
 
-        // 4. Poll for result
         setStatusMessage('Rendering preview...');
         const resultUrl = await pollForResult(sessionId);
 
@@ -206,44 +204,48 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
       setProcessing(false);
       processingRef.current = false;
     }
-  }, [videoFiles, ranks, title, onSessionCreated, videoMode, timestamps, endTime]);
+  }, [videoFiles, ranks, title, onSessionCreated, videoMode, timestamps, endTime, layoutConfig]);
 
   return (
-    <div className="w-full max-w-[400px] mx-auto bg-slate-700/30 rounded-lg p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-bold text-white">{title || 'Preview'}</h3>
+    <div className="w-full max-w-[400px] mx-auto bg-slate-800/40 backdrop-blur-md rounded-2xl border border-white/10 p-5 shadow-2xl">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-bold text-white tracking-tight">{title || 'Preview'}</h3>
         <button
           onClick={processVideos}
           disabled={processing}
-          className={`px-3 py-2 rounded-md transition-all text-sm font-medium ${
-            processing ? 'opacity-50 cursor-not-allowed bg-slate-600' : 'bg-blue-600 hover:bg-blue-700'
+          className={`group flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-xs font-bold uppercase tracking-widest ${
+            processing 
+              ? 'bg-slate-700 text-slate-500 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 active:scale-95'
           }`}
         >
-          {processing ? 'Processing' : videoUrl ? 'Refresh' : 'Generate'}
+          <FontAwesomeIcon icon={videoUrl ? faSync : faPlayCircle} className={processing ? 'animate-spin' : 'group-hover:scale-110 transition-transform'} />
+          {processing ? 'Processing' : videoUrl ? 'Regenerate' : 'Generate'}
         </button>
       </div>
 
-      <div className="relative bg-black rounded-lg overflow-hidden aspect-[9/16] w-full max-w-[400px] mx-auto">
+      <div className="relative bg-black rounded-xl overflow-hidden aspect-[9/16] w-full max-w-[280px] mx-auto border border-slate-700 shadow-2xl">
         {processing ? (
-          <div className="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center p-6 text-center">
-            <FontAwesomeIcon icon={faSpinner} className="h-10 w-10 mb-4 animate-spin text-blue-400" />
-            <p className="text-white font-medium mb-2">{statusMessage}</p>
-            <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
-              <div className="bg-blue-500 h-full transition-all duration-300" style={{ width: `${progress}%` }} />
+          <div className="absolute inset-0 bg-slate-900/95 z-20 flex flex-col items-center justify-center p-8 text-center backdrop-blur-sm">
+            <div className="w-12 h-12 rounded-full border-4 border-slate-800 border-t-blue-500 animate-spin mb-6" />
+            <p className="text-white font-bold text-sm mb-3 tracking-wide">{statusMessage}</p>
+            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mb-2">
+              <div className="bg-gradient-to-r from-blue-600 to-cyan-400 h-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
             </div>
-            <p className="text-xs text-slate-400 mt-2">{progress}%</p>
+            <p className="text-[10px] font-mono text-slate-500 uppercase tracking-tighter">{progress}% Complete</p>
           </div>
         ) : videoUrl ? (
           <video src={videoUrl} controls autoPlay loop playsInline className="w-full h-full object-cover" />
         ) : error ? (
-          <div className="flex flex-col items-center justify-center h-full text-red-400 p-4 text-center">
-            <FontAwesomeIcon icon={faExclamationTriangle} className="h-8 w-8 mb-2" />
-            <p className="text-sm">{error}</p>
+          <div className="flex flex-col items-center justify-center h-full text-red-400 p-6 text-center bg-red-950/20">
+            <div className="w-12 h-12 rounded-full bg-red-950/40 flex items-center justify-center mb-4 border border-red-900/50">
+              <FontAwesomeIcon icon={faExclamationTriangle} className="h-5 w-5" />
+            </div>
+            <p className="text-xs font-bold uppercase tracking-wider mb-2">Generation Failed</p>
+            <p className="text-xs text-red-300/70 leading-relaxed">{error}</p>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-slate-500">
-            <FontAwesomeIcon icon={faPlayCircle} className="h-12 w-12 mb-2 opacity-50" />
-            <p>Click Generate to preview</p>
+          <div className="flex flex-col items-center justify-center h-full bg-slate-900">
           </div>
         )}
       </div>
