@@ -97,6 +97,7 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
   const views = await runReport(`/post/${params.id}`);
   const editable = views < 10;
   const videoThumbnail = `https://storage.googleapis.com/ranktop-v-thumb/${params.id}.jpg`;
+  const enableReRanking = false; // Set to true when feature is ready
 
   let dateStr: string = "";
   if (post.metadata) {
@@ -173,7 +174,7 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
                 </>
               )}
               {/* Temporarily disabled re-ranking feature */}
-              {1 === 2 && (
+              {enableReRanking && (
                 <button className="outline outline-2 outline-blue-700 rounded-md p-2 bg-blue-500 hover:bg-opacity-20 bg-opacity-10 text-blue-400 h-10 whitespace-nowrap">
                   <Link href={`/post/${params.id}/rerank`}>Re-rank</Link>
                 </button>
