@@ -5,7 +5,9 @@ import { runReport } from "./pageview";
 
 export async function UpdatePostViews() {
   console.log("Updating views")
-  const allposts = await prisma.posts.findMany();
+  const allposts = await prisma.posts.findMany({
+    select: { id: true }
+  });
 
   const viewdata: Record<string, number> = {};
 

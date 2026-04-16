@@ -5,7 +5,6 @@ import { faExclamationTriangle, faCheckCircle } from '@fortawesome/free-solid-sv
 import { useRouter } from 'next/navigation';
 import { newList } from '@/components/serverActions/listupload';
 import { upload } from '@/components/serverActions/imgupload';
-import { getSignedGCSUrl } from '@/lib/signedurls';
 
 interface Timestamp {
   rankIndex: number;
@@ -105,15 +104,23 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
     if (started.current) return;
     started.current = true;
 
+    const getApiRoute = (type: 'pre-edited' | 'final') => {
+      if (process.env.NEXT_PUBLIC_LOCAL_VIDEO_SERVICE === 'true') {
+        return '/api/video/local';
+      }
+      return `/api/video/${type}`;
+    };
+
     const pollStatus = async (postId: string, route: 'final' | 'pre-edited') => {
       let attempts = 0;
       const maxAttempts = 300;
+      const apiRoute = getApiRoute(route);
       while (attempts < maxAttempts) {
         try {
-          const res = await fetch(`/api/video/${route}`, {
+          const res = await fetch(apiRoute, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'checkStatus', postId }),
+            body: JSON.stringify({ action: 'checkStatus', postId, videoMode: route }),
           });
           if (res.ok) {
             const data = await res.json();
@@ -169,7 +176,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
         scheduleProgress(5);
         const sessionId = `pre_${Date.now()}`;
 
-        const urlRes = await fetch('/api/video/pre-edited', {
+        const urlRes = await fetch(getApiRoute('pre-edited'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -189,7 +196,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
         setMessage('Starting render...');
         const payload = extractTextPayload(formData);
-        const triggerRes = await fetch('/api/video/pre-edited', {
+        const triggerRes = await fetch(getApiRoute('pre-edited'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -211,7 +218,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
         if (!filePaths || filePaths.length === 0) {
           setMessage('Preparing storage...');
-          const urlRes = await fetch('/api/video/final', {
+          const urlRes = await fetch(getApiRoute('final'), {
             method: 'POST',
             body: JSON.stringify({
               action: 'getUploadUrls',
@@ -245,7 +252,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
         setMessage('Starting render...');
         const payload = extractTextPayload(formData);
-        const triggerRes = await fetch('/api/video/final', {
+        const triggerRes = await fetch(getApiRoute('final'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

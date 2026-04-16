@@ -6,6 +6,11 @@ import { VideoDisplay } from "./VideoDisplay"
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LoadBatch, LoadBatchCat } from "./serverActions/loadposts";
 
+interface Item {
+  text: string;
+  note?: string | null;
+}
+
 export default function PostsList({ starter }: { starter: any }) {
   const [posts, setPosts] = useState(starter);
   const [loading, setLoading] = useState(false);
@@ -236,15 +241,13 @@ export default function PostsList({ starter }: { starter: any }) {
                 {list.metadata?.videos && list.metadata.videoUrl ? (
                   <VideoDisplay videoUrl={list.metadata.videoUrl} title={list.title} postId={list.id} variant="preview" />
                 ) : list.metadata?.images ? (
-                  <ListCarousel ranks={[list.rank1, list.rank2, list.rank3, list.rank4, list.rank5]} postid={list.id} firstimage={index === 0} />
+                  <ListCarousel items={list.items} postid={list.id} firstimage={index === 0} />
                 ) : (
                   <div className="p-4 bg-white/[0.03] space-y-3">
                     <ol className="space-y-2 list-decimal list-inside text-slate-400 text-base md:text-lg">
-                      <li className="truncate pl-2"><span className="text-slate-300">{list.rank1}</span></li>
-                      <li className="truncate pl-2"><span className="text-slate-300">{list.rank2}</span></li>
-                      {list.rank3 && <li className="truncate pl-2"><span className="text-slate-300">{list.rank3}</span></li>}
-                      {list.rank4 && <li className="truncate pl-2"><span className="text-slate-300">{list.rank4}</span></li>}
-                      {list.rank5 && <li className="truncate pl-2"><span className="text-slate-300">{list.rank5}</span></li>}
+                      {(list.items as any as Item[]).map((item, idx) => (
+                        <li key={idx} className="truncate pl-2"><span className="text-slate-300">{item.text}</span></li>
+                      ))}
                     </ol>
                   </div>
                 )}

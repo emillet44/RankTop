@@ -12,6 +12,11 @@ export async function generateMetadata(props: { params: Promise<{ results: strin
   }
 }
 
+interface Item {
+  text: string;
+  note?: string | null;
+}
+
 //Uses loadposts server action to load results of the search query, displayed in grid format.
 export default async function Results(props: { params: Promise<{ results: string }> }) {
   const params = await props.params;
@@ -23,24 +28,26 @@ export default async function Results(props: { params: Promise<{ results: string
       <Header />
       <div className="min-h-[calc(100vh-52px)] pt-14">
         <header className="text-3xl text-slate-400 pl-16 pt-16">Results</header>
-        <div className=" pt-4 px-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-10"> {results?.map((list: any) => (
-          <div className="outline outline-slate-700 rounded-md p-5 bg-slate-50 bg-opacity-5 hover:scale-105" key={list.id}>
-            <Link href={`/post/${list.id}`}>
-              <button className="h-44 w-full">
-                <div className="h-44 text-left">
-                  <header className="text-2xl line-clamp-2 text-slate-400">{list.title}</header>
-                  <ul className="list-inside list-decimal text-slate-400">
-                    <li className="truncate text-slate-400">{list.rank1}</li>
-                    <li className="truncate text-slate-400">{list.rank2}</li>
-                    <li className="empty:hidden truncate text-slate-400">{list.rank3}</li>
-                    <li className="empty:hidden truncate text-slate-400">{list.rank4}</li>
-                    <li className="empty:hidden truncate text-slate-400">{list.rank5}</li>
-                  </ul>
-                </div>
-              </button>
-            </Link>
-          </div>
-        ))}
+        <div className=" pt-4 px-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-10"> {results?.map((list: any) => {
+          const items = (list.items as any as Item[]) || [];
+          
+          return (
+            <div className="outline outline-slate-700 rounded-md p-5 bg-slate-50 bg-opacity-5 hover:scale-105" key={list.id}>
+              <Link href={`/post/${list.id}`}>
+                <button className="h-44 w-full">
+                  <div className="h-44 text-left">
+                    <header className="text-2xl line-clamp-2 text-slate-400">{list.title}</header>
+                    <ul className="list-inside list-decimal text-slate-400">
+                      {items.map((item, idx) => (
+                        <li key={idx} className="truncate text-slate-400">{item.text}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </button>
+              </Link>
+            </div>
+          );
+        })}
         </div>
       </div>
 

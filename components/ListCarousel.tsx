@@ -8,7 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { fetchImageMetadata } from './serverActions/findimage';
 
-export function ListCarousel({ ranks, postid, firstimage }: { ranks: (string | null)[], postid: string, firstimage: boolean }) {
+export function ListCarousel({ items, postid, firstimage }: { items: { text: string; note?: string | null }[], postid: string, firstimage: boolean }) {
   const [index, setIndex] = useState(0);
   
   const fetcher = async () => {
@@ -28,7 +28,7 @@ export function ListCarousel({ ranks, postid, firstimage }: { ranks: (string | n
     if (direction === "left" && index > 0) {
       setIndex(index - 1);
     } 
-    if (direction === "right" && ranks[index + 1] != null) {
+    if (direction === "right" && items[index + 1] != null) {
       setIndex(index + 1);
     }
   };
@@ -37,7 +37,7 @@ export function ListCarousel({ ranks, postid, firstimage }: { ranks: (string | n
     <div className="space-y-3 relative">
       <div className="flex items-center justify-between px-4 pt-4 relative z-10">
         <span className="text-sm font-bold text-slate-400">
-          #{index + 1} <span className="ml-1 font-medium text-slate-500 tracking-wide">{ranks[index]}</span>
+          #{index + 1} <span className="ml-1 font-medium text-slate-500 tracking-wide">{items[index]?.text}</span>
         </span>
         <div className="flex space-x-1">
           <button 
@@ -49,7 +49,7 @@ export function ListCarousel({ ranks, postid, firstimage }: { ranks: (string | n
           </button>
           <button 
             onClick={(e) => changeImage(e, "right")} 
-            disabled={ranks[index + 1] == null}
+            disabled={items[index + 1] == null}
             className="w-7 h-7 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-slate-500 hover:text-offwhite hover:bg-white/10 disabled:opacity-20 transition-all"
           >
             <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
@@ -65,7 +65,7 @@ export function ListCarousel({ ranks, postid, firstimage }: { ranks: (string | n
         ) : images[index] ? (
           <Image 
             src={images[index]} 
-            alt={`Rank ${index + 1}: ${ranks[index]}`} 
+            alt={`Rank ${index + 1}: ${items[index]?.text}`} 
             fill
             priority={firstimage && index === 0} 
             className="object-contain transition-transform duration-500 group-hover/image:scale-[1.02]"

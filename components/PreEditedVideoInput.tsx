@@ -513,6 +513,7 @@ export default function PreEditedVideoInput({ ranks, onTimestampsChange }: PreEd
           {/* ── Video player ── */}
           <div className="relative rounded-xl bg-black flex items-center justify-center">
             <video
+              playsInline
               ref={videoRef}
               src={videoUrl ?? undefined}
               className="w-full max-h-72 rounded-xl"

@@ -2,5 +2,8 @@ node_modules/
 .next/
 .DS_STORE
 .env
-.vercel
 .env*.local
+.vercel
+.playwright-mcp
+app/api/video/local
+video-processor

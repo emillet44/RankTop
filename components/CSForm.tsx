@@ -156,12 +156,23 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
 
   const handleDrop = useCallback((e: any, dropIndex: number) => {
     e.preventDefault();
-    if (draggedIndex.current !== null && draggedIndex.current !== dropIndex) {
-      if (postType === 'image') swapImages(draggedIndex.current, dropIndex);
-      else if (postType === 'video') swapVideos(draggedIndex.current, dropIndex);
+
+    // If draggedIndex is set, this is an internal reorder
+    if (draggedIndex.current !== null) {
+      if (draggedIndex.current !== dropIndex) {
+        if (postType === 'image') swapImages(draggedIndex.current, dropIndex);
+        else if (postType === 'video') swapVideos(draggedIndex.current, dropIndex);
+      }
+      draggedIndex.current = null;
+      return;
     }
-    draggedIndex.current = null;
-  }, [postType, swapImages, swapVideos]);
+
+    // Otherwise it's an external file drop
+    const file = e.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      updateImageData(dropIndex, { file, url: URL.createObjectURL(file) });
+    }
+  }, [postType, swapImages, swapVideos, updateImageData]);
 
   const handleFileChange = useCallback((e: any, index: number) => {
     const file = e.target.files?.[0];
@@ -294,21 +305,21 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
         <div className="relative overflow-visible p-5 sm:p-8 rounded-2xl border border-white/15 bg-black/25 backdrop-blur-md w-full max-w-2xl flex flex-col">
           <div className="relative overflow-visible flex flex-col">
             <div className={`transition-all duration-300 ease-in-out ${showPreview ? '-translate-x-full opacity-0 h-0 overflow-hidden' : 'translate-x-0 opacity-100'} grid grid-cols-1 gap-8 pt-2`}>
-              
+
               {/* Form Header */}
               <div className="flex items-center justify-between border-b border-white/10 pb-8 gap-4">
                 <div className="min-w-0">
                   <h1 className="text-2xl sm:text-3xl font-bold text-slate-100 tracking-tight truncate">Create Post</h1>
                   <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Share your rankings</p>
                 </div>
-                
+
                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                   <label className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ranks</label>
                   <div className="flex items-center bg-white/10 border border-white/10 rounded-lg overflow-hidden h-9">
-                    <button 
+                    <button
                       type="button"
-                      onClick={() => changeRank(-1)} 
-                      disabled={ranks === 2} 
+                      onClick={() => changeRank(-1)}
+                      disabled={ranks === 2}
                       className="w-10 h-full flex items-center justify-center text-xl text-slate-300 hover:bg-white/10 disabled:opacity-20 transition-all border-r border-white/10"
                     >
                       <FontAwesomeIcon icon={faMinus} className="w-3.5 h-3.5" />
@@ -316,10 +327,10 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                     <span className="w-10 h-full flex items-center justify-center font-bold text-slate-100 bg-white/5">
                       {ranks}
                     </span>
-                    <button 
+                    <button
                       type="button"
-                      onClick={() => changeRank(1)} 
-                      disabled={ranks === 5} 
+                      onClick={() => changeRank(1)}
+                      disabled={ranks === 5}
                       className="w-10 h-full flex items-center justify-center text-xl text-slate-300 hover:bg-white/10 disabled:opacity-20 transition-all border-l border-white/10"
                     >
                       <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
@@ -335,14 +346,14 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
               <div className="space-y-6">
                 <div className="relative group">
                   <label className="absolute -top-2 left-2 px-1 bg-[#0a0a0a] text-[10px] font-bold text-slate-400 uppercase tracking-widest z-10">Title</label>
-                  <input 
-                    name="title" 
-                    onBlur={handleInputChange} 
-                    placeholder="What are you ranking?" 
-                    className="text-lg md:text-2xl font-semibold outline-none w-full bg-white/[0.02] border border-white/15 rounded-xl px-4 py-3 placeholder-slate-600 focus:border-blue-500/50 transition-all" 
-                    required 
-                    pattern="[^:'\\%{}]*\S[^:'\\%{}]*" 
-                    maxLength={55} 
+                  <input
+                    name="title"
+                    onBlur={handleInputChange}
+                    placeholder="What are you ranking?"
+                    className="text-lg md:text-2xl font-semibold outline-none w-full bg-white/[0.02] border border-white/15 rounded-xl px-4 py-3 placeholder-slate-600 focus:border-blue-500/50 transition-all"
+                    required
+                    pattern="[^:'\\%{}]*\S[^:'\\%{}]*"
+                    maxLength={55}
                   />
                 </div>
 
@@ -351,24 +362,24 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                     <div key={index} className="space-y-2">
                       <div className="relative flex items-center group w-full">
                         <span className="absolute left-4 text-[10px] font-bold text-blue-400 uppercase tracking-widest">#{index + 1}</span>
-                        <input 
-                          name={`r${index + 1}`} 
-                          onBlur={handleInputChange} 
+                        <input
+                          name={`r${index + 1}`}
+                          onBlur={handleInputChange}
                           placeholder={`Rank ${index + 1}`}
-                          className="w-full text-base md:text-xl font-semibold bg-white/[0.05] border border-white/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:border-blue-500/40 focus:bg-white/[0.08] transition-all text-slate-100 placeholder-slate-600" 
-                          required 
-                          pattern="[^:'\\%{}]*\S[^:'\\%{}]*" 
-                          maxLength={80} 
+                          className="w-full text-base md:text-xl font-semibold bg-white/[0.05] border border-white/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:border-blue-500/40 focus:bg-white/[0.08] transition-all text-slate-100 placeholder-slate-600"
+                          required
+                          pattern="[^:'\\%{}]*\S[^:'\\%{}]*"
+                          maxLength={80}
                         />
                       </div>
                       {showRankNotes && (
                         <div className="pl-4 flex items-center gap-3">
                           <div className="w-px h-6 bg-white/20 ml-6" />
-                          <input 
-                            name={`r${index + 1}_note`} 
-                            className="flex-1 text-xs bg-transparent border-b border-white/10 pb-1 outline-none focus:border-blue-400/50 transition-all text-slate-300 placeholder-slate-600" 
-                            placeholder="Add a quick note..." 
-                            maxLength={50} 
+                          <input
+                            name={`r${index + 1}_note`}
+                            className="flex-1 text-xs bg-transparent border-b border-white/10 pb-1 outline-none focus:border-blue-400/50 transition-all text-slate-300 placeholder-slate-600"
+                            placeholder="Add a quick note..."
+                            maxLength={50}
                           />
                         </div>
                       )}
@@ -505,19 +516,18 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
               type="button"
               onClick={togglePreview}
               disabled={!showPreview && !canPreview()}
-              className={`w-full py-4 px-6 rounded-xl text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${
-                showPreview 
-                  ? 'bg-white/10 text-slate-200 hover:bg-white/20 border border-white/10' 
-                  : !canPreview() 
-                    ? 'bg-white/5 text-slate-600 border border-white/5 cursor-not-allowed' 
+              className={`w-full py-4 px-6 rounded-xl text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${showPreview
+                  ? 'bg-white/10 text-slate-200 hover:bg-white/20 border border-white/10'
+                  : !canPreview()
+                    ? 'bg-white/5 text-slate-600 border border-white/5 cursor-not-allowed'
                     : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10 hover:border-white/20'
-              }`}
+                }`}
             >
               {showPreview ? 'Edit Details' : 'Preview Post'}
             </button>
-            <button 
-              type="submit" 
-              disabled={!!submissionData} 
+            <button
+              type="submit"
+              disabled={!!submissionData}
               className="w-full py-4 px-6 rounded-xl text-[11px] font-bold uppercase tracking-[0.2em] bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submissionData ? 'Processing...' : 'Create Post'}

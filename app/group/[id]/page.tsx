@@ -13,6 +13,11 @@ import Image from "next/image";
 //so even if a signed out user arrives they will not see the join button. States[0] stores the signed in state which allows this to work. It really needs to be changed to something
 //more descriptive at some point but right now the states array is extremely useful.
 
+interface Item {
+  text: string;
+  note?: string | null;
+}
+
 export default async function Group(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const { signedin, userid } = await getSessionData();
@@ -85,26 +90,28 @@ export default async function Group(props: { params: Promise<{ id: string }> }) 
             }
           </div>
           <div className="grid grid-cols-1 w-full max-w-2xl justify-items-center auto-rows-min">
-            {gposts.map((list: any, index: number) => (
-              <Link href={`/post/${list.id}`} className="w-full" key={list.id}>
-                {list.metadata?.images &&
-                  <div className="py-8 sm:border-x border-b border-slate-700">
-                    <header className="pl-8 text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
-                    <ListCarousel ranks={[list.rank1, list.rank2, list.rank3, list.rank4, list.rank5]} postid={list.id} firstimage={index === 0} />
-                  </div>
-                }
-                {!list.metadata?.images &&
-                  <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8 sm:border-x border-b border-slate-700">
-                    <header className="text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
-                    <li className="truncate text-xl text-slate-400">{list.rank1}</li>
-                    <li className="truncate text-xl text-slate-400">{list.rank2}</li>
-                    <li className="empty:hidden truncate text-xl text-slate-400">{list.rank3}</li>
-                    <li className="empty:hidden truncate text-xl text-slate-400">{list.rank4}</li>
-                    <li className="empty:hidden truncate text-xl text-slate-400">{list.rank5}</li>
-                  </ul>
-                }
-              </Link>
-            ))}
+            {gposts.map((list: any, index: number) => {
+              const items = (list.items as any as Item[]) || [];
+              
+              return (
+                <Link href={`/post/${list.id}`} className="w-full" key={list.id}>
+                  {list.metadata?.images &&
+                    <div className="py-8 sm:border-x border-b border-slate-700">
+                      <header className="pl-8 text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
+                      <ListCarousel items={items} postid={list.id} firstimage={index === 0} />
+                    </div>
+                  }
+                  {!list.metadata?.images &&
+                    <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-6 list-inside list-decimal p-8 sm:border-x border-b border-slate-700">
+                      <header className="text-4xl line-clamp-2 text-slate-400 font-semibold">{list.title}</header>
+                      {items.map((item, idx) => (
+                        <li key={idx} className="truncate text-xl text-slate-400">{item.text}</li>
+                      ))}
+                    </ul>
+                  }
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>

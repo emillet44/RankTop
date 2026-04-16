@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { prisma } from "@/lib/prisma"
+import { syncPostToAlgolia } from "@/lib/AlgoliaSync"
 import { metadata } from '@/app/layout';
 
 //This server action will update a post given its unique id and new post data. Due to the nature of the formData object however, optional values that
@@ -10,34 +11,44 @@ import { metadata } from '@/app/layout';
 //than it did originally).
 export async function editList(formData: FormData, id: string) {
 
-  const data = JSON.stringify(Object.fromEntries(formData));
-  const formDataObj = JSON.parse(data);
-
-  formDataObj.r3 = formDataObj.r3 == undefined ? null : formDataObj.r3;
-  formDataObj.r4 = formDataObj.r4 == undefined ? null : formDataObj.r4;
-  formDataObj.r5 = formDataObj.r5 == undefined ? null : formDataObj.r5;
-  formDataObj.description = formDataObj.description == undefined ? null : formDataObj.description;
+  const data = Object.fromEntries(formData);
+  
+  const items = [];
+  for (let i = 1; i <= 5; i++) {
+    const name = data[`r${i}`] as string;
+    const note = data[`r${i}_note`] as string;
+    if (name) {
+      items.push({
+        text: name,
+        note: note || null
+      });
+    }
+  }
 
   const updateList = await prisma.posts.update({
     where: {
       id: id
     },
     data: {
-      title: formDataObj.title,
-      rank1: formDataObj.r1,
-      rank2: formDataObj.r2,
-      rank3: formDataObj.r3,
-      rank4: formDataObj.r4,
-      rank5: formDataObj.r5,
-      description: formDataObj.description,
-      category: formDataObj.category,
+      title: data.title as string,
+      items: items,
+      description: data.description !== "" ? (data.description as string) : null,
+      category: data.category as string,
       metadata: {
         update: {
           date: new Date()
         }
       }
+    },
+    include: {
+      metadata: true
     }
   })
+
+  if (!updateList.private) {
+    await syncPostToAlgolia(updateList, updateList.username, updateList.metadata);
+  }
+
   revalidatePath(`/post/${id}`);
   return (id);
 }

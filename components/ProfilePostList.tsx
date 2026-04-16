@@ -5,6 +5,11 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LoadUserPosts } from "./serverActions/loadposts";
 
+interface Item {
+  text: string;
+  note?: string | null;
+}
+
 export default function ProfilePostList({ starter, profileid }: { starter: any, profileid: string }) {
   const [posts, setPosts] = useState(starter);
   const [loading, setLoading] = useState(false);
@@ -15,11 +20,11 @@ export default function ProfilePostList({ starter, profileid }: { starter: any, 
 
   const addPosts = useCallback(async () => {
     try {
-      const posts = await LoadUserPosts(batch.current, profileid);
+      const uposts = await LoadUserPosts(batch.current, profileid);
 
-      if (posts) {
-        setPosts((prevPosts: any) => [...prevPosts, ...posts]);
-        if (posts.length === 0) {
+      if (uposts) {
+        setPosts((prevPosts: any) => [...prevPosts, ...uposts]);
+        if (uposts.length === 0) {
           setEnd(true);
         }
       } else {
@@ -62,68 +67,71 @@ export default function ProfilePostList({ starter, profileid }: { starter: any, 
   return (
     <>
       <div className="pt-4 max-w-7xl grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-        {posts?.map((post: any) => (
-          <Link href={`/post/${post.id}`} key={post.id}>
-            <div className="rounded-sm p-5 bg-white shadow-lg shadow-black bg-opacity-5 hover:scale-105 transition-transform">
-              <div className="h-64 max-w-[370px] text-left">
-                {/* Check for videoUrl instead of 'videos' to match your data structure */}
-                {post.metadata?.videoUrl ? (
-                  <>
-                    <header className="text-2xl line-clamp-2 text-slate-400 font-semibold truncate text-ellipsis">{post.title}</header>
-                    <h1 className="truncate text-slate-400">{"1. " + post.rank1}</h1>
-                    <div className="bg-black h-52 rounded-md relative overflow-hidden">
-                      <Image
-                        src={`https://storage.googleapis.com/ranktop-v-thumb/${post.id}.jpg`}
-                        alt={post.title}
-                        width={480}
-                        height={270}
-                        className="object-cover h-full w-full rounded-md opacity-60"
-                      />
-                      {/* Play Icon Overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <svg
-                          className="w-16 h-16 text-slate-100 opacity-90"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                        </svg>
+        {posts?.map((post: any) => {
+          const items = (post.items as any as Item[]) || [];
+          const topRank = items[0]?.text || "";
+          
+          return (
+            <Link href={`/post/${post.id}`} key={post.id}>
+              <div className="rounded-sm p-5 bg-white shadow-lg shadow-black bg-opacity-5 hover:scale-105 transition-transform">
+                <div className="h-64 max-w-[370px] text-left">
+                  {/* Check for videoUrl instead of 'videos' to match your data structure */}
+                  {post.metadata?.videoUrl ? (
+                    <>
+                      <header className="text-2xl line-clamp-2 text-slate-400 font-semibold truncate text-ellipsis">{post.title}</header>
+                      <h1 className="truncate text-slate-400">{"1. " + topRank}</h1>
+                      <div className="bg-black h-52 rounded-md relative overflow-hidden">
+                        <Image
+                          src={`https://storage.googleapis.com/ranktop-v-thumb/${post.id}.jpg`}
+                          alt={post.title}
+                          width={480}
+                          height={270}
+                          className="object-cover h-full w-full rounded-md opacity-60"
+                        />
+                        {/* Play Icon Overlay */}
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <svg
+                            className="w-16 h-16 text-slate-100 opacity-90"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                          </svg>
+                        </div>
+                        <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 px-2 py-1 rounded text-[10px] font-bold text-white tracking-widest">
+                          VIDEO
+                        </div>
                       </div>
-                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 px-2 py-1 rounded text-[10px] font-bold text-white tracking-widest">
-                        VIDEO
+                    </>
+                  ) : post.metadata?.images ? (
+                    <>
+                      <header className="text-2xl line-clamp-2 text-slate-400 font-semibold truncate text-ellipsis">{post.title}</header>
+                      <h1 className="truncate text-slate-400">{"1. " + topRank}</h1>
+                      <div className="bg-black h-52 rounded-md">
+                        <Image
+                          src={`https://storage.googleapis.com/ranktop-i/${post.id}1.png`}
+                          alt={"Image 1"}
+                          width={480}
+                          height={270}
+                          className="object-contain h-full w-full rounded-md"
+                        />
                       </div>
-                    </div>
-                  </>
-                ) : post.metadata?.images ? (
-                  <>
-                    <header className="text-2xl line-clamp-2 text-slate-400 font-semibold truncate text-ellipsis">{post.title}</header>
-                    <h1 className="truncate text-slate-400">{"1. " + post.rank1}</h1>
-                    <div className="bg-black h-52 rounded-md">
-                      <Image
-                        src={`https://storage.googleapis.com/ranktop-i/${post.id}1.png`}
-                        alt={"Image 1"}
-                        width={480}
-                        height={270}
-                        className="object-contain h-full w-full rounded-md"
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <header className="text-2xl line-clamp-2 text-slate-400 font-semibold truncate">{post.title}</header>
-                    <ul className="list-inside list-decimal text-slate-400">
-                      <li className="truncate text-slate-400 text-lg">{post.rank1}</li>
-                      <li className="truncate text-slate-400 text-lg">{post.rank2}</li>
-                      <li className="empty:hidden truncate text-slate-400 text-lg">{post.rank3}</li>
-                      <li className="empty:hidden truncate text-slate-400 text-lg">{post.rank4}</li>
-                      <li className="empty:hidden truncate text-slate-400 text-lg">{post.rank5}</li>
-                    </ul>
-                  </>
-                )}
+                    </>
+                  ) : (
+                    <>
+                      <header className="text-2xl line-clamp-2 text-slate-400 font-semibold truncate">{post.title}</header>
+                      <ul className="list-inside list-decimal text-slate-400">
+                        {items.map((item, index) => (
+                          <li key={index} className="truncate text-slate-400 text-lg">{item.text}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
       <div ref={observerRef} className="h-[1px]" />
       {loading && <header className="text-slate-400 py-3 text-center">Loading more posts...</header>}

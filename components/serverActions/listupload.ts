@@ -14,19 +14,23 @@ export async function newList(formData: FormData) {
   const isImagePost = data.postType === 'image';
   const isPrivate = data.visibility === "Private";
 
-  // 3. Construct the Prisma data object
+  // 3. Construct the items array
+  const items = [];
+  for (let i = 1; i <= 5; i++) {
+    const name = data[`r${i}`] as string;
+    const note = data[`r${i}_note`] as string;
+    if (name) {
+      items.push({
+        text: name,
+        note: note || null
+      });
+    }
+  }
+
+  // 4. Construct the Prisma data object
   const createData: any = {
     title: data.title as string,
-    rank1: data.r1 as string,
-    rank2: data.r2 as string,
-    rank3: data.r3 as string,
-    rank4: data.r4 as string,
-    rank5: data.r5 as string,
-    rank1_note: data.r1_note ? (data.r1_note as string) : null,
-    rank2_note: data.r2_note ? (data.r2_note as string) : null,
-    rank3_note: data.r3_note ? (data.r3_note as string) : null,
-    rank4_note: data.r4_note ? (data.r4_note as string) : null,
-    rank5_note: data.r5_note ? (data.r5_note as string) : null,
+    items: items,
     description: data.description !== "" ? (data.description as string) : null,
     category: data.category === "None" ? "" : (data.category as string),
     private: data.visibility === "Private",
@@ -37,7 +41,7 @@ export async function newList(formData: FormData) {
     }
   };
 
-  // 4. Handle Authenticated User Fields
+  // 5. Handle Authenticated User Fields
   if (data.userid && data.userid !== "") {
     createData.author = { connect: { id: data.userid as string } };
     createData.username = (data.username as string) || null;

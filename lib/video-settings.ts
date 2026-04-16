@@ -6,8 +6,9 @@ export const VIDEO_DIMENSIONS = {
 };
 
 export const FONT_MAP: Record<string, string> = {
-  'Archivo Expanded Bold': 'font.ttf',
+  'Archivo Expanded Bold': 'Archivo-Expanded-Bold.ttf',
   'Arial Regular': 'Arial-Regular.ttf',
+  'Rubik Bold': 'Rubik-Bold.ttf',
 };
 
 export interface WordColor {
@@ -27,6 +28,9 @@ export interface VideoLayoutConfig {
   matchRankColor: boolean;
   textShadow: boolean;
   rankSpacing: number;
+  rankYOffset: number;
+  pushVideoDown: boolean;
+  titleAccentOutline: boolean;
   fontFamily: string;
   rankColors: string[];
   
@@ -40,6 +44,7 @@ export interface VideoLayoutConfig {
   titleBoxTopPadding?: number;
   titleBoxBottomPadding?: number;
   rankFontSize?: number;
+  rankTextFontSize?: number;
   rankPaddingY?: number;
   rankBoxWidth?: number;
   textOutlineWidth?: number;
@@ -60,14 +65,24 @@ export const DEFAULT_VIDEO_STYLE: VideoLayoutConfig = {
   fontFamily: 'Archivo Expanded Bold',
   rankColors: ['#FFD700', '#C0C0C0', '#CD7F32', 'white', 'white'],
   titleFontSize: 100,
+  subtitleFontSize: 45,
   rankFontSize: 60,
-};
+  rankTextFontSize: 60,
+  rankYOffset: 0,
+  pushVideoDown: false,
+  titleAccentOutline: false,
+  };
 
-/**
- * Returns derived settings scaled for a specific width/height.
- * This ensures consistency between the 540x960 preview and the 1080x1920 final render.
- */
-export function getDerivedVideoSettings(config: Partial<VideoLayoutConfig>, scale: number = 0.5) {
+  /**
+  * Returns derived settings scaled for a specific width/height.
+  * This ensures consistency between the 540x960 preview and the 1080x1920 final render.
+  */
+  export function getDerivedVideoSettings(config: Partial<VideoLayoutConfig>, scale: number = 0.5) {
+  const rankFontSize = (config.rankFontSize ?? 60) * scale;
+  const rankNumX = 45 * scale;
+  const rankTextX = rankNumX + (rankFontSize * 1.1);
+  const rankBoxWidth = (955 * scale) - rankTextX;
+
   return {
     titleFontSize:                 (config.titleFontSize          ?? 100) * scale,
     titleLineSpacing:              (config.titleLineSpacing       ?? 30)  * scale,
@@ -75,18 +90,20 @@ export function getDerivedVideoSettings(config: Partial<VideoLayoutConfig>, scal
     titleMaxLines:                 config.titleMaxLines                   ?? 2,
     titleBoxTopPadding:            (config.titleBoxTopPadding     ?? 30)  * scale,
     titleBoxBottomPadding:         (config.titleBoxBottomPadding  ?? 40)  * scale,
-    subtitleFontSize:              (config.subtitleFontSize       ?? 44)  * scale,
+    subtitleFontSize:              (config.subtitleFontSize       ?? 45)  * scale,
     subtitleTopMargin:             (config.subtitleTopMargin      ?? 10)  * scale,
-    rankFontSize:                  (config.rankFontSize           ?? 60)  * scale,
+    rankFontSize,
+    rankTextFontSize:              (config.rankTextFontSize       ?? 60)  * scale,
     rankSpacing:                   (config.rankSpacing            ?? 140) * scale,
     rankPaddingY:                  (config.rankPaddingY           ?? 80)  * scale,
-    rankNumX:                      45 * scale,
-    rankTextX:                     125 * scale,
-    rankBoxWidth:                  (config.rankBoxWidth           ?? 830) * scale,
+    rankYOffset:                   (config.rankYOffset            ?? 0)   * scale,
+    rankNumX,
+    rankTextX,
+    rankBoxWidth,
     textOutlineWidth:              (config.textOutlineWidth       ?? (config.fontFamily === 'Arial Regular' ? 9 : 18))  * scale,
     watermarkFontSize:             48 * scale,
     watermarkPadding:              20 * scale,
     creatorWatermarkFontSize:      44 * scale,
     creatorWatermarkBottomPadding: 80 * scale,
   };
-}
+  }

@@ -7,18 +7,11 @@ datasource db {
 }
 
 model Posts {
+
   id          String         @id @default(cuid())
   title       String
-  rank1       String
-  rank2       String
-  rank3       String?
-  rank4       String?
-  rank5       String?
-  rank1_note  String?
-  rank2_note  String?
-  rank3_note  String?
-  rank4_note  String?
-  rank5_note  String?
+  items       Json
+  reRankType  String         @default("None")
   authorId    String?
   username    String?
   description String?
@@ -29,6 +22,17 @@ model Posts {
   metadata    Post_Metadata?
   author      User?          @relation(fields: [authorId], references: [id])
   group       Groups?        @relation(fields: [groupId], references: [id])
+  rerankings  ReRankings[]
+}
+
+model ReRankings {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String?
+  items     Json
+  createdAt DateTime @default(now())
+  post      Posts    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
 }
 
 enum PostStatus { 
@@ -100,6 +104,7 @@ model User {
   sessions       Session[]
   adminGroups    Groups[]        @relation("GroupAdmins")
   memberGroups   Groups[]        @relation("GroupMembers")
+  rerankings     ReRankings[]
 }
 
 model Reports {

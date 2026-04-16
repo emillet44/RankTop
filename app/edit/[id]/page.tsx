@@ -34,10 +34,8 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
     return notFound();
   }
 
-  let startranks = 2;
-  if (post.rank5 != null) startranks = 5;
-  else if (post.rank4 != null) startranks = 4;
-  else if (post.rank3 != null) startranks = 3;
+  const items = (post.items as any[]) || [];
+  let startranks = Math.max(2, items.length);
 
   return (
     <>

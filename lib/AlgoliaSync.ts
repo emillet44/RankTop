@@ -26,13 +26,9 @@ export async function syncPostToAlgolia(post: any, username: string | null, meta
       date: metadata?.date ? new Date(metadata.date).getTime() : Date.now(),
       
       // Searchable Content: The ranks themselves
-      ranks: [
-        post.rank1, 
-        post.rank2, 
-        post.rank3, 
-        post.rank4, 
-        post.rank5
-      ].filter((r: any) => r && r.trim() !== ""),
+      ranks: Array.isArray(post.items) 
+        ? post.items.map((item: any) => item.text).filter((text: any) => text && text.trim() !== "")
+        : [],
 
       // Faceting/Filtering
       private: post.private ?? false,

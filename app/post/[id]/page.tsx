@@ -16,6 +16,11 @@ import { LoadSinglePost } from "@/components/serverActions/loadposts";
 import { prisma } from "@/lib/prisma";
 import { getSessionData } from "@/lib/auth-helpers";
 
+interface Item {
+  text: string;
+  note?: string | null;
+}
+
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const params = await props.params;
   const post = await LoadSinglePost(params.id);
@@ -27,7 +32,8 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
     };
   }
 
-  const ranks = [post.rank1, post.rank2, post.rank3].filter(Boolean).slice(0, 3);
+  const items = (post.items as any as Item[]) || [];
+  const ranks = items.map(i => i.text).filter(Boolean).slice(0, 3);
   const rankDescription = `Top ${ranks.length}: ${ranks.join(', ')}`;
   const description = post.description ? post.description.slice(0, 155) + (post.description.length > 155 ? '...' : '') : rankDescription;
   const canonicalUrl = `https://ranktop.net/post/${params.id}`;
@@ -80,6 +86,9 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
     )
   }
 
+  const items = (post.items as any as Item[]) || [];
+  const topRankName = items[0]?.text || "Ranking";
+
   const liked = (await prisma.likes.findUnique({
     where: { userId_postId: { userId: userid, postId: params.id } }
   })) != null;
@@ -106,7 +115,7 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
     "@context": "https://schema.org",
     "@type": "VideoObject",
     "name": post.title,
-    "description": post.description || `Top ranking: ${post.rank1}`,
+    "description": post.description || `Top ranking: ${topRankName}`,
     "thumbnailUrl": videoThumbnail,
     "contentUrl": post.metadata.videoUrl,
     "uploadDate": post.metadata.date.toISOString(),
@@ -119,7 +128,7 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
     "@context": "https://schema.org",
     "@type": "Article",
     "headline": post.title,
-    "description": post.description || `Top ranking: ${post.rank1}`,
+    "description": post.description || `Top ranking: ${topRankName}`,
     "author": { "@type": "Person", "name": post.username || "Guest" },
     "datePublished": post.metadata?.date.toISOString(),
     "image": `https://ranktop.net/api/og/post/${params.id}`,
@@ -150,8 +159,7 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
                 postId={params.id} 
                 postTitle={post.title} 
                 postDescription={post.description} 
-                postRanks={[post.rank1, post.rank2, post.rank3, post.rank4, post.rank5]}
-                rankNotes={[post.rank1_note, post.rank2_note, post.rank3_note, post.rank4_note, post.rank5_note]}
+                items={items}
                 username={post.username || ""}
                 videoUrl={post.metadata?.videoUrl} 
               />
@@ -164,6 +172,12 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
                   <Delete id={params.id} />
                 </>
               )}
+              {/* Temporarily disabled re-ranking feature */}
+              {1 === 2 && (
+                <button className="outline outline-2 outline-blue-700 rounded-md p-2 bg-blue-500 hover:bg-opacity-20 bg-opacity-10 text-blue-400 h-10 whitespace-nowrap">
+                  <Link href={`/post/${params.id}/rerank`}>Re-rank</Link>
+                </button>
+              )}
             </div>
           </div>
 
@@ -172,15 +186,13 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
               <VideoDisplay videoUrl={post.metadata.videoUrl} title={post.title} postId={params.id} />
             ) : post.metadata?.images ? (
               <div className="pt-8 pb-8 rounded-xl outline outline-slate-700 bg-slate-900/20">
-                <ListCarousel ranks={[post.rank1, post.rank2, post.rank3, post.rank4, post.rank5]} postid={params.id} firstimage={true} />
+                <ListCarousel items={items} postid={params.id} firstimage={true} />
               </div>
             ) : (
               <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-2 sm:gap-4 list-inside list-decimal p-4 sm:p-6 rounded-xl outline outline-slate-700 bg-slate-900/20">
-                <li className="text-xl text-slate-400 p-2 w-11/12">{post.rank1}</li>
-                <li className="text-xl text-slate-400 p-2 w-11/12">{post.rank2}</li>
-                <li className="text-xl text-slate-400 p-2 w-11/12 empty:hidden">{post.rank3}</li>
-                <li className="text-xl text-slate-400 p-2 w-11/12 empty:hidden">{post.rank4}</li>
-                <li className="text-xl text-slate-400 p-2 w-11/12 empty:hidden">{post.rank5}</li>
+                {items.map((item, index) => (
+                  <li key={index} className="text-xl text-slate-400 p-2 w-11/12">{item.text}</li>
+                ))}
               </ul>
             )}
           </div>

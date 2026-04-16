@@ -9,13 +9,20 @@ import { editList } from "./serverActions/listedit";
 //when first loading the post When the submit button is clicked, editList from listedit.ts is passed the original post id and form data to update the post. Once done the
 //user is redirected to the edited post. Refer to CSForm for info on other functionalities of this page.
 
+interface Item {
+  text: string;
+  note?: string | null;
+}
+
 export function CSEditForm({ id, post, startranks }: { id: string, post: any, startranks: number }) {
   const statcats = ["", "Gaming", "Music", "Movies", "TV Shows", "Tech", "Sports", "Memes", "Fashion", "Food & Drink", "Celebrities", "Lifestyle", "Books", "Science & Nature", "Education"];
   const [selected, setSelected] = useState(startranks.toString());
-  const [desctoggle, setDesc] = useState("");
+  const [desctoggle, setDesc] = useState(post.description ? "Remove Description" : "Add Description");
   const [category, setCategory] = useState(statcats.includes(post.category) ? post.category : "Custom");
   const [lockcat, setLockCat] = useState(statcats.includes(category) ? "" : post.category);
   const router = useRouter();
+
+  const items = (post.items as any as Item[]) || [];
 
   const getInput = (e: any) => {
     setSelected(e.target.value);
@@ -103,32 +110,38 @@ export function CSEditForm({ id, post, startranks }: { id: string, post: any, st
           </div>
           <div className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-2 sm:gap-4 p-4 sm:p-6 rounded-xl outline outline-slate-700 bg-slate-50 bg-opacity-5">
             <textarea data-gramm="false" defaultValue={post.title} form="editpost" name="title" rows={1} className="text-2xl text-slate-400 outline-none bg-transparent placeholder:text-slate-400 resize-none overflow-hidden align-bottom" required />
-            <div className="flex items-center">
-              <label className="text-xl text-slate-400 pr-2">1.</label>
-              <textarea data-gramm="false" defaultValue={post.rank1} form="editpost" name="r1" rows={1} className="text-xl text-slate-400 outline-none p-2 pl-1 focus:border-b border-slate-400 w-11/12 bg-transparent resize-none overflow-hidden align-bottom" required />
-            </div>
-            <div className="flex items-center">
-              <label className="text-xl text-slate-400 pr-2">2.</label>
-              <textarea data-gramm="false" defaultValue={post.rank2} form="editpost" name="r2" rows={1} className="text-xl text-slate-400 outline-none p-2 pl-1 focus:border-b border-slate-400 w-11/12 bg-transparent resize-none overflow-hidden align-bottom" required />
-            </div>
-            {parseInt(selected) >= 3 &&
-              <div className="flex items-center">
-                <label className="text-xl text-slate-400 pr-2">3.</label>
-                <textarea data-gramm="false" defaultValue={post.rank3} form="editpost" name="r3" rows={1} className="text-xl text-slate-400 outline-none p-2 pl-1 focus:border-b border-slate-400 w-11/12 bg-transparent resize-none overflow-hidden align-bottom" required />
-              </div>
-            }
-            {parseInt(selected) >= 4 &&
-              <div className="flex items-center">
-                <label className="text-xl text-slate-400 pr-2">4.</label>
-                <textarea data-gramm="false" defaultValue={post.rank4} form="editpost" name="r4" rows={1} className="text-xl text-slate-400 outline-none p-2 pl-1 focus:border-b border-slate-400 w-11/12 bg-transparent resize-none overflow-hidden align-bottom" required />
-              </div>
-            }
-            {selected === "5" &&
-              <div className="flex items-center">
-                <label className="text-xl text-slate-400 pr-2">5.</label>
-                <textarea data-gramm="false" defaultValue={post.rank5} form="editpost" name="r5" rows={1} className="text-xl text-slate-400 outline-none p-2 pl-1 focus:border-b border-slate-400 w-11/12 bg-transparent resize-none overflow-hidden align-bottom" required />
-              </div>
-            }
+            
+            {[1, 2, 3, 4, 5].map((num) => (
+              (num <= 2 || num <= parseInt(selected)) && (
+                <div key={num} className="space-y-2">
+                  <div className="flex items-center">
+                    <label className="text-xl text-slate-400 pr-2">{num}.</label>
+                    <textarea 
+                      data-gramm="false" 
+                      defaultValue={items[num-1]?.text || ""} 
+                      form="editpost" 
+                      name={`r${num}`} 
+                      rows={1} 
+                      className="text-xl text-slate-400 outline-none p-2 pl-1 focus:border-b border-slate-400 w-11/12 bg-transparent resize-none overflow-hidden align-bottom" 
+                      required={num <= 2} 
+                    />
+                  </div>
+                  {desctoggle === "Remove Description" && (
+                    <div className="flex items-center pl-6">
+                      <textarea 
+                        data-gramm="false" 
+                        defaultValue={items[num-1]?.note || ""} 
+                        placeholder="Add a note..." 
+                        form="editpost" 
+                        name={`r${num}_note`} 
+                        rows={1} 
+                        className="text-sm text-slate-500 outline-none p-1 focus:border-b border-slate-700 w-10/12 bg-transparent resize-none overflow-hidden" 
+                      />
+                    </div>
+                  )}
+                </div>
+              )
+            ))}
           </div>
           {desctoggle == "Remove Description" &&
             <div>

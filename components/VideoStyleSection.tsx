@@ -328,6 +328,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                       >
                         <option value="Archivo Expanded Bold" className="bg-slate-900">Archivo Expanded Bold</option>
                         <option value="Arial Regular" className="bg-slate-900">Arial Regular</option>
+                        <option value="Rubik Bold" className="bg-slate-900">Rubik Bold</option>
                       </select>
                       <FontAwesomeIcon icon={faChevronDown} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[10px] text-slate-500" />
                     </div>
@@ -364,7 +365,9 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                     <div className="grid grid-cols-2 gap-x-8 gap-y-3 bg-white/[0.03] border border-white/[0.07] rounded-xl p-4">
                       {[
                         { label: 'Title', key: 'titleFontSize' as const, min: 40, max: 100 },
-                        { label: 'Rank',  key: 'rankFontSize'  as const, min: 20, max: 100 },
+                        { label: 'Subtitle', key: 'subtitleFontSize' as const, min: 30, max: 100 },
+                        { label: 'Rank #',  key: 'rankFontSize'  as const, min: 30, max: 100 },
+                        { label: 'Rank Text',  key: 'rankTextFontSize'  as const, min: 30, max: 100 },
                       ].map(({ label, key, min, max }) => (
                         <div key={key} className="space-y-2">
                           <div className="flex justify-between items-center">
@@ -383,17 +386,45 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                   </div>
                 </div>
 
-                <div
-                  className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.07] rounded-xl cursor-pointer hover:border-white/[0.12] transition-colors"
-                  onClick={() => updateConfig({ textShadow: !config.textShadow })}
-                >
-                    <div>
-                      <p className="text-[11px] font-bold text-slate-300">Text Outline</p>
-                      <p className="text-[9px] text-slate-500">Enable black text borders</p>
-                    </div>
-                    <div className={`w-10 h-5 rounded-full transition-all duration-300 relative shrink-0 ${config.textShadow ? 'bg-blue-600' : 'bg-white/10'}`}>
-                      <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${config.textShadow ? 'left-6' : 'left-1'}`} />
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div
+                    className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.07] rounded-xl cursor-pointer hover:border-white/[0.12] transition-colors"
+                    onClick={() => updateConfig({ textShadow: !config.textShadow })}
+                  >
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-300">Text Outline</p>
+                        <p className="text-[9px] text-slate-500">Enable black text borders</p>
+                      </div>
+                      <div className={`w-10 h-5 rounded-full transition-all duration-300 relative shrink-0 ${config.textShadow ? 'bg-blue-600' : 'bg-white/10'}`}>
+                        <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${config.textShadow ? 'left-6' : 'left-1'}`} />
+                      </div>
+                  </div>
+
+                  <div
+                    className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.07] rounded-xl cursor-pointer hover:border-white/[0.12] transition-colors"
+                    onClick={() => updateConfig({ pushVideoDown: !config.pushVideoDown })}
+                  >
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-300">Push Video Down</p>
+                        <p className="text-[9px] text-slate-500">Don&apos;t overlap video with title</p>
+                      </div>
+                      <div className={`w-10 h-5 rounded-full transition-all duration-300 relative shrink-0 ${config.pushVideoDown ? 'bg-blue-600' : 'bg-white/10'}`}>
+                        <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${config.pushVideoDown ? 'left-6' : 'left-1'}`} />
+                      </div>
+                  </div>
+
+                  <div
+                    className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.07] rounded-xl cursor-pointer hover:border-white/[0.12] transition-colors"
+                    onClick={() => updateConfig({ titleAccentOutline: !config.titleAccentOutline })}
+                  >
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-300">Accent Outline</p>
+                        <p className="text-[9px] text-slate-500">Accent words affect outline only</p>
+                      </div>
+                      <div className={`w-10 h-5 rounded-full transition-all duration-300 relative shrink-0 ${config.titleAccentOutline ? 'bg-blue-600' : 'bg-white/10'}`}>
+                        <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${config.titleAccentOutline ? 'left-6' : 'left-1'}`} />
+                      </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -495,7 +526,6 @@ export const VideoStyleSection = memo(function VideoStyleSection({
               <SectionLabel label="Rank List" />
               <div className="space-y-5">
 
-                {/* Row spacing + Match color toggle side by side */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
@@ -510,10 +540,24 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                     />
                   </div>
 
-                  <div
-                    className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.07] rounded-xl cursor-pointer hover:border-white/[0.12] transition-colors"
-                    onClick={() => updateConfig({ matchRankColor: !config.matchRankColor })}
-                  >
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Vertical Offset (Y)</span>
+                      <span className="text-[10px] font-mono text-blue-400 tabular-nums">{config.rankYOffset}px</span>
+                    </div>
+                    <input
+                      type="range" min="-100" max="800" step="50"
+                      value={config.rankYOffset}
+                      onChange={e => updateConfig({ rankYOffset: parseInt(e.target.value) })}
+                      className="w-full accent-blue-500 h-1 bg-white/10 rounded-full appearance-none cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                <div
+                  className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.07] rounded-xl cursor-pointer hover:border-white/[0.12] transition-colors"
+                  onClick={() => updateConfig({ matchRankColor: !config.matchRankColor })}
+                >
                     <div>
                       <p className="text-[11px] font-bold text-slate-300">Match Text Color</p>
                       <p className="text-[9px] text-slate-500">Apply rank color to label text</p>
@@ -522,7 +566,6 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                       <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${config.matchRankColor ? 'left-6' : 'left-1'}`} />
                     </div>
                   </div>
-                </div>
 
                 {/* Rank colors — labeled row, larger swatches */}
                 <div className="space-y-2">
@@ -550,10 +593,8 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                     ))}
                   </div>
                 </div>
-
               </div>
             </div>
-
           </div>
         )}
       </div>

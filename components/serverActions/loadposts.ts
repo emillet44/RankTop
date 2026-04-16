@@ -24,7 +24,19 @@ async function addVideoUrls(posts: any[]) {
 export async function LoadSinglePost(postId: string) {
   const post = await prisma.posts.findUnique({
     where: { id: postId },
-    include: { metadata: true },
+    select: {
+      id: true,
+      title: true,
+      items: true,
+      reRankType: true,
+      authorId: true,
+      username: true,
+      description: true,
+      category: true,
+      groupId: true,
+      private: true,
+      metadata: true,
+    },
   });
   
   if (post) {
@@ -36,7 +48,17 @@ export async function LoadSinglePost(postId: string) {
 
 export async function LoadAll() {
   const aposts = await prisma.posts.findMany({
-    include: {
+    select: {
+      id: true,
+      title: true,
+      items: true,
+      reRankType: true,
+      authorId: true,
+      username: true,
+      description: true,
+      category: true,
+      groupId: true,
+      private: true,
       metadata: true,
     },
   });
@@ -106,7 +128,17 @@ export async function LoadBatch(batch: number, sort: string, category: string, d
     take: 4,
     where,
     orderBy,
-    include: {
+    select: {
+      id: true,
+      title: true,
+      items: true,
+      reRankType: true,
+      authorId: true,
+      username: true,
+      description: true,
+      category: true,
+      groupId: true,
+      private: true,
       metadata: true,
     },
   });
@@ -127,7 +159,17 @@ export async function LoadPostResults(search: string) {
     where: {
       title: { contains: search, mode: 'insensitive' }
     },
-    include: {
+    select: {
+      id: true,
+      title: true,
+      items: true,
+      reRankType: true,
+      authorId: true,
+      username: true,
+      description: true,
+      category: true,
+      groupId: true,
+      private: true,
       metadata: true,
     },
   });
@@ -162,7 +204,17 @@ export async function LoadUserPosts(batch: number, userid: string) {
     where: {
       authorId: userid,
     },
-    include: {
+    select: {
+      id: true,
+      title: true,
+      items: true,
+      reRankType: true,
+      authorId: true,
+      username: true,
+      description: true,
+      category: true,
+      groupId: true,
+      private: true,
       metadata: true,
     },
   });

@@ -96,7 +96,7 @@ export const OverlayPreview = memo(function OverlayPreview({
       invalidateFitTextCache();
       try {
         const fontName = config.fontFamily || 'Archivo Expanded Bold';
-        const fileName  = FONT_MAP[fontName] || 'font.ttf';
+        const fileName  = FONT_MAP[fontName] || 'Archivo-Expanded-Bold.ttf';
         const font      = new FontFace('CustomFont', `url(/fonts/${fileName})`);
         await font.load();
         if (active) {
@@ -175,7 +175,22 @@ export const OverlayPreview = memo(function OverlayPreview({
           sh = v.videoWidth / tAspect;
           sy = (v.videoHeight - sh) / 2;
         }
-        ctx.drawImage(v, sx, sy, sw, sh, 0, 0, W, H);
+
+        // --- Calculate pushed-down geometry ---
+        // We need boxH to know where to start rendering the video if pushVideoDown is true.
+        const offCanvas = document.createElement('canvas');
+        const offCtx = offCanvas.getContext('2d')!;
+        offCtx.font = `${SERVER.titleFontSize}px CustomFont`;
+        const { lines: tLines, size: tSize } = fitText(
+          offCtx, title || 'Title',
+          SERVER.titleBoxWidth, SERVER.titleMaxLines, SERVER.titleFontSize
+        );
+        const textH = tLines.length * tSize + (tLines.length - 1) * SERVER.titleLineSpacing;
+        const subtitleH = config.subtitle ? SERVER.subtitleTopMargin + SERVER.subtitleFontSize : 0;
+        const boxH = SERVER.titleBoxTopPadding + textH + subtitleH + SERVER.titleBoxBottomPadding;
+
+        const videoY = config.pushVideoDown ? boxH : 0;
+        ctx.drawImage(v, sx, sy, sw, sh, 0, videoY, W, H);
       } else {
         ctx.fillStyle = '#1e293b';
         ctx.fillRect(0, 0, W, H);
@@ -188,7 +203,7 @@ export const OverlayPreview = memo(function OverlayPreview({
         bgRafRef.current = null;
       }
     };
-  }, [frameLoaded]);
+  }, [frameLoaded, config.pushVideoDown, title, SERVER]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // LAYER B — Backdrop + title + ranks
@@ -205,8 +220,6 @@ export const OverlayPreview = memo(function OverlayPreview({
       if (!ctx) return;
 
       ctx.clearRect(0, 0, W, H);
-      ctx.lineJoin = 'round';
-      ctx.lineCap  = 'round';
 
       // ── Measure title layout ──
       const { size: tSize, lines: tLines } = fitText(
@@ -229,7 +242,9 @@ export const OverlayPreview = memo(function OverlayPreview({
           off.height = boxH;
           const offCtx = off.getContext('2d');
           if (offCtx) {
-            offCtx.drawImage(bgCanvas, 0, 0, W, boxH, 0, 0, W, boxH);
+            // Sample from where the video starts
+            const sampleY = config.pushVideoDown ? boxH : 0;
+            offCtx.drawImage(bgCanvas, 0, sampleY, W, boxH, 0, 0, W, boxH);
             offCtx.filter = 'blur(20px)';
             offCtx.drawImage(off, 0, 0);
             offCtx.filter = 'none';
@@ -259,13 +274,17 @@ export const OverlayPreview = memo(function OverlayPreview({
 
         line.split(' ').forEach((word, i, arr) => {
           const displayWord = i < arr.length - 1 ? `${word} ` : word;
-          const color       = wordColorMap.get(word.toLowerCase()) || 'white';
-          if (config.textShadow !== false) {
-            ctx.strokeStyle = 'black';
+          const accentColor = wordColorMap.get(word.toLowerCase());
+          
+          const fill = (config.titleAccentOutline && accentColor) ? 'white' : (accentColor || 'white');
+          const stroke = (config.titleAccentOutline && accentColor) ? accentColor : 'black';
+
+          if (config.textShadow !== false || (config.titleAccentOutline && accentColor)) {
+            ctx.strokeStyle = stroke;
             ctx.lineWidth   = SERVER.textOutlineWidth;
             ctx.strokeText(displayWord, currentX, y);
           }
-          ctx.fillStyle = color;
+          ctx.fillStyle = fill;
           ctx.fillText(displayWord, currentX, y);
           currentX += ctx.measureText(displayWord).width;
         });
@@ -301,10 +320,13 @@ export const OverlayPreview = memo(function OverlayPreview({
       }
 
       // ── Ranks ──
+      // This section handles the rendering of the list items (1. Item Name, 2. Item Name, etc.)
       ranks.forEach((rank, i) => {
         if (!rank) return;
-        const y         = SERVER.rankPaddingY + boxH + i * SERVER.rankSpacing;
+        // Y position calculated based on padding, title box height, and spacing between ranks
+        const y         = SERVER.rankPaddingY + boxH + i * SERVER.rankSpacing + SERVER.rankYOffset;
         const fontSize  = SERVER.rankFontSize;
+        const textFontSize = SERVER.rankTextFontSize;
         const rankColor = config.rankColors?.[i] ?? 'white';
 
         ctx.save();
@@ -315,23 +337,44 @@ export const OverlayPreview = memo(function OverlayPreview({
         ctx.lineJoin     = 'round';
         ctx.lineCap      = 'round';
 
+        // 1. DRAW RANK NUMBER (e.g., "1.", "10.")
+        // Alignment: Right-aligned to SERVER.rankTextX (minus a small gap)
+        // This ensures that "1.", "10.", and "100." all align perfectly by the period.
         ctx.font = `${fontSize}px CustomFont`;
+        ctx.textAlign = 'right';
+        const numAnchorX = SERVER.rankTextX - (fontSize * 0.15); // End number slightly before text starts
+
         if (config.textShadow !== false) {
           ctx.strokeStyle = 'black';
           ctx.lineWidth   = SERVER.textOutlineWidth;
-          ctx.strokeText(`${i + 1}.`, SERVER.rankNumX, y);
+          ctx.strokeText(`${i + 1}.`, numAnchorX, y);
         }
         ctx.fillStyle = rankColor;
-        ctx.fillText(`${i + 1}.`, SERVER.rankNumX, y);
+        ctx.fillText(`${i + 1}.`, numAnchorX, y);
 
-        const rRes       = fitText(ctx, rank, SERVER.rankBoxWidth, 1, fontSize);
-        const centeredY  = y + (fontSize - rRes.size) / 2;
-        ctx.font         = `${rRes.size}px CustomFont`;
+        // 2. CALCULATE RANK TEXT WRAPPING/FITTING
+        ctx.textAlign = 'left'; // Reset alignment for the rank text
+        const rRes       = fitText(ctx, rank, SERVER.rankBoxWidth, 1, textFontSize);
+        
+        // 3. VERTICAL ALIGNMENT LOGIC
+        // Adjusts rank text Y position relative to the rank number's Y position
+        // If the rank number is much larger, bottom align. Else center.
+        const isMuchLarger = fontSize > textFontSize * 1.8;
+        const alignOffset  = isMuchLarger 
+          ? (fontSize - (rRes.size * 1.5)) 
+          : (fontSize - rRes.size) / 2;
+        
+        const textY  = y + alignOffset;
+
+        // 4. DRAW RANK TEXT (e.g., "The Title of the Item")
+        // Position: SERVER.rankTextX (Horizontal) and textY (Vertical)
+        // If rank numbers (1, 10, 100) are pushing the text, check SERVER.rankTextX in lib/video-settings.ts
+        ctx.font = `${rRes.size}px CustomFont`;
         if (config.textShadow !== false) {
-          ctx.strokeText(rRes.lines[0], SERVER.rankTextX, centeredY);
+          ctx.strokeText(rRes.lines[0], SERVER.rankTextX, textY);
         }
         ctx.fillStyle = config.matchRankColor ? rankColor : 'white';
-        ctx.fillText(rRes.lines[0], SERVER.rankTextX, centeredY);
+        ctx.fillText(rRes.lines[0], SERVER.rankTextX, textY);
         ctx.restore();
       });
     });
@@ -342,7 +385,7 @@ export const OverlayPreview = memo(function OverlayPreview({
         textRafRef.current = null;
       }
     };
-  }, [config, fontStatus, title, ranks, SERVER]);
+  }, [config.subtitle, config, fontStatus, title, ranks, SERVER]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // LAYER C — Watermarks

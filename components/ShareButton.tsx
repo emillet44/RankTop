@@ -8,15 +8,14 @@ interface ShareButtonProps {
   postId: string;
   postTitle: string;
   postDescription?: string | null;
-  postRanks: (string | null)[];
-  rankNotes: (string | null)[];
+  items: { text: string; note?: string | null }[];
   username: string;
   videoUrl: string | null;
 }
 
 type ImageFormat = 'square' | 'twitter' | 'story';
 
-export function ShareButton({ postId, postTitle, postDescription, postRanks, rankNotes, username, videoUrl }: ShareButtonProps) {
+export function ShareButton({ postId, postTitle, postDescription, items, username, videoUrl }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -27,10 +26,10 @@ export function ShareButton({ postId, postTitle, postDescription, postRanks, ran
   const shareUrl = `https://ranktop.net/post/${postId}`;
 
   // Create share text
-  const ranks = postRanks.filter(Boolean).slice(0, 3);
+  const topRanks = items.map(item => item.text).filter(Boolean).slice(0, 3);
   const shareText = postDescription
     ? `${postTitle} - ${postDescription.slice(0, 100)}${postDescription.length > 100 ? '...' : ''}`
-    : `${postTitle} - Top ${ranks.length}: ${ranks.join(', ')}`;
+    : `${postTitle} - Top ${topRanks.length}: ${topRanks.join(', ')}`;
 
   const copyToClipboard = async () => {
     try {
@@ -92,7 +91,10 @@ export function ShareButton({ postId, postTitle, postDescription, postRanks, ran
       const { width, height } = dimensions[format];
 
       // Use your existing OG image endpoint but with custom dimensions
-      const imageUrl = `/api/og?title=${encodeURIComponent(postTitle)}&description=${encodeURIComponent(postDescription || '')}&username=${encodeURIComponent(username || '')}${postRanks.filter(Boolean).map((rank, i) => `&rank=${encodeURIComponent(rank as string)}`).join('')}${rankNotes.filter(Boolean).map((note, i) => `&rank_note=${encodeURIComponent(note as string)}`).join('')}&width=${width}&height=${height}&format=${format}&watermark=${watermark}`;
+      const rankParams = items.map(item => `&rank=${encodeURIComponent(item.text)}`).join('');
+      const noteParams = items.map(item => `&rank_note=${encodeURIComponent(item.note || '')}`).join('');
+      const imageUrl = `/api/og?title=${encodeURIComponent(postTitle)}&description=${encodeURIComponent(postDescription || '')}&username=${encodeURIComponent(username || '')}${rankParams}${noteParams}&width=${width}&height=${height}&format=${format}&watermark=${watermark}`;
+      
       // Fetch the image
       const response = await fetch(imageUrl);
       if (!response.ok) throw new Error('Failed to generate image');

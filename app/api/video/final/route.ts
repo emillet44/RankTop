@@ -37,6 +37,14 @@ export async function POST(req: Request) {
 
     // 2. Create Submission (DB Record + Cloud Task)
     const { title, r1, r2, r3, r4, r5, description, category, username, userid, visibility, filePaths, layoutConfig } = body;
+
+    const items = [];
+    const rawRanks = [r1, r2, r3, r4, r5];
+    for (const r of rawRanks) {
+      if (r) {
+        items.push({ text: r as string, note: null });
+      }
+    }
     
     // Convert the stringified JSON from the hidden input back into an object
     const parsedLayout = typeof layoutConfig === 'string' ? JSON.parse(layoutConfig) : layoutConfig;
@@ -44,7 +52,7 @@ export async function POST(req: Request) {
     const post = await prisma.posts.create({
       data: {
         title,
-        rank1: r1, rank2: r2, rank3: r3, rank4: r4, rank5: r5,
+        items: items,
         description: description || null,
         category: category === "None" ? "" : category,
         username: username || null,
@@ -56,7 +64,7 @@ export async function POST(req: Request) {
       }
     });
 
-    const ranks = [r1, r2, r3, r4, r5].filter(Boolean);
+    const ranks = items.map(i => i.text);
     const protocol = req.headers.get('x-forwarded-proto') || 'https';
     const host = req.headers.get('host');
     const currentWebsiteUrl = `${protocol}://${host}`;
