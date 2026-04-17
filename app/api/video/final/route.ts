@@ -36,11 +36,11 @@ export async function POST(req: Request) {
   }
 
     // 2. Create Submission (DB Record + Cloud Task)
-    const { title, r1, r2, r3, r4, r5, description, category, username, userid, visibility, filePaths, layoutConfig } = body;
+    const { title, description, category, username, userid, visibility, filePaths, layoutConfig } = body;
 
     const items = [];
-    const rawRanks = [r1, r2, r3, r4, r5];
-    for (const r of rawRanks) {
+    for (let i = 1; i <= 10; i++) {
+      const r = body[`r${i}`];
       if (r) {
         items.push({ text: r as string, note: null });
       }

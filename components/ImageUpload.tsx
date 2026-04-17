@@ -64,7 +64,7 @@ const ImageUploadSection = memo(function ImageUploadSection({
         <div className="h-px flex-1 bg-white/5" />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
         {[...Array(ranks)].map((_, index) => {
           const { url } = imageData[index];
           const isOver = draggingOver === index;

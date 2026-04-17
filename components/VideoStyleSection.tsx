@@ -200,7 +200,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
     updateConfig({ titleWordColors: config.titleWordColors.filter(wc => wc.word !== word) })
   }
 
-  const RANK_LABELS = ['1st', '2nd', '3rd', '4th', '5th']
+  const RANK_LABELS = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th']
 
   // Memoize so config doesn't produce a new object
   // on every render — without this, OverlayPreview's React.memo check always fails.
@@ -570,9 +570,9 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                 {/* Rank colors — labeled row, larger swatches */}
                 <div className="space-y-2">
                   <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Rank Number Colors</span>
-                  <div className="flex gap-3">
-                    {config.rankColors.map((color, i) => (
-                      <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                  <div className="flex flex-wrap gap-3">
+                    {config.rankColors.slice(0, ranks.length).map((color, i) => (
+                      <div key={i} className="flex flex-col items-center gap-2 min-w-[40px]">
                         <label className="relative cursor-pointer w-full">
                           <div
                             className="w-full aspect-square rounded-xl border-2 transition-all"
@@ -588,7 +588,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                             className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
                           />
                         </label>
-                        <span className="text-[8px] font-bold text-slate-600 uppercase">{RANK_LABELS[i]}</span>
+                        <span className="text-[8px] font-bold text-slate-600 uppercase whitespace-nowrap">{RANK_LABELS[i] || `${i + 1}th`}</span>
                       </div>
                     ))}
                   </div>

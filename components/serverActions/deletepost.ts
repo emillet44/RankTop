@@ -36,9 +36,9 @@ export async function DeletePost(idparam: string) {
     }
 
     // 3. Handle Image Deletion
-    // Loops through the 5 possible rank images (id1.png, id2.png, etc.)
+    // Loops through the 10 possible rank images (id1.png, id2.png, etc.)
     if (post.metadata?.images) {
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= 10; i++) {
         deletePromises.push(
           storage.bucket('ranktop-i').file(`${idparam}${i}.png`).delete().catch(e => {
             // We catch but don't stop, because a post might only have 3 images out of 5

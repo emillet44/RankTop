@@ -63,7 +63,7 @@ export const DEFAULT_VIDEO_STYLE: VideoLayoutConfig = {
   textShadow: true,
   rankSpacing: 140,
   fontFamily: 'Archivo Expanded Bold',
-  rankColors: ['#FFD700', '#C0C0C0', '#CD7F32', 'white', 'white'],
+  rankColors: ['#FFD700', '#C0C0C0', '#CD7F32', 'white', 'white', 'white', 'white', 'white', 'white', 'white'],
   titleFontSize: 100,
   subtitleFontSize: 45,
   rankFontSize: 60,

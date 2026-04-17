@@ -16,7 +16,7 @@ export async function newList(formData: FormData) {
 
   // 3. Construct the items array
   const items = [];
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 10; i++) {
     const name = data[`r${i}`] as string;
     const note = data[`r${i}_note`] as string;
     if (name) {

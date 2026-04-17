@@ -49,8 +49,8 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
 
   const [modalon, setModal] = useState(false);
 
-  const [imageData, setImageData] = useState<ImageData[]>(Array(5).fill({ file: null, url: null }));
-  const [videoData, setVideoData] = useState<VideoData[]>(Array(5).fill({ file: null, url: null, duration: 0 }));
+  const [imageData, setImageData] = useState<ImageData[]>(Array(10).fill({ file: null, url: null }));
+  const [videoData, setVideoData] = useState<VideoData[]>(Array(10).fill({ file: null, url: null, duration: 0 }));
 
   // Keep track of active blob URLs to clean them up properly
   const activeUrlsRef = useRef<Set<string>>(new Set());
@@ -79,7 +79,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
 
   const draggedIndex = useRef<number | null>(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [previewData, setPreviewData] = useState<{ title: string; ranks: string[]; images: (string | null)[]; currentIndex: number; }>({ title: '', ranks: ['', '', '', '', ''], images: [null, null, null, null, null], currentIndex: 0 });
+  const [previewData, setPreviewData] = useState<{ title: string; ranks: string[]; images: (string | null)[]; currentIndex: number; }>({ title: '', ranks: Array(10).fill(''), images: Array(10).fill(null), currentIndex: 0 });
 
   const [videoSessionId, setVideoSessionId] = useState<string | null>(null);
   const [videoFilePaths, setVideoFilePaths] = useState<string[]>([]);
@@ -260,7 +260,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
   const toggleModal = (e: any) => { e.preventDefault(); setModal(!modalon); }
 
   const changeRank = (delta: number) => {
-    setRanks(prev => Math.min(5, Math.max(2, prev + delta)));
+    setRanks(prev => Math.min(10, Math.max(2, prev + delta)));
   }
 
   const togglePreview = (e: any) => {
@@ -288,7 +288,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
     const formData = new FormData(form);
     setPreviewData({
       title: formData.get('title') as string || '',
-      ranks: [formData.get('r1') as string || '', formData.get('r2') as string || '', formData.get('r3') as string || '', formData.get('r4') as string || '', formData.get('r5') as string || ''],
+      ranks: Array.from({ length: 10 }, (_, i) => formData.get(`r${i + 1}`) as string || ''),
       images: postType === 'image' ? imageData.map(img => img.url) : [],
       currentIndex: 0
     });
@@ -330,7 +330,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                     <button
                       type="button"
                       onClick={() => changeRank(1)}
-                      disabled={ranks === 5}
+                      disabled={ranks === 10}
                       className="w-10 h-full flex items-center justify-center text-xl text-slate-300 hover:bg-white/10 disabled:opacity-20 transition-all border-l border-white/10"
                     >
                       <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
@@ -481,11 +481,17 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                           {previewData.title || 'Your Title Here'}
                         </header>
                         <ul className="grid grid-cols-1 grid-flow-row auto-rows-auto gap-2 sm:gap-4 list-inside list-decimal p-4 sm:p-6 rounded-xl outline outline-slate-700 w-full">
-                          <li className="text-lg sm:text-xl text-slate-400 outline-none p-1 sm:p-2 w-11/12 truncate">{previewData.ranks[0] || 'Your first rank here'}</li>
-                          <li className="text-lg sm:text-xl text-slate-400 outline-none p-1 sm:p-2 w-11/12 truncate">{previewData.ranks[1] || 'Your second rank here'}</li>
-                          <li className={`text-lg sm:text-xl text-slate-400 outline-none p-1 sm:p-2 w-11/12 truncate ${!previewData.ranks[2] ? 'hidden' : ''}`}>{previewData.ranks[2] || ''}</li>
-                          <li className={`text-lg sm:text-xl text-slate-400 outline-none p-1 sm:p-2 w-11/12 truncate ${!previewData.ranks[3] ? 'hidden' : ''}`}>{previewData.ranks[3] || ''}</li>
-                          <li className={`text-lg sm:text-xl text-slate-400 outline-none p-1 sm:p-2 w-11/12 truncate ${!previewData.ranks[4] ? 'hidden' : ''}`}>{previewData.ranks[4] || ''}</li>
+                          {previewData.ranks.map((rank, idx) => (
+                            rank ? (
+                              <li key={idx} className="text-lg sm:text-xl text-slate-400 outline-none p-1 sm:p-2 w-11/12 truncate">
+                                {rank}
+                              </li>
+                            ) : idx < 2 ? (
+                              <li key={idx} className="text-lg sm:text-xl text-slate-400 outline-none p-1 sm:p-2 w-11/12 truncate">
+                                {idx === 0 ? 'Your first rank here' : 'Your second rank here'}
+                              </li>
+                            ) : null
+                          ))}
                         </ul>
                       </div>
                     )}

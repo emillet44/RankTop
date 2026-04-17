@@ -196,12 +196,18 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
         setMessage('Starting render...');
         const payload = extractTextPayload(formData);
+        const ranksArr = [];
+        for (let i = 1; i <= 10; i++) {
+          const val = payload[`r${i}`];
+          if (val) ranksArr.push(val);
+        }
+
         const triggerRes = await fetch(getApiRoute('pre-edited'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...payload,
-            ranks: [payload.r1, payload.r2, payload.r3, payload.r4, payload.r5].filter(Boolean),
+            ranks: ranksArr,
             sessionId,
             filePath: urlData.filePath,
             timestamps,
@@ -252,12 +258,18 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
         setMessage('Starting render...');
         const payload = extractTextPayload(formData);
+        const ranksArr = [];
+        for (let i = 1; i <= 10; i++) {
+          const val = payload[`r${i}`];
+          if (val) ranksArr.push(val);
+        }
+
         const triggerRes = await fetch(getApiRoute('final'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...payload,
-            ranks: [payload.r1, payload.r2, payload.r3, payload.r4, payload.r5].filter(Boolean),
+            ranks: ranksArr,
             filePaths,
             sessionId,
             layoutConfig,

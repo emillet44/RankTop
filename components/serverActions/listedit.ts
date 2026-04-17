@@ -14,7 +14,7 @@ export async function editList(formData: FormData, id: string) {
   const data = Object.fromEntries(formData);
   
   const items = [];
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 10; i++) {
     const name = data[`r${i}`] as string;
     const note = data[`r${i}_note`] as string;
     if (name) {

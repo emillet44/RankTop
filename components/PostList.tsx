@@ -224,51 +224,7 @@ export default function PostsList({ starter }: { starter: any }) {
       {/* Posts List - Seamless Feed */}
       <div className="flex flex-col">
         {posts?.map((list: any, index: number) => (
-          <article key={list.id} className="relative border-b border-white/10 hover:bg-white/[0.02] transition-colors group">
-            {/* Background Link for "outer border" redirect */}
-            <Link href={`/post/${list.id}`} className="absolute inset-0 z-0" aria-label={`View ${list.title}`} />
-            
-            <div className="relative z-10 p-4 sm:p-6 space-y-4 pointer-events-none">
-              {/* Post Header: Title */}
-              <h2 className="text-xl md:text-2xl font-semibold text-slate-100 line-clamp-2 leading-tight tracking-tight pointer-events-auto">
-                <Link href={`/post/${list.id}`} className="hover:text-blue-400 transition-colors">
-                  {list.title}
-                </Link>
-              </h2>
-
-              {/* Content Area */}
-              <div className="rounded-lg overflow-hidden border border-white/5 pointer-events-auto bg-black/20">
-                {list.metadata?.videos && list.metadata.videoUrl ? (
-                  <VideoDisplay videoUrl={list.metadata.videoUrl} title={list.title} postId={list.id} variant="preview" />
-                ) : list.metadata?.images ? (
-                  <ListCarousel items={list.items} postid={list.id} firstimage={index === 0} />
-                ) : (
-                  <div className="p-4 bg-white/[0.03] space-y-3">
-                    <ol className="space-y-2 list-decimal list-inside text-slate-400 text-base md:text-lg">
-                      {(list.items as any as Item[]).map((item, idx) => (
-                        <li key={idx} className="truncate pl-2"><span className="text-slate-300">{item.text}</span></li>
-                      ))}
-                    </ol>
-                  </div>
-                )}
-              </div>
-
-              {/* Post Footer: Stats & Date */}
-              <div className="flex items-center justify-between text-[13px] text-slate-500 font-medium pt-1 pointer-events-auto">
-                <div className="flex items-center space-x-5">
-                  <div className="flex items-center group/stat">
-                    <span className="text-slate-400 group-hover/stat:text-blue-400 transition-colors">{list.metadata?.likes ?? 0} likes</span>
-                  </div>
-                  <div className="flex items-center group/stat">
-                    <span className="text-slate-400 group-hover/stat:text-blue-400 transition-colors">{list.metadata?.views ?? 0} views</span>
-                  </div>
-                </div>
-                {list.metadata?.date && (
-                  <time className="text-slate-600">{getPostDate(new Date(list.metadata.date))}</time>
-                )}
-              </div>
-            </div>
-          </article>
+          <PostItem key={list.id} list={list} index={index} />
         ))}
       </div>
 
@@ -285,4 +241,89 @@ export default function PostsList({ starter }: { starter: any }) {
       </div>
     </div>
   )
+}
+
+function PostItem({ list, index }: { list: any; index: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const items = list.items as any as Item[];
+  const isTextPost = !(list.metadata?.videos && list.metadata.videoUrl) && !list.metadata?.images;
+  const showExpandButton = isTextPost && items.length > 5;
+  const displayedItems = (isTextPost && !expanded) ? items.slice(0, 5) : items;
+
+  const getPostDate = (postDate: Date): string => {
+    const now = new Date();
+    const diff = now.getTime() - postDate.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+
+    if (diff / 1000 < 60) {
+      return "Seconds ago";
+    } else if (minutes < 60) {
+      return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    } else if (hours < 24) {
+      return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    } else {
+      const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+      return postDate.toLocaleDateString('en-US', options);
+    }
+  };
+
+  return (
+    <article className="relative border-b border-white/10 hover:bg-white/[0.02] transition-colors group">
+      {/* Background Link for "outer border" redirect */}
+      <Link href={`/post/${list.id}`} className="absolute inset-0 z-0" aria-label={`View ${list.title}`} />
+
+      <div className="relative z-10 p-4 sm:p-6 space-y-4 pointer-events-none">
+        {/* Post Header: Title */}
+        <h2 className="text-xl md:text-2xl font-semibold text-slate-100 line-clamp-2 leading-tight tracking-tight pointer-events-auto">
+          <Link href={`/post/${list.id}`} className="hover:text-blue-400 transition-colors">
+            {list.title}
+          </Link>
+        </h2>
+
+        {/* Content Area */}
+        <div className="rounded-lg overflow-hidden border border-white/5 pointer-events-auto bg-black/20">
+          {list.metadata?.videos && list.metadata.videoUrl ? (
+            <VideoDisplay videoUrl={list.metadata.videoUrl} title={list.title} postId={list.id} variant="preview" />
+          ) : list.metadata?.images ? (
+            <ListCarousel items={list.items} postid={list.id} firstimage={index === 0} />
+          ) : (
+            <div className="p-4 bg-white/[0.03] space-y-3">
+              <ol className="space-y-2 list-decimal list-inside text-slate-400 text-base md:text-lg">
+                {displayedItems.map((item, idx) => (
+                  <li key={idx} className="truncate pl-2"><span className="text-slate-300">{item.text}</span></li>
+                ))}
+              </ol>
+              {showExpandButton && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setExpanded(!expanded);
+                  }}
+                  className="mt-2 text-[11px] font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase tracking-widest pointer-events-auto"
+                >
+                  {expanded ? "Show less" : `Show ${items.length - 5} more ranks`}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Post Footer: Stats & Date */}
+        <div className="flex items-center justify-between text-[13px] text-slate-500 font-medium pt-1 pointer-events-auto">
+          <div className="flex items-center space-x-5">
+            <div className="flex items-center group/stat">
+              <span className="text-slate-400 group-hover/stat:text-blue-400 transition-colors">{list.metadata?.likes ?? 0} likes</span>
+            </div>
+            <div className="flex items-center group/stat">
+              <span className="text-slate-400 group-hover/stat:text-blue-400 transition-colors">{list.metadata?.views ?? 0} views</span>
+            </div>
+          </div>
+          {list.metadata?.date && (
+            <time className="text-slate-600">{getPostDate(new Date(list.metadata.date))}</time>
+          )}
+        </div>
+      </div>
+    </article>
+  );
 }

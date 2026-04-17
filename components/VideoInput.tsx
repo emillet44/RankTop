@@ -94,7 +94,7 @@ const VideoUploadSection = memo(function VideoUploadSection({
 
       {/* Auto-stitch: existing per-rank upload UI */}
       {videoMode === 'auto' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[...Array(ranks)].map((_, index) => {
             const { url, duration } = videoData[index];
             return (
