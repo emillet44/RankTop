@@ -33,7 +33,7 @@ const PostTypeSelector = memo(function PostTypeSelector({
           icon={faVideo} 
           className={`w-5 h-5 mb-2 transition-transform duration-300 group-hover:scale-110 ${postType === 'video' ? 'text-blue-400' : 'text-slate-600'}`} 
         />
-        <span className="text-[11px] font-bold uppercase tracking-[0.2em]">Video Post</span>
+        <span className="text-[11px] font-bold  tracking-[0.2em]">Video Post</span>
       </button>
 
       {/* Image Post Button */}
@@ -46,7 +46,7 @@ const PostTypeSelector = memo(function PostTypeSelector({
           icon={faImage} 
           className={`w-5 h-5 mb-2 transition-transform duration-300 group-hover:scale-110 ${postType === 'image' ? 'text-blue-400' : 'text-slate-600'}`} 
         />
-        <span className="text-[11px] font-bold uppercase tracking-[0.2em]">Image Post</span>
+        <span className="text-[11px] font-bold  tracking-[0.2em]">Image Post</span>
       </button>
     </div>
   );

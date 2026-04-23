@@ -7,6 +7,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-inter)', 'sans-serif'],
+      },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic':
@@ -14,6 +17,10 @@ module.exports = {
       },
       colors: {
         offwhite: '#FFFFF0'
+      },
+      letterSpacing: {
+        tightest: '-.075em',
+        tighter: '-.05em',
       }
     },
   },

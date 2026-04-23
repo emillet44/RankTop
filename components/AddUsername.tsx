@@ -76,7 +76,7 @@ export default function UsernameForm({ userid, currentUsername }: UsernameFormPr
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-slate-500 text-xs font-bold uppercase">New Username</label>
+              <label className="text-slate-500 text-xs font-bold ">New Username</label>
               <input
                 autoFocus
                 value={inputValue}

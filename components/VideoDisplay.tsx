@@ -63,7 +63,7 @@ export function VideoDisplay({
             <div className="flex flex-col items-center space-y-3">
               <div className="w-6 h-6 border-2 border-blue-500/30 border-t-transparent rounded-full animate-spin"></div>
               <div className="text-center">
-                <div className="text-slate-400 text-[11px] font-semibold uppercase tracking-wider">
+                <div className="text-slate-400 text-[11px] font-semibold capitalize">
                     {retryCount > 0 ? 'Syncing...' : 'Loading...'}
                 </div>
               </div>

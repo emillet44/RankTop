@@ -60,7 +60,7 @@ const ImageUploadSection = memo(function ImageUploadSection({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 px-1">
-        <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Images</h3>
+        <h3 className="text-[11px] font-bold text-slate-500 tracking-normal capitalize">Images</h3>
         <div className="h-px flex-1 bg-white/5" />
       </div>
 
@@ -79,7 +79,7 @@ const ImageUploadSection = memo(function ImageUploadSection({
               onDrop={(e) => handleDrop(e, index)}
             >
               <div className="flex items-center justify-between px-1">
-                <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tighter">Rank {index + 1}</span>
+                <span className="text-[10px] font-bold text-slate-600 tracking-normal capitalize">Rank {index + 1}</span>
               </div>
 
               {url === null && (
@@ -100,7 +100,7 @@ const ImageUploadSection = memo(function ImageUploadSection({
                       icon={faImage}
                       className={`text-xl transition-colors ${isOver ? 'text-blue-400' : 'text-slate-700 group-hover:text-blue-500/50'}`}
                     />
-                    <span className={`text-[9px] font-bold uppercase tracking-widest transition-colors ${isOver ? 'text-blue-400' : 'text-slate-600'}`}>
+                    <span className={`text-[9px] font-bold tracking-normal capitalize transition-colors ${isOver ? 'text-blue-400' : 'text-slate-600'}`}>
                       {isOver ? 'Drop it!' : 'Upload'}
                     </span>
                   </div>
@@ -113,7 +113,7 @@ const ImageUploadSection = memo(function ImageUploadSection({
                 >
                   {isOver && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-blue-500/20 pointer-events-none">
-                      <span className="text-[10px] font-bold text-blue-300 uppercase tracking-widest">Replace</span>
+                      <span className="text-[10px] font-bold text-blue-300 tracking-normal capitalize">Replace</span>
                     </div>
                   )}
                   <Image

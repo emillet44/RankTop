@@ -310,11 +310,11 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
               <div className="flex items-center justify-between border-b border-white/10 pb-8 gap-4">
                 <div className="min-w-0">
                   <h1 className="text-2xl sm:text-3xl font-bold text-slate-100 tracking-tight truncate">Create Post</h1>
-                  <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Share your rankings</p>
+                  <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-normal capitalize mt-1">Share your rankings</p>
                 </div>
 
                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                  <label className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ranks</label>
+                  <label className="text-[9px] sm:text-[10px] font-bold text-slate-500 tracking-normal capitalize">Ranks</label>
                   <div className="flex items-center bg-white/10 border border-white/10 rounded-lg overflow-hidden h-9">
                     <button
                       type="button"
@@ -345,7 +345,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
               {/* Title and Ranks Section */}
               <div className="space-y-6">
                 <div className="relative group">
-                  <label className="absolute -top-2 left-2 px-1 bg-[#0a0a0a] text-[10px] font-bold text-slate-400 uppercase tracking-widest z-10">Title</label>
+                  <label className="absolute -top-2 left-2 px-1 bg-[#0a0a0a] text-[10px] font-bold text-slate-400  tracking-widest z-10">Title</label>
                   <input
                     name="title"
                     onBlur={handleInputChange}
@@ -361,7 +361,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                   {[...Array(ranks)].map((_, index) => (
                     <div key={index} className="space-y-2">
                       <div className="relative flex items-center group w-full">
-                        <span className="absolute left-4 text-[10px] font-bold text-blue-400 uppercase tracking-widest">#{index + 1}</span>
+                        <span className="absolute left-4 text-[10px] font-bold text-blue-400  tracking-widest">#{index + 1}</span>
                         <input
                           name={`r${index + 1}`}
                           onBlur={handleInputChange}
@@ -436,6 +436,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
                 usergroups={usergroups}
                 descref={descref}
                 showRankNotes={showRankNotes}
+                postType={postType}
               />
             </div>
 
@@ -522,7 +523,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
               type="button"
               onClick={togglePreview}
               disabled={!showPreview && !canPreview()}
-              className={`w-full py-4 px-6 rounded-xl text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${showPreview
+              className={`w-full py-4 px-6 rounded-xl text-[11px] font-bold tracking-normal capitalize transition-all duration-300 ${showPreview
                   ? 'bg-white/10 text-slate-200 hover:bg-white/20 border border-white/10'
                   : !canPreview()
                     ? 'bg-white/5 text-slate-600 border border-white/5 cursor-not-allowed'
@@ -534,7 +535,7 @@ export function CSForm({ signedin, username, userid, usergroups }: { signedin: b
             <button
               type="submit"
               disabled={!!submissionData}
-              className="w-full py-4 px-6 rounded-xl text-[11px] font-bold uppercase tracking-[0.2em] bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 px-6 rounded-xl text-[11px] font-bold tracking-normal capitalize bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submissionData ? 'Processing...' : 'Create Post'}
             </button>

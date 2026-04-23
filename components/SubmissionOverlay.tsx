@@ -5,6 +5,7 @@ import { faExclamationTriangle, faCheckCircle } from '@fortawesome/free-solid-sv
 import { useRouter } from 'next/navigation';
 import { newList } from '@/components/serverActions/listupload';
 import { upload } from '@/components/serverActions/imgupload';
+import { saveReRanking } from '@/components/serverActions/rerankupload';
 
 interface Timestamp {
   rankIndex: number;
@@ -14,8 +15,9 @@ interface Timestamp {
 interface SubmissionOverlayProps {
   formData: FormData;
   videoFiles: File[];
-  postType: 'text' | 'image' | 'video';
+  postType: 'text' | 'image' | 'video' | 'rerank';
   onClose: () => void;
+  onComplete?: (postId: string) => void;
   previousSessionId?: string | null;
   previousFilePaths?: string[] | null;
 }
@@ -68,6 +70,7 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
   videoFiles,
   postType,
   onClose,
+  onComplete,
   previousSessionId,
   previousFilePaths,
 }) => {
@@ -279,16 +282,23 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
         if (!triggerRes.ok) throw new Error('Processing initialization failed.');
         postId = triggerRes.headers.get('X-Post-Id') || '';
         await pollStatus(postId, 'final');
-      } else if (postType === 'image') {
-        setMessage('Creating post...');
+      } else if (postType === 'rerank') {
+        setMessage('Saving re-ranking...');
         scheduleProgress(10);
+        
         const metadataOnly = new FormData();
         formData.forEach((val, key) => {
-          if (!(val instanceof File)) metadataOnly.append(key, val);
+          if (!(val instanceof File)) {
+            metadataOnly.append(key, val);
+          } else if (key.startsWith('img')) {
+            // Add a flag so the server action knows a new image is coming for this rank
+            metadataOnly.append(`hasNewImg${key.replace('img', '')}`, 'true');
+          }
         });
-        postId = await newList(metadataOnly);
-
-        setMessage('Uploading images...');
+        
+        postId = await saveReRanking(metadataOnly, formData.get('postId') as string);
+        
+        setMessage('Uploading new images...');
         const imageEntries: { file: File; name: string }[] = [];
         formData.forEach((val, key) => {
           if (val instanceof File && key.startsWith('img')) {
@@ -317,13 +327,24 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
 
       setIsComplete(true);
       scheduleProgress(100);
-      setTimeout(() => router.push(`/post/${postId}`), 800);
+      
+      const finalUrl = postType === 'rerank' 
+        ? `/post/${formData.get('postId')}/rerank/${postId}` 
+        : `/post/${postId}`;
+        
+      setTimeout(() => {
+        if (onComplete) {
+          onComplete(postId);
+        } else {
+          router.push(finalUrl);
+        }
+      }, 800);
     } catch (err: any) {
       console.error('Submission error:', err);
       setError(err.message || 'An error occurred.');
       started.current = false;
     }
-  }, [formData, videoFiles, postType, router, previousSessionId, previousFilePaths, scheduleProgress]);
+  }, [formData, videoFiles, postType, router, previousSessionId, previousFilePaths, scheduleProgress, onComplete]);
 
   useEffect(() => {
     runSubmission();

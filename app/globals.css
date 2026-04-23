@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight font-bold;
+  }
+
+  h1 { @apply text-4xl md:text-6xl; }
+  h2 { @apply text-3xl md:text-4xl; }
+  h3 { @apply text-2xl md:text-3xl; }
+
+  body {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply h-8 flex items-center px-5 rounded bg-blue-600 hover:bg-blue-500 text-white transition-all font-bold text-[13px] capitalize tracking-normal border border-transparent;
+  }
+  
+  .nav-link {
+    @apply h-8 flex items-center px-4 rounded text-[13px] font-bold text-slate-400 hover:text-offwhite hover:bg-white/5 border border-transparent transition-all capitalize tracking-normal;
+  }
+}

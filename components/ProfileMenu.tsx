@@ -36,7 +36,7 @@ export function ProfileMenu({ username, userid }: { username: string, userid: st
           className="absolute flex flex-col top-12 right-0 w-56 border border-white/10 bg-black/90 backdrop-blur-xl rounded-lg text-offwhite py-2 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200"
         >
           <div className="px-4 py-2 border-b border-white/10 mb-1">
-            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Account</p>
+            <p className="text-[10px] text-slate-400  font-bold capitalize">Account</p>
             <p className="text-[13px] truncate text-slate-500 font-mono">#{userid.slice(-8)}</p>
           </div>
           

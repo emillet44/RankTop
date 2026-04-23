@@ -31,6 +31,8 @@ export async function newList(formData: FormData) {
   const createData: any = {
     title: data.title as string,
     items: items,
+    itemCount: items.length,
+    reRankType: data.postType === 'video' ? "NONE" : (data.reRankType as any || "NONE"),
     description: data.description !== "" ? (data.description as string) : null,
     category: data.category === "None" ? "" : (data.category as string),
     private: data.visibility === "Private",

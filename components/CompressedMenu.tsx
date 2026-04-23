@@ -45,7 +45,7 @@ export function CompressedMenu({ username, signedin }: { username: string, signe
           {/* Identity Section */}
           {signedin && (
             <div className="mb-8 px-4">
-              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-[0.2em] mb-1">Account</p>
+              <p className="text-[10px] text-slate-500 font-bold tracking-normal capitalize mb-1">Account</p>
               <header className="text-offwhite font-bold truncate text-lg">@{username}</header>
             </div>
           )}
@@ -57,7 +57,7 @@ export function CompressedMenu({ username, signedin }: { username: string, signe
                 <Link 
                   href={`/user/${username}`} 
                   onClick={toggleMenu} 
-                  className="h-11 flex items-center px-4 rounded-lg text-slate-400 hover:text-offwhite hover:bg-white/5 transition-all font-bold uppercase tracking-wider text-[11px] group"
+                  className="h-11 flex items-center px-4 rounded-lg text-slate-400 hover:text-offwhite hover:bg-white/5 transition-all font-bold tracking-normal capitalize text-[11px] group"
                 >
                   <FontAwesomeIcon icon={faUser} className="w-4 h-4 mr-3 text-slate-500 group-hover:text-blue-400 transition-colors" />
                   My Profile
@@ -65,7 +65,7 @@ export function CompressedMenu({ username, signedin }: { username: string, signe
                 <Link 
                   href="/username" 
                   onClick={toggleMenu} 
-                  className="h-11 flex items-center px-4 rounded-lg text-slate-400 hover:text-offwhite hover:bg-white/5 transition-all font-bold uppercase tracking-wider text-[11px] group"
+                  className="h-11 flex items-center px-4 rounded-lg text-slate-400 hover:text-offwhite hover:bg-white/5 transition-all font-bold tracking-normal capitalize text-[11px] group"
                 >
                   <FontAwesomeIcon icon={faGear} className="w-4 h-4 mr-3 text-slate-500 group-hover:text-blue-400 transition-colors" />
                   Settings
@@ -77,7 +77,7 @@ export function CompressedMenu({ username, signedin }: { username: string, signe
             <Link 
               href="/groups" 
               onClick={toggleMenu} 
-              className="h-11 flex items-center px-4 rounded-lg text-slate-300 hover:text-offwhite hover:bg-white/5 transition-all font-bold uppercase tracking-wider text-[11px] group"
+              className="h-11 flex items-center px-4 rounded-lg text-slate-300 hover:text-offwhite hover:bg-white/5 transition-all font-bold tracking-normal capitalize text-[11px] group"
             >
               <FontAwesomeIcon icon={faUsers} className="w-4 h-4 mr-3 text-slate-500 group-hover:text-blue-400 transition-colors" />
               Groups
@@ -86,7 +86,7 @@ export function CompressedMenu({ username, signedin }: { username: string, signe
             <Link 
               href="/newpost" 
               onClick={toggleMenu} 
-              className="h-11 mt-4 flex items-center px-4 rounded-lg bg-blue-600/10 border border-blue-500/20 text-blue-400 hover:bg-blue-600/20 hover:border-blue-500/40 transition-all font-bold uppercase tracking-wider text-[11px] group"
+              className="h-11 mt-4 flex items-center px-4 rounded-lg bg-blue-600/10 border border-blue-500/20 text-blue-400 hover:bg-blue-600/20 hover:border-blue-500/40 transition-all font-bold tracking-normal capitalize text-[11px] group"
             >
               <FontAwesomeIcon icon={faPlus} className="w-4 h-4 mr-3 text-blue-500 group-hover:scale-110 transition-transform" />
               New Post
@@ -101,14 +101,14 @@ export function CompressedMenu({ username, signedin }: { username: string, signe
                   toggleMenu();
                   signOut({ callbackUrl: "/" });
                 }} 
-                className="w-full h-11 flex items-center justify-center rounded-lg text-red-500/80 hover:text-red-500 hover:bg-red-500/5 transition-all font-bold uppercase tracking-widest text-[11px]"
+                className="w-full h-11 flex items-center justify-center rounded-lg text-red-500/80 hover:text-red-500 hover:bg-red-500/5 transition-all font-bold tracking-normal capitalize text-[11px]"
               >
                 <FontAwesomeIcon icon={faArrowRightFromBracket} className="w-3.5 h-3.5 mr-2" />
                 Sign Out
               </button>
             ) : (
               <Link href="/signin" onClick={toggleMenu} className="block">
-                <button className="w-full h-11 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-all uppercase tracking-wider text-[11px]">
+                <button className="w-full h-11 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-all tracking-normal capitalize text-[11px]">
                   Sign In
                 </button>
               </Link>

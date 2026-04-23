@@ -48,7 +48,7 @@ export function Search() {
         <div onClick={closeMenu} className="fixed inset-0 z-20" />
       }
       <div className="h-[34px] flex items-center px-2 sm:px-3 border-r border-white/10 z-30 relative cursor-pointer hover:bg-white/5 transition-colors shrink-0" onClick={() => setIsOpen(!isOpen)}>
-        <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest min-w-[42px] sm:min-w-[48px] text-center">
+        <span className="text-[12px] font-bold text-slate-400  capitalize min-w-[42px] sm:min-w-[48px] text-center">
           <span className="hidden sm:inline">{type}</span>
           <span className="sm:hidden">{type.charAt(0)}</span>
         </span>
@@ -56,9 +56,9 @@ export function Search() {
         {isOpen &&
         <>
           <div className="absolute top-full left-0 z-40 mt-1.5 bg-black border border-white/10 rounded-md min-w-[120px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
-            <div className="px-4 py-2 hover:bg-white/5 text-slate-300 text-[11px] font-bold uppercase tracking-widest transition-colors cursor-pointer" onClick={() => changeType("Posts")}>Posts</div>
-            <div className="px-4 py-2 hover:bg-white/5 text-slate-300 text-[11px] font-bold uppercase tracking-widest transition-colors cursor-pointer" onClick={() => changeType("Users")}>Users</div>
-            <div className="px-4 py-2 hover:bg-white/5 text-slate-300 text-[11px] font-bold uppercase tracking-widest transition-colors cursor-pointer" onClick={() => changeType("Groups")}>Groups</div>
+            <div className="px-4 py-2 hover:bg-white/5 text-slate-300 text-[11px] font-bold  capitalize transition-colors cursor-pointer" onClick={() => changeType("Posts")}>Posts</div>
+            <div className="px-4 py-2 hover:bg-white/5 text-slate-300 text-[11px] font-bold  capitalize transition-colors cursor-pointer" onClick={() => changeType("Users")}>Users</div>
+            <div className="px-4 py-2 hover:bg-white/5 text-slate-300 text-[11px] font-bold  capitalize transition-colors cursor-pointer" onClick={() => changeType("Groups")}>Groups</div>
           </div>
         </>
       }
@@ -84,7 +84,7 @@ export function Search() {
             <EmptyQueryBoundary fallback={null}>
               <div className="absolute grid grid-cols-1 z-30 mt-1.5 border border-white/10 empty:outline-none rounded-md bg-black text-offwhite w-full shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
                 <CustomHits />
-                <Link href={`/search/${type.toLowerCase()}/${search}`} className="block w-full hover:bg-white/5 p-3 text-[12px] font-bold uppercase tracking-widest border-t border-white/10 text-blue-400 transition-colors">
+                <Link href={`/search/${type.toLowerCase()}/${search}`} className="block w-full hover:bg-white/5 p-3 text-[12px] font-bold  capitalize border-t border-white/10 text-blue-400 transition-colors">
                   Search for &quot;{search}&quot;
                 </Link>
                 <div className="p-2 w-full border-t border-white/10 bg-black/40 flex justify-end">

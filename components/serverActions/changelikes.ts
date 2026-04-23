@@ -2,103 +2,190 @@
 
 import { prisma } from "@/lib/prisma";
 
-
-//This server action has a function to update likes on the database, which updates the post first, then it adds the postId to the users liked posts.
-//It can both add or remove likes depending on the add parameter. The likes function first loads the user email, the uses it to find the user record
-//in the database. It then uses the user id to check whether the user has liked the post or not, then it uses the post id parameter it recieved to
-//find how many likes the post has already.
-export async function addLike(postid: string, userid: string) {
-
-    await prisma.$transaction(async (prisma) => {
-      await prisma.likes.upsert({
+/**
+ * Idempotent post like toggle
+ * Sets the like status to an explicit state to handle high-frequency clicks
+ */
+export async function setPostLikeStatus(postid: string, userid: string, shouldLike: boolean) {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const existingLike = await tx.likes.findUnique({
         where: {
           userId_postId: {
             userId: userid,
             postId: postid,
           },
         },
-        update: {},
-        create: {
-          postId: postid,
-          user: { connect: { id: userid } },
-        },
       });
-      await prisma.posts.update({
-        where: { id: postid },
-        data: {
-          metadata: {
-            update: {
-              likes: { increment: 1 },
+
+      if (!shouldLike && existingLike) {
+        // Remove like
+        await tx.likes.delete({
+          where: {
+            userId_postId: {
+              userId: userid,
+              postId: postid,
             },
           },
-        },
-      });
+        });
+
+        await tx.posts.update({
+          where: { id: postid },
+          data: {
+            metadata: {
+              update: {
+                likes: { decrement: 1 },
+              },
+            },
+          },
+        });
+      } else if (shouldLike && !existingLike) {
+        // Add like
+        await tx.likes.create({
+          data: {
+            postId: postid,
+            userId: userid,
+          },
+        });
+
+        await tx.posts.update({
+          where: { id: postid },
+          data: {
+            metadata: {
+              update: {
+                likes: { increment: 1 },
+              },
+            },
+          },
+        });
+      }
+      return { success: true };
     });
+  } catch (error) {
+    console.error("Failed to set like status:", error);
+    throw new Error("Could not update like");
+  }
+}
+
+// Keep legacy actions for compatibility if needed elsewhere
+export async function addLike(postid: string, userid: string) {
+  return setPostLikeStatus(postid, userid, true);
 }
 
 export async function removeLike(postid: string, userid: string) {
-  
-  await prisma.$transaction(async (prisma) => {
-    await prisma.likes.delete({
-      where: {
-        userId_postId: {
-          userId: userid,
-          postId: postid,
-        },
-      },
-    });
-    await prisma.posts.update({
-      where: { id: postid },
-      data: {
-        metadata: {
-          update: {
-            likes: { decrement: 1 },
+  return setPostLikeStatus(postid, userid, false);
+}
+
+export async function setCommentLikeStatus(commentid: string, userid: string, shouldLike: boolean) {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const existingLike = await tx.comment_Likes.findUnique({
+        where: {
+          userId_commentId: {
+            userId: userid,
+            commentId: commentid,
           },
         },
-      },
+      });
+
+      if (!shouldLike && existingLike) {
+        await tx.comment_Likes.delete({
+          where: {
+            userId_commentId: {
+              userId: userid,
+              commentId: commentid,
+            },
+          },
+        });
+        await tx.comments.update({
+          where: { id: commentid },
+          data: {
+            likes: { decrement: 1 },
+          },
+        });
+      } else if (shouldLike && !existingLike) {
+        await tx.comment_Likes.create({
+          data: {
+            commentId: commentid,
+            userId: userid,
+          },
+        });
+        await tx.comments.update({
+          where: { id: commentid },
+          data: {
+            likes: { increment: 1 },
+          },
+        });
+      }
+      return { success: true };
     });
-  });
+  } catch (error) {
+    console.error("Failed to set comment like status:", error);
+    throw new Error("Could not update comment like");
+  }
 }
 
 export async function addCommentLike(commentid: string, userid: string) {
-  await prisma.$transaction(async (prisma) => {
-    await prisma.comment_Likes.upsert({
-      where: {
-        userId_commentId: {
-          userId: userid,
-          commentId: commentid,
-        },
-      },
-      update: {},
-      create: {
-        commentId: commentid,
-        user: { connect: { id: userid } },
-      },
-    });
-    await prisma.comments.update({
-      where: { id: commentid },
-      data: {
-        likes: { increment: 1 }
-      },
-    });
-  });
+  return setCommentLikeStatus(commentid, userid, true);
 }
 
 export async function removeCommentLike(commentid: string, userid: string) {
-  await prisma.$transaction(async (prisma) => {
-    await prisma.comment_Likes.delete({
-      where: {
-        userId_commentId: {
-          userId: userid,
-          commentId: commentid,
+  return setCommentLikeStatus(commentid, userid, false);
+}
+
+export async function setReRankingLikeStatus(rerankingid: string, userid: string, shouldLike: boolean) {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const existingLike = await tx.reRanking_Likes.findUnique({
+        where: {
+          userId_rerankingId: {
+            userId: userid,
+            rerankingId: rerankingid,
+          },
         },
-      },
-    })
-    await prisma.comments.update({
-      where: { id: commentid },
-      data: {
-        likes: { decrement: 1 }
-      },
+      });
+
+      if (!shouldLike && existingLike) {
+        await tx.reRanking_Likes.delete({
+          where: {
+            userId_rerankingId: {
+              userId: userid,
+              rerankingId: rerankingid,
+            },
+          },
+        });
+        await tx.reRankings.update({
+          where: { id: rerankingid },
+          data: {
+            likes: { decrement: 1 },
+          },
+        });
+      } else if (shouldLike && !existingLike) {
+        await tx.reRanking_Likes.create({
+          data: {
+            rerankingId: rerankingid,
+            userId: userid,
+          },
+        });
+        await tx.reRankings.update({
+          where: { id: rerankingid },
+          data: {
+            likes: { increment: 1 },
+          },
+        });
+      }
+      return { success: true };
     });
-  });
+  } catch (error) {
+    console.error("Failed to set reranking like status:", error);
+    throw new Error("Could not update reranking like");
+  }
+}
+
+export async function addReRankingLike(rerankingid: string, userid: string) {
+  return setReRankingLikeStatus(rerankingid, userid, true);
+}
+
+export async function removeReRankingLike(rerankingid: string, userid: string) {
+  return setReRankingLikeStatus(rerankingid, userid, false);
 }

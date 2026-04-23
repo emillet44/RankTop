@@ -10,6 +10,7 @@ interface OptionalSettingsSectionProps {
   descref: React.RefObject<HTMLTextAreaElement>;
   showRankNotes: boolean;
   onToggleRankNotes: (e: any) => void;
+  postType: 'text' | 'image' | 'video';
 }
 
 const OptionalSettingsSection = memo(function OptionalSettingsSection({
@@ -19,7 +20,8 @@ const OptionalSettingsSection = memo(function OptionalSettingsSection({
   usergroups,
   descref,
   showRankNotes,
-  onToggleRankNotes
+  onToggleRankNotes,
+  postType
 }: OptionalSettingsSectionProps) {
   return (
     <div className="border border-white/10 bg-white/[0.03] rounded-2xl overflow-hidden transition-all duration-300">
@@ -30,7 +32,7 @@ const OptionalSettingsSection = memo(function OptionalSettingsSection({
       >
         <div className="flex items-center gap-3">
           <FontAwesomeIcon icon={faCog} className={`w-3.5 h-3.5 transition-transform duration-500 ${settingsToggle ? 'rotate-90 text-blue-400' : 'text-slate-400'}`} />
-          <span className="text-[11px] font-bold text-slate-300 uppercase tracking-widest">Optional Settings</span>
+          <span className="text-[11px] font-bold text-slate-300  capitalize">Optional Settings</span>
         </div>
         <FontAwesomeIcon icon={settingsToggle ? faAngleUp : faAngleDown} className="text-slate-500 w-2.5 h-2.5" />
       </button>
@@ -41,8 +43,8 @@ const OptionalSettingsSection = memo(function OptionalSettingsSection({
           {/* Rank Notes Toggle */}
           <div className="flex items-center justify-between p-4 bg-white/[0.04] border border-white/10 rounded-xl">
             <div className="space-y-1">
-              <span className="text-[11px] font-bold text-slate-200 uppercase tracking-wider">Rank Notes</span>
-              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Add context for each item</p>
+              <span className="text-[11px] font-bold text-slate-200  capitalize">Rank Notes</span>
+              <p className="text-[10px] text-slate-400 font-medium  tracking-tight">Add context for each item</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -57,7 +59,7 @@ const OptionalSettingsSection = memo(function OptionalSettingsSection({
 
           {/* Description */}
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Description</label>
+            <label className="text-[10px] font-bold text-slate-400  capitalize ml-1">Description</label>
             <textarea
               ref={descref}
               name="description"
@@ -70,11 +72,11 @@ const OptionalSettingsSection = memo(function OptionalSettingsSection({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Category */}
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Category</label>
+              <label className="text-[10px] font-bold text-slate-400  capitalize ml-1">Category</label>
               <div className="relative">
                 <select
                   name="category"
-                  className="w-full p-3 bg-white/[0.05] rounded-xl outline-none border border-white/10 focus:border-blue-500/40 text-slate-200 text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer"
+                  className="w-full p-3 bg-white/[0.05] rounded-xl outline-none border border-white/10 focus:border-blue-500/40 text-slate-200 text-xs font-bold  capitalize appearance-none cursor-pointer"
                 >
                   <option value="None" className="bg-slate-900">None</option>
                   <option value="Gaming" className="bg-slate-900">Gaming</option>
@@ -100,11 +102,11 @@ const OptionalSettingsSection = memo(function OptionalSettingsSection({
 
             {/* Visibility */}
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Visibility</label>
+              <label className="text-[10px] font-bold text-slate-400  capitalize ml-1">Visibility</label>
               <div className="relative">
                 <select
                   name="visibility"
-                  className="w-full p-3 bg-white/[0.05] rounded-xl outline-none border border-white/10 focus:border-blue-500/40 text-slate-200 text-xs font-bold uppercase tracking-wider appearance-none cursor-pointer"
+                  className="w-full p-3 bg-white/[0.05] rounded-xl outline-none border border-white/10 focus:border-blue-500/40 text-slate-200 text-xs font-bold  capitalize appearance-none cursor-pointer"
                   defaultValue="Public"
                 >
                   <option value="Public" className="bg-slate-900">Public</option>
@@ -123,6 +125,31 @@ const OptionalSettingsSection = memo(function OptionalSettingsSection({
                       ))}
                     </>
                   )}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <FontAwesomeIcon icon={faAngleDown} className="w-2.5 h-2.5 text-slate-500" />
+                </div>
+              </div>
+            </div>
+
+            {/* Re-ranking Type */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between ml-1">
+                <label className="text-[10px] font-bold text-slate-400 capitalize">Re-ranking</label>
+                {postType === 'video' && (
+                  <span className="text-[8px] font-black text-rose-500/60 uppercase tracking-tighter">Disabled for video</span>
+                )}
+              </div>
+              <div className="relative">
+                <select
+                  name="reRankType"
+                  disabled={postType === 'video'}
+                  className={`w-full p-3 bg-white/[0.05] rounded-xl outline-none border border-white/10 focus:border-blue-500/40 text-slate-200 text-xs font-bold capitalize appearance-none cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed`}
+                  defaultValue="NONE"
+                >
+                  <option value="NONE" className="bg-slate-900">None</option>
+                  <option value="REORDER" className="bg-slate-900">Reorder Only</option>
+                  <option value="FULL" className="bg-slate-900">Full (Edit Text/Images)</option>
                 </select>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                   <FontAwesomeIcon icon={faAngleDown} className="w-2.5 h-2.5 text-slate-500" />

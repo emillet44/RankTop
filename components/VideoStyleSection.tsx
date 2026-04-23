@@ -95,7 +95,7 @@ function ResetConfirmationModal({ isOpen, onClose, onConfirm }: { isOpen: boolea
 function SectionLabel({ label, hint }: { label: string; hint?: string }) {
   return (
     <div className="flex items-baseline gap-3 mb-4">
-      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">{label}</span>
+      <span className="text-[9px] font-bold text-slate-400 capitalize">{label}</span>
       {hint && <span className="text-[9px] text-slate-600 italic">{hint}</span>}
       <div className="flex-1 h-px bg-white/[0.06]" />
     </div>
@@ -228,7 +228,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
             ranks={ranks}
           />
           <div className="absolute top-4 left-4">
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-black/70 backdrop-blur-md px-2 py-1 rounded">Live Styling</span>
+            <span className="text-[9px] font-bold text-slate-400 capitalize bg-black/70 backdrop-blur-md px-2 py-1 rounded">Live styling</span>
           </div>
         </div>
 
@@ -237,7 +237,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
           onClick={() => setOpen(o => !o)}
           className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.05] transition-colors cursor-pointer"
         >
-          <span className="flex items-center gap-3 text-[11px] font-bold text-slate-300 uppercase tracking-widest">
+          <span className="flex items-center gap-3 text-[11px] font-bold text-slate-300 capitalize">
             <FontAwesomeIcon icon={faPalette} className={`text-sm transition-colors ${open ? 'text-blue-400' : 'text-slate-500'}`} />
             Video Style
           </span>
@@ -299,14 +299,14 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                 {/* Backdrop + Font on one row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Title Backdrop</span>
+                    <span className="text-[9px] font-semibold text-slate-500 tracking-normal capitalize">Title Backdrop</span>
                     <div className="flex gap-1 bg-white/[0.06] p-1 rounded-xl border border-white/10">
                       {['none', 'black', 'white', 'blurred'].map((b) => (
                         <button
                           key={b}
                           type="button"
                           onClick={() => updateConfig({ titleBackdrop: b as any })}
-                          className={`flex-1 py-2 text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all ${
+                          className={`flex-1 py-2 text-[9px] font-bold tracking-normal capitalize rounded-lg transition-all ${
                             config.titleBackdrop === b
                               ? 'bg-blue-600 text-white shadow-lg'
                               : 'text-slate-400 hover:text-slate-200'
@@ -319,12 +319,12 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Font</span>
+                    <span className="text-[9px] font-semibold text-slate-500 tracking-normal capitalize">Font</span>
                     <div className="relative">
                       <select
                         value={config.fontFamily}
                         onChange={e => updateConfig({ fontFamily: e.target.value })}
-                        className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-200 outline-none focus:border-blue-500/40 appearance-none cursor-pointer"
+                        className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-2.5 text-[10px] font-bold tracking-normal text-slate-200 outline-none focus:border-blue-500/40 appearance-none cursor-pointer"
                       >
                         <option value="Archivo Expanded Bold" className="bg-slate-900">Archivo Expanded Bold</option>
                         <option value="Arial Regular" className="bg-slate-900">Arial Regular</option>
@@ -338,7 +338,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                 {/* Shadows & Toggles */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Shadow Blur</span>
+                    <span className="text-[9px] font-semibold text-slate-500 tracking-normal capitalize">Shadow Blur</span>
                     <div className="grid grid-cols-2 gap-x-8 gap-y-3 bg-white/[0.03] border border-white/[0.07] rounded-xl p-4">
                       {[
                         { label: 'Title', key: 'titleShadowBlur' as const },
@@ -346,7 +346,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                       ].map(({ label, key }) => (
                         <div key={key} className="space-y-2">
                           <div className="flex justify-between items-center">
-                            <span className="text-[9px] text-slate-500">{label}</span>
+                            <span className="text-[9px] text-slate-500 capitalize">{label}</span>
                             <span className="text-[10px] font-mono text-blue-400 tabular-nums w-5 text-right">{config[key]}</span>
                           </div>
                           <input
@@ -361,7 +361,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Font Sizes</span>
+                    <span className="text-[9px] font-semibold text-slate-500 tracking-normal capitalize">Font Sizes</span>
                     <div className="grid grid-cols-2 gap-x-8 gap-y-3 bg-white/[0.03] border border-white/[0.07] rounded-xl p-4">
                       {[
                         { label: 'Title', key: 'titleFontSize' as const, min: 40, max: 100 },
@@ -371,7 +371,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                       ].map(({ label, key, min, max }) => (
                         <div key={key} className="space-y-2">
                           <div className="flex justify-between items-center">
-                            <span className="text-[9px] text-slate-500">{label}</span>
+                            <span className="text-[9px] text-slate-500 capitalize">{label}</span>
                             <span className="text-[10px] font-mono text-blue-400 tabular-nums w-5 text-right">{config[key] ?? DEFAULT_VIDEO_STYLE[key]}</span>
                           </div>
                           <input
@@ -440,7 +440,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                   { label: 'Watermark', field: 'creatorWatermark' as const, colorField: 'creatorWatermarkColor' as const, placeholder: '@yourname' },
                 ].map(({ label, field, colorField, placeholder }) => (
                   <div key={field} className="flex items-center gap-3">
-                    <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider w-20 shrink-0">{label}</span>
+                    <span className="text-[9px] font-semibold text-slate-500 tracking-normal capitalize w-20 shrink-0">{label}</span>
                     <input
                       type="text"
                       value={config[field]}
@@ -458,7 +458,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
 
                 {/* Accent Words */}
                 <div className="pt-1 space-y-3">
-                  <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Accent Words</span>
+                  <span className="text-[9px] font-semibold text-slate-500 tracking-normal capitalize">Accent Words</span>
 
                   {/* Existing word pills */}
                   {config.titleWordColors.length > 0 && (
@@ -466,7 +466,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                       {config.titleWordColors.map(wc => (
                         <span
                           key={wc.word}
-                          className="group flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border"
+                          className="group flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-[10px] font-bold tracking-normal border"
                           style={{ color: wc.color, borderColor: `${wc.color}40`, background: `${wc.color}12` }}
                         >
                           <span
@@ -529,7 +529,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Row Spacing</span>
+                      <span className="text-[9px] font-semibold text-slate-500 tracking-normal capitalize">Row Spacing</span>
                       <span className="text-[10px] font-mono text-blue-400 tabular-nums">{config.rankSpacing}px</span>
                     </div>
                     <input
@@ -542,7 +542,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Vertical Offset (Y)</span>
+                      <span className="text-[9px] font-semibold text-slate-500 tracking-normal capitalize">Vertical Offset (Y)</span>
                       <span className="text-[10px] font-mono text-blue-400 tabular-nums">{config.rankYOffset}px</span>
                     </div>
                     <input
@@ -569,7 +569,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
 
                 {/* Rank colors — labeled row, larger swatches */}
                 <div className="space-y-2">
-                  <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Rank Number Colors</span>
+                  <span className="text-[9px] font-semibold text-slate-500 tracking-normal capitalize">Rank Number Colors</span>
                   <div className="flex flex-wrap gap-3">
                     {config.rankColors.slice(0, ranks.length).map((color, i) => (
                       <div key={i} className="flex flex-col items-center gap-2 min-w-[40px]">
@@ -588,7 +588,7 @@ export const VideoStyleSection = memo(function VideoStyleSection({
                             className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
                           />
                         </label>
-                        <span className="text-[8px] font-bold text-slate-600 uppercase whitespace-nowrap">{RANK_LABELS[i] || `${i + 1}th`}</span>
+                        <span className="text-[8px] font-bold text-slate-600  whitespace-nowrap">{RANK_LABELS[i] || `${i + 1}th`}</span>
                       </div>
                     ))}
                   </div>

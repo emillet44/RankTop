@@ -134,12 +134,12 @@ export default function PostsList({ starter }: { starter: any }) {
         
         {/* Category Filter */}
         <div className="flex items-center space-x-1 shrink-0">
-          <label className="inline-block text-[10px] font-bold text-slate-500 uppercase tracking-widest translate-y-[0.5px]">Topic</label>
+          <label className="inline-block text-[10px] font-bold text-slate-500 capitalize translate-y-[0.5px]">Topic</label>
           <div className="relative">
             <select 
               value={category}
               onChange={(e) => handleFilterChange('category', e.target.value)}
-              className="bg-transparent border-none text-[12px] text-slate-300 focus:outline-none focus:ring-0 cursor-pointer font-bold uppercase tracking-wider p-0 pr-4 appearance-none leading-tight"
+              className="bg-transparent border-none text-[12px] text-slate-300 focus:outline-none focus:ring-0 cursor-pointer font-bold p-0 pr-4 appearance-none leading-tight"
             >
               <option value="All" className="bg-slate-900">All</option>
               <option value="None" className="bg-slate-900">None</option>
@@ -164,12 +164,12 @@ export default function PostsList({ starter }: { starter: any }) {
 
         {/* Sort Order */}
         <div className="flex items-center space-x-1 border-l border-white/10 pl-2 sm:pl-4 shrink-0">
-          <label className="inline-block text-[10px] font-bold text-slate-500 uppercase tracking-widest translate-y-[0.5px]">Rank</label>
+          <label className="inline-block text-[10px] font-bold text-slate-500  capitalize translate-y-[0.5px]">Rank</label>
           <div className="relative">
             <select 
               value={sort}
               onChange={(e) => handleFilterChange('sort', e.target.value)}
-              className="bg-transparent border-none text-[12px] text-slate-300 focus:outline-none focus:ring-0 cursor-pointer font-bold uppercase tracking-wider p-0 pr-4 appearance-none leading-tight"
+              className="bg-transparent border-none text-[12px] text-slate-300 focus:outline-none focus:ring-0 cursor-pointer font-bold  capitalize p-0 pr-4 appearance-none leading-tight"
             >
               <option value="Newest" className="bg-slate-900">New</option>
               <option value="Most Viewed" className="bg-slate-900">Views</option>
@@ -180,12 +180,12 @@ export default function PostsList({ starter }: { starter: any }) {
 
         {/* Date Range */}
         <div className="flex items-center space-x-1 border-l border-white/10 pl-2 sm:pl-4 shrink-0">
-          <label className="inline-block text-[10px] font-bold text-slate-500 uppercase tracking-widest translate-y-[0.5px]">Time</label>
+          <label className="inline-block text-[10px] font-bold text-slate-500  capitalize translate-y-[0.5px]">Time</label>
           <div className="relative">
             <select 
               value={date}
               onChange={(e) => handleFilterChange('date', e.target.value)}
-              className="bg-transparent border-none text-[12px] text-slate-300 focus:outline-none focus:ring-0 cursor-pointer font-bold uppercase tracking-wider p-0 pr-4 appearance-none leading-tight"
+              className="bg-transparent border-none text-[12px] text-slate-300 focus:outline-none focus:ring-0 cursor-pointer font-bold  capitalize p-0 pr-4 appearance-none leading-tight"
             >
               <option value="All Time" className="bg-slate-900">All</option>
               <option value="Today" className="bg-slate-900">Day</option>
@@ -201,11 +201,11 @@ export default function PostsList({ starter }: { starter: any }) {
             <input 
               maxLength={16} 
               placeholder="..."
-              className="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[11px] text-slate-300 focus:outline-none focus:border-blue-500/50 transition-all w-16 uppercase font-bold tracking-wider"
+              className="bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-[11px] text-slate-300 focus:outline-none focus:border-blue-500/50 transition-all w-16  font-bold"
             />
             <button 
               onClick={lockCategory} 
-              className="text-[10px] font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase tracking-widest"
+              className="text-[10px] font-bold text-blue-500 hover:text-blue-400 transition-colors  capitalize"
             >
               Go
             </button>
@@ -214,7 +214,7 @@ export default function PostsList({ starter }: { starter: any }) {
 
         {category === "Custom" && lockcat && (
           <div className="flex items-center border-l border-white/10 pl-4 shrink-0">
-            <span className="text-[11px] font-bold text-blue-500 uppercase border border-blue-500/30 px-2 py-0.5 rounded tracking-widest">
+            <span className="text-[11px] font-bold text-blue-500  border border-blue-500/30 px-2 py-0.5 rounded capitalize">
               {lockcat}
             </span>
           </div>
@@ -234,7 +234,7 @@ export default function PostsList({ starter }: { starter: any }) {
           <div className="w-6 h-6 border-2 border-blue-500/50 border-t-transparent rounded-full animate-spin"></div>
         )}
         {end && !loading && (
-          <div className="text-slate-600 text-[13px] font-semibold uppercase tracking-widest">
+          <div className="text-slate-600 text-[13px] font-semibold  capitalize">
             End of Feed
           </div>
         )}
@@ -300,7 +300,7 @@ function PostItem({ list, index }: { list: any; index: number }) {
                     e.preventDefault();
                     setExpanded(!expanded);
                   }}
-                  className="mt-2 text-[11px] font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase tracking-widest pointer-events-auto"
+                  className="mt-2 text-[11px] font-bold text-blue-500 hover:text-blue-400 transition-colors  capitalize pointer-events-auto"
                 >
                   {expanded ? "Show less" : `Show ${items.length - 5} more ranks`}
                 </button>

@@ -53,7 +53,7 @@ const VideoUploadSection = memo(function VideoUploadSection({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-2 px-1">
-          <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Video Clips</h3>
+          <h3 className="text-[11px] font-bold text-slate-500 capitalize">Video clips</h3>
         </div>
 
         {/* Mode Tab Switcher */}
@@ -61,7 +61,7 @@ const VideoUploadSection = memo(function VideoUploadSection({
           <button
             type="button"
             onClick={() => onVideoModeChange('auto')}
-            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all duration-300
+            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold capitalize transition-all duration-300
               ${videoMode === 'auto'
                 ? 'bg-blue-600 text-white shadow shadow-blue-500/10'
                 : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
@@ -72,7 +72,7 @@ const VideoUploadSection = memo(function VideoUploadSection({
           <button
             type="button"
             onClick={() => onVideoModeChange('pre-edited')}
-            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all duration-300
+            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold capitalize transition-all duration-300
               ${videoMode === 'pre-edited'
                 ? 'bg-blue-600 text-white shadow shadow-blue-500/10'
                 : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
@@ -100,7 +100,7 @@ const VideoUploadSection = memo(function VideoUploadSection({
             return (
               <div key={index} className="space-y-2 group" onDragOver={onDragOverAction} onDrop={(e) => onDropAction(e, index)}>
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tighter">Rank {index + 1}</span>
+                  <span className="text-[10px] font-bold text-slate-600  tracking-tighter">Rank {index + 1}</span>
                 </div>
 
                 {url === null ? (
@@ -114,7 +114,7 @@ const VideoUploadSection = memo(function VideoUploadSection({
                     />
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                       <FontAwesomeIcon icon={faVideo} className="text-2xl text-slate-700 group-hover:text-blue-500/50 transition-colors" />
-                      <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Select Clip</span>
+                      <span className="text-[9px] font-bold text-slate-600 tracking-normal capitalize font-display">Select Clip</span>
                     </div>
                   </div>
                 ) : (

@@ -53,6 +53,8 @@ export async function POST(req: Request) {
       data: {
         title,
         items: items,
+        itemCount: items.length,
+        reRankType: "NONE",
         description: description || null,
         category: category === "None" ? "" : category,
         username: username || null,

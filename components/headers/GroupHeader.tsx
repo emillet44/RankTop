@@ -16,9 +16,9 @@ export async function Header() {
       <div className="w-full px-4 md:px-6 flex items-center justify-between relative h-full">
         {/* Left: Logo - Switches to "R" on tiny screens */}
         <div className="flex-1 flex items-center min-w-0">
-          <Link href="/home" className="text-2xl md:text-3xl text-offwhite tracking-tighter hover:text-blue-400 transition-colors font-normal">
+          <Link href="/home" className="text-2xl md:text-3xl text-offwhite tracking-tightest hover:text-blue-400 transition-colors font-bold">
             <span className="hidden min-[450px]:inline">RankTop</span>
-            <span className="min-[450px]:hidden font-bold">R</span>
+            <span className="min-[450px]:hidden">R</span>
           </Link>
         </div>
 
@@ -32,9 +32,9 @@ export async function Header() {
           <div className="hidden md:flex items-center gap-x-2 md:gap-x-3">
             <Link 
               href="/newpost" 
-              className="h-8 flex items-center px-4 rounded text-[13px] font-bold bg-white/5 border border-white/10 text-offwhite hover:bg-white/10 transition-all uppercase tracking-wider"
+              className="h-8 flex items-center px-4 rounded text-[13px] font-bold bg-white/5 border border-white/10 text-offwhite hover:bg-white/10 transition-all capitalize tracking-normal"
             >
-              New Post
+              New post
             </Link>
             {signedin ? (
               <div className="relative z-[110]">
@@ -42,8 +42,8 @@ export async function Header() {
               </div>
             ) : (
               <Link href="/signin">
-                <button className="h-8 flex items-center px-5 rounded bg-blue-600 hover:bg-blue-500 text-white transition-all font-bold text-[13px] uppercase tracking-wider border border-transparent">
-                  Sign In
+                <button className="h-8 flex items-center px-5 rounded bg-blue-600 hover:bg-blue-500 text-white transition-all font-bold text-[13px] capitalize tracking-normal border border-transparent">
+                  Sign in
                 </button>
               </Link>
             )}

@@ -2,36 +2,41 @@
 
 import { prisma } from "@/lib/prisma";
 
-//Server action to load comments, then load an extra condition "userliked" to determine whether the user liked a comment or not
-
 export async function LoadBatch(batch: number, type: string, userid: string, postid: string) {
   const comments = await prisma.comments.findMany({
-    skip: 5 * batch,
-    take: 5,
+    skip: 10 * batch,
+    take: 10,
     where: {
       parentId: null,
       postId: postid,
     },
     orderBy: [
-      {
-        likes: 'desc'
-      },
+      { likes: 'desc' },
+      { date: 'desc' }
     ],
   });
 
-  const updcomments = Promise.all(comments.map(async comment => ({
-    ...comment,
-    userliked: await prisma.comment_Likes.findUnique({
+  if (userid) {
+    const likedCommentIds = await prisma.comment_Likes.findMany({
       where: {
-        userId_commentId: {
-          userId: userid,
-          commentId: comment.id,
-        },
+        userId: userid,
+        commentId: { in: comments.map(c => c.id) }
       },
-    }) != null
-  })));
+      select: { commentId: true }
+    });
+    
+    const likedSet = new Set(likedCommentIds.map(l => l.commentId));
+    
+    return comments.map(comment => ({
+      ...comment,
+      userliked: likedSet.has(comment.id)
+    }));
+  }
 
-  return updcomments;
+  return comments.map(comment => ({
+    ...comment,
+    userliked: false
+  }));
 }
 
 export async function LoadReplies(commentid: string, userid: string) {
@@ -40,23 +45,29 @@ export async function LoadReplies(commentid: string, userid: string) {
       parentId: commentid,
     },
     orderBy: [
-      {
-        likes: 'desc'
-      },
+      { date: 'asc' }
     ],
   });
 
-  const updcomments = Promise.all(replies.map(async reply => ({
-    ...reply,
-    userliked: await prisma.comment_Likes.findUnique({
+  if (userid) {
+    const likedReplyIds = await prisma.comment_Likes.findMany({
       where: {
-        userId_commentId: {
-          userId: userid,
-          commentId: reply.id,
-        },
+        userId: userid,
+        commentId: { in: replies.map(r => r.id) }
       },
-    }) != null
-  })));
+      select: { commentId: true }
+    });
 
-  return updcomments;
+    const likedSet = new Set(likedReplyIds.map(l => l.commentId));
+
+    return replies.map(reply => ({
+      ...reply,
+      userliked: likedSet.has(reply.id)
+    }));
+  }
+
+  return replies.map(reply => ({
+    ...reply,
+    userliked: false
+  }));
 }

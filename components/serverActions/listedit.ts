@@ -32,6 +32,7 @@ export async function editList(formData: FormData, id: string) {
     data: {
       title: data.title as string,
       items: items,
+      itemCount: items.length,
       description: data.description !== "" ? (data.description as string) : null,
       category: data.category as string,
       metadata: {

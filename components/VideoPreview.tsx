@@ -209,11 +209,11 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
   return (
     <div className="w-full max-w-[400px] mx-auto bg-slate-800/40 backdrop-blur-md rounded-2xl border border-white/10 p-5 shadow-2xl">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-white tracking-tight">{title || 'Preview'}</h3>
+        <h3 className="text-xl font-bold text-white capitalize">{title || 'Preview'}</h3>
         <button
           onClick={processVideos}
           disabled={processing}
-          className={`group flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-xs font-bold uppercase tracking-widest ${
+          className={`group flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-xs font-bold capitalize ${
             processing 
               ? 'bg-slate-700 text-slate-500 cursor-not-allowed' 
               : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 active:scale-95'
@@ -228,11 +228,11 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
         {processing ? (
           <div className="absolute inset-0 bg-slate-900/95 z-20 flex flex-col items-center justify-center p-8 text-center backdrop-blur-sm">
             <div className="w-12 h-12 rounded-full border-4 border-slate-800 border-t-blue-500 animate-spin mb-6" />
-            <p className="text-white font-bold text-sm mb-3 tracking-wide">{statusMessage}</p>
+            <p className="text-white font-bold text-sm mb-3 tracking-normal">{statusMessage}</p>
             <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mb-2">
               <div className="bg-gradient-to-r from-blue-600 to-cyan-400 h-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
             </div>
-            <p className="text-[10px] font-mono text-slate-500 uppercase tracking-tighter">{progress}% Complete</p>
+            <p className="text-[10px] font-mono text-slate-500 tracking-tighter">{progress}% Complete</p>
           </div>
         ) : videoUrl ? (
           <video src={videoUrl} controls autoPlay loop playsInline className="w-full h-full object-cover" />
@@ -241,7 +241,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
             <div className="w-12 h-12 rounded-full bg-red-950/40 flex items-center justify-center mb-4 border border-red-900/50">
               <FontAwesomeIcon icon={faExclamationTriangle} className="h-5 w-5" />
             </div>
-            <p className="text-xs font-bold uppercase tracking-wider mb-2">Generation Failed</p>
+            <p className="text-xs font-bold tracking-normal capitalize font-display mb-2">Generation Failed</p>
             <p className="text-xs text-red-300/70 leading-relaxed">{error}</p>
           </div>
         ) : (

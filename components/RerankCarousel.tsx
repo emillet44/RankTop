@@ -5,31 +5,23 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
 import useSWR from 'swr';
 import Image from 'next/image';
-import Link from 'next/link';
-import { fetchImageMetadata } from './serverActions/findimage';
+import { fetchRerankImageMetadata } from './serverActions/findimage';
 
-export function ListCarousel({ 
-  items, 
-  postid, 
-  firstimage,
-  manualImages 
-}: { 
-  items: { text: string; note?: string | null }[], 
-  postid: string, 
-  firstimage: boolean,
-  manualImages?: string[]
-}) {
+interface Item {
+  text: string;
+  note?: string | null;
+  imageUrl?: string | null;
+}
+
+export function RerankCarousel({ items, rerankId, firstimage }: { items: Item[], rerankId: string, firstimage: boolean }) {
   const [index, setIndex] = useState(0);
   
   const fetcher = async () => {
-    if (manualImages) return manualImages;
-    const { imageUrls } = await fetchImageMetadata(postid);
+    const { imageUrls } = await fetchRerankImageMetadata(rerankId);
     return imageUrls;
   };
 
-  const { data: images, error } = useSWR(manualImages ? null : `/api/imageMetadata/${postid}`, fetcher, {
-    fallbackData: manualImages
-  });
+  const { data: images, error } = useSWR(`rerank-images-${rerankId}`, fetcher);
 
   if (error) {
     return <div className="p-8 text-center text-red-400 bg-red-400/10 rounded-xl border border-red-400/20 text-sm">Error loading images</div>;
@@ -70,25 +62,25 @@ export function ListCarousel({
         </div>
       </div>
       
-      <Link href={`/post/${postid}`} className="block relative aspect-video bg-black/40 overflow-hidden group/image">
+      <div className="block relative aspect-video bg-black/40 overflow-hidden group/image">
         {!images ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-6 h-6 border-2 border-blue-500/30 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : images[index] ? (
-          <Image
-            src={images[index]}
-            alt={`Rank ${index + 1}: ${items[index]?.text}`}
+          <Image 
+            src={images[index]} 
+            alt={`Rank ${index + 1}: ${items[index]?.text}`} 
             fill
-            sizes="(max-width: 768px) 100vw, 672px"
-            priority={firstimage && index === 0}
+            priority={firstimage && index === 0} 
             className="object-contain transition-transform duration-500 group-hover/image:scale-[1.02]"
-          />        ) : (
+          />
+        ) : (
           <div className="absolute inset-0 flex items-center justify-center text-slate-600 text-xs font-medium tracking-normal capitalize">
             No image
           </div>
         )}
-      </Link>
+      </div>
     </div>
   )
 }
