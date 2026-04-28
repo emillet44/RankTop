@@ -11,11 +11,12 @@ interface ShareButtonProps {
   items: { text: string; note?: string | null }[];
   username: string;
   videoUrl: string | null;
+  isMenuMode?: boolean;
 }
 
 type ImageFormat = 'square' | 'twitter' | 'story';
 
-export function ShareButton({ postId, postTitle, postDescription, items, username, videoUrl }: ShareButtonProps) {
+export function ShareButton({ postId, postTitle, postDescription, items, username, videoUrl, isMenuMode = false }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -94,7 +95,7 @@ export function ShareButton({ postId, postTitle, postDescription, items, usernam
       const rankParams = items.map(item => `&rank=${encodeURIComponent(item.text)}`).join('');
       const noteParams = items.map(item => `&rank_note=${encodeURIComponent(item.note || '')}`).join('');
       const imageUrl = `/api/og?title=${encodeURIComponent(postTitle)}&description=${encodeURIComponent(postDescription || '')}&username=${encodeURIComponent(username || '')}${rankParams}${noteParams}&width=${width}&height=${height}&format=${format}&watermark=${watermark}`;
-      
+
       // Fetch the image
       const response = await fetch(imageUrl);
       if (!response.ok) throw new Error('Failed to generate image');
@@ -155,26 +156,34 @@ export function ShareButton({ postId, postTitle, postDescription, items, usernam
     setIsExportOpen(false);
   };
 
+  const triggerStyle = isMenuMode
+    ? "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/5 rounded-lg transition-colors"
+    : "flex items-center justify-center space-x-2 border rounded-xl px-4 h-10 transition-all bg-white/5 border-white/10 hover:bg-white/10";
+
   return (
-    <div className="relative flex space-x-2">
-      {/* Share Button */}
-      <button 
-        onClick={() => { setIsExportOpen(false); setIsShareOpen(!isShareOpen); }} 
-        className={`flex items-center justify-center space-x-2 border rounded-xl px-4 h-10 transition-all ${isShareOpen ? 'bg-white/15 border-white/20' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+    <div className={`relative ${isMenuMode ? 'flex flex-col w-full' : 'flex space-x-2'}`}>
+      {/* Share Trigger */}
+      <button
+        onClick={() => { setIsExportOpen(false); setIsShareOpen(!isShareOpen); }}
+        className={triggerStyle}
         aria-label="Share post"
       >
         <FontAwesomeIcon icon={faShare} className="w-3.5 h-3.5 text-slate-400" />
-        <span className="hidden sm:inline text-slate-300 text-[13px] font-bold tracking-normal capitalize">Share</span>
+        <span className={`${isMenuMode ? '' : 'hidden sm:inline'} text-slate-300 text-[13px] font-bold capitalize`}>
+          Share Post
+        </span>
       </button>
 
-      {/* Export Button */}
-      <button 
-        onClick={() => { setIsShareOpen(false); setIsExportOpen(!isExportOpen); }} 
-        className={`flex items-center justify-center space-x-2 border rounded-xl px-4 h-10 transition-all ${isExportOpen ? 'bg-white/15 border-white/20' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+      {/* Export Trigger */}
+      <button
+        onClick={() => { setIsShareOpen(false); setIsExportOpen(!isExportOpen); }}
+        className={triggerStyle}
         aria-label="Export as image"
       >
         <FontAwesomeIcon icon={faDownload} className="w-3.5 h-3.5 text-slate-400" />
-        <span className="hidden sm:inline text-slate-300 text-[13px] font-bold tracking-normal capitalize">Export</span>
+        <span className={`${isMenuMode ? '' : 'hidden sm:inline'} text-slate-300 text-[13px] font-bold capitalize`}>
+          Export {videoUrl ? 'Video' : 'Image'}
+        </span>
       </button>
 
       {(isShareOpen || isExportOpen) &&
@@ -184,7 +193,8 @@ export function ShareButton({ postId, postTitle, postDescription, items, usernam
 
           {/* Share menu */}
           {isShareOpen &&
-            <div className="absolute right-0 top-12 z-50 bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl min-w-[200px] p-1.5 overflow-hidden">
+            <div className={`absolute z-50 bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl min-w-[200px] p-1.5 overflow-hidden 
+              ${isMenuMode ? 'right-full mr-2 top-0' : 'right-0 top-12'}`}>
               {/* Copy Link */}
               <button onClick={copyToClipboard} className="w-full flex items-center space-x-3 p-3 hover:bg-white/5 rounded-lg transition-colors group">
                 <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-400 group-hover:text-blue-400 transition-colors">
@@ -246,7 +256,8 @@ export function ShareButton({ postId, postTitle, postDescription, items, usernam
 
           {/* Export menu */}
           {isExportOpen && (
-            <div className="absolute right-0 top-12 z-50 bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl min-w-[240px] p-1.5 overflow-hidden">
+            <div className={`absolute z-50 bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl min-w-[240px] p-1.5 overflow-hidden 
+            ${isMenuMode ? 'right-full mr-2 top-0' : 'right-0 top-12'}`}>
 
               {/* Special Toggle for Cinnamon */}
               {username === 'Cinnamon' && !videoUrl && (
@@ -254,11 +265,11 @@ export function ShareButton({ postId, postTitle, postDescription, items, usernam
                   <label className="flex items-center justify-between cursor-pointer group">
                     <span className="text-[10px] text-slate-500 font-bold  tracking-widest">Watermark</span>
                     <div className="relative inline-flex items-center">
-                      <input 
-                        type="checkbox" 
-                        className="sr-only peer" 
-                        checked={watermark} 
-                        onChange={() => setWatermark(!watermark)} 
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={watermark}
+                        onChange={() => setWatermark(!watermark)}
                       />
                       <div className="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
                     </div>
@@ -340,11 +351,11 @@ export function ShareButton({ postId, postTitle, postDescription, items, usernam
                     )}
                   </button>
                 </>
-                )}
-                </div>
-                )}
-                </>
-                }
-                </div>
-                );
-                }
+              )}
+            </div>
+          )}
+        </>
+      }
+    </div>
+  );
+}

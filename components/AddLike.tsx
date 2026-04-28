@@ -9,12 +9,14 @@ import { useState, useTransition, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { setPostLikeStatus } from "./serverActions/changelikes";
 
-export function AddLike({ postid, likes, userliked, userid }: { postid: string, likes: number, userliked: boolean, userid: string | null }) {
+export function AddLike({ postid, likes, userliked, userid, authorid }: { postid: string, likes: number, userliked: boolean, userid: string | null, authorid: string }) {
   const router = useRouter();
   const [modalon, setModal] = useState(false);
   const [localLiked, setLocalLiked] = useState(userliked);
   const [, startTransition] = useTransition();
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const isAuthor = userid === authorid;
 
   useEffect(() => {
     setLocalLiked(userliked);
@@ -27,6 +29,8 @@ export function AddLike({ postid, likes, userliked, userid }: { postid: string, 
       toggleModal();
       return;
     }
+
+    if (isAuthor) return;
 
     const nextLiked = !localLiked;
     setLocalLiked(nextLiked);
@@ -54,21 +58,26 @@ export function AddLike({ postid, likes, userliked, userid }: { postid: string, 
     <div className="flex items-center gap-3">
       <button 
         onClick={handleLike}
-        className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-300 active:scale-75 bg-white/5 border-white/10 ${
-          localLiked ? 'text-teal-800' : 'text-slate-400 hover:bg-white/10 hover:text-slate-200'
+        disabled={isAuthor}
+        className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-300 active:scale-75 ${
+          localLiked 
+            ? 'bg-teal-500/10 border-teal-500/20 text-teal-500' 
+            : isAuthor
+              ? 'bg-white/5 border-white/5 text-slate-600 cursor-not-allowed'
+              : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-200'
         }`}
       >
         <FontAwesomeIcon 
           icon={localLiked ? faHeartSolid : faHeart} 
-          className={`w-4 h-4 transition-transform duration-300 ${localLiked ? 'scale-110' : 'scale-100'}`} 
+          className={`w-[18px] h-[18px] transition-transform duration-300 ${localLiked ? 'scale-110' : 'scale-100'}`} 
         />
       </button>
       
-      <div className="flex flex-col">
-        <span className="text-slate-200 font-bold text-base tracking-tight">
-          {displayLikes}
+      <div className="flex flex-col leading-tight">
+        <span className={`font-bold text-base tracking-tight ${localLiked ? 'text-teal-500' : isAuthor ? 'text-slate-400' : 'text-slate-200'}`}>
+          {displayLikes.toLocaleString()}
         </span>
-        <span className="text-xs text-slate-500 font-bold tracking-normal capitalize">Likes</span>
+        <span className="text-[10px] text-slate-500 font-black tracking-wider uppercase">Likes</span>
       </div>
 
       {modalon && (

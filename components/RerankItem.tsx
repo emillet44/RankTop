@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown, faChevronUp, faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronUp, faArrowUp, faArrowDown, faMinus } from '@fortawesome/free-solid-svg-icons';
 import { faHeart } from '@fortawesome/free-regular-svg-icons';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -51,6 +51,7 @@ export function RerankItem({ rerank, postId, userid }: { rerank: any, postId: st
             userliked={rerank.userliked} 
             userid={userid} 
             postid={postId}
+            authorid={rerank.userId}
             minimal={true}
           />
           <FontAwesomeIcon 
@@ -71,20 +72,26 @@ export function RerankItem({ rerank, postId, userid }: { rerank: any, postId: st
 
               return (
                 <div key={idx} className="flex items-center gap-3 py-1">
-                  <div className="flex items-center gap-2 flex-none min-w-[42px] justify-end">
-                    {isAltered ? (
-                      <div className="flex items-center justify-center px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
-                        <span className="text-[7px] font-black text-blue-400 uppercase tracking-tighter">NEW</span>
-                      </div>
-                    ) : delta !== 0 && (
-                      <div className={`flex items-center gap-0.5 ${delta > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                        <FontAwesomeIcon 
-                          icon={delta > 0 ? faArrowUp : faArrowDown} 
-                          className="w-2 h-2" 
-                        />
-                        <span className="text-[9px] font-black">{Math.abs(delta)}</span>
-                      </div>
-                    )}
+                  <div className="flex items-center gap-2 flex-none">
+                    <div className="w-9 flex justify-center flex-none">
+                      {isAltered ? (
+                        <div className="flex items-center justify-center px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
+                          <span className="text-[7px] font-black text-blue-400 uppercase tracking-tighter">NEW</span>
+                        </div>
+                      ) : delta !== 0 ? (
+                        <div className={`flex items-center justify-center gap-0.5 ${delta > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                          <FontAwesomeIcon 
+                            icon={delta > 0 ? faArrowUp : faArrowDown} 
+                            className="w-2 h-2" 
+                          />
+                          <span className="text-[9px] font-black">{Math.abs(delta)}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center text-slate-600">
+                          <FontAwesomeIcon icon={faMinus} className="w-2 h-2" />
+                        </div>
+                      )}
+                    </div>
 
                     <span className="flex-none w-5 h-5 flex items-center justify-center rounded-md bg-white/5 border border-white/5 text-[9px] font-black text-blue-400">
                       {idx + 1}

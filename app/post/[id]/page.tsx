@@ -7,6 +7,7 @@ import { fetchImageMetadata } from "@/components/serverActions/findimage";
 import { prisma } from "@/lib/prisma";
 import { getSessionData } from "@/lib/auth-helpers";
 import { PostContent } from "@/components/PostContent";
+import { calculateRerank } from "@/components/serverActions/calculatererank";
 
 interface Item {
   text: string;
@@ -96,7 +97,6 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
     where: { postId: params.id, userId: userid }
   }) : null;
 
-  // Enhance existing rerank with userliked status using a fresh variable to avoid type inference issues
   let enhancedExistingRerank: any = null;
   if (existingUserRerank) {
     const isLiked = userid ? await prisma.reRanking_Likes.findUnique({
@@ -125,6 +125,24 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
     ...r,
     userliked: likedRerankingIds.has(r.id)
   }));
+
+  // Compute community consensus server-side (null if no rerankings or reranking disabled)
+  const consensusItems = enableReRanking && rerankings.length > 0
+    ? await calculateRerank(
+        rerankings.map(r => ({
+          items: r.items as unknown as Item[],
+          rankMap: r.rankMap,
+          likes: r.likes,
+          createdAt: r.createdAt
+        })),
+        {
+          items: post.items as unknown as Item[],
+          itemCount: post.itemCount,
+          reRankType: post.reRankType as 'REORDER' | 'FULL' | 'NONE',
+          images: imageUrls
+        }
+      )
+    : null;
 
   let dateStr: string = "";
   if (post.metadata) {
@@ -183,6 +201,7 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
         imageUrls={imageUrls}
         existingUserRerank={enhancedExistingRerank}
         rerankingsWithLikes={rerankingsWithLikes}
+        consensusItems={consensusItems}
         dateStr={dateStr}
         structuredData={structuredData}
       />

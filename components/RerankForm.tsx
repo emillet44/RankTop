@@ -85,7 +85,6 @@ export function RerankForm({ post, id, initialImages, existingRerank, onOptimist
 
   // CACHE REFS: This fixes the 20fps layout thrashing issue
   const cachedRowRectsRef = useRef<({ top: number; bottom: number } | null)[]>([]);
-  const containerOffsetRef = useRef({ x: 0, y: 0 });
 
   const mousePosRef = useRef({ x: 0, y: 0 });
   const loopRafIdRef = useRef<number | null>(null);
@@ -493,7 +492,7 @@ export function RerankForm({ post, id, initialImages, existingRerank, onOptimist
 
       {!isChanged && (
         <p className="text-xs font-bold text-slate-500 tracking-wider animate-pulse text-center mb-1">
-          Drag items to re-rank
+          Create your version
         </p>
       )}
 

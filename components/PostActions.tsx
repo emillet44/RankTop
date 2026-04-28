@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { faEllipsisVertical, faPen, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { useState, useRef, useEffect } from 'react';
+import { faEllipsisVertical, faPen, faTrash, faShareNodes } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Link from 'next/link';
 import { ShareButton } from './ShareButton';
@@ -20,42 +20,64 @@ interface PostActionsProps {
 }
 
 export function PostActions({ 
-  postId, 
-  postTitle, 
-  postDescription, 
-  items, 
-  username, 
-  videoUrl, 
-  yours, 
-  editable, 
-  enableReRanking 
+  postId, postTitle, postDescription, items, username, videoUrl, yours, editable 
 }: PostActionsProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const closeMenu = () => setIsOpen(false);
+
   return (
-    <div className="flex items-center gap-2">
-      {/* 1. Share & Export (now styled consistently) */}
-      <ShareButton 
-        postId={postId}
-        postTitle={postTitle}
-        postDescription={postDescription}
-        items={items}
-        username={username}
-        videoUrl={videoUrl}
-      />
+    <div className="relative">
+      {/* 1. Trigger Button */}
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 hover:text-white transition-all z-50 relative"
+      >
+        <FontAwesomeIcon icon={faEllipsisVertical} />
+      </button>
 
-      {/* 2. Edit (Primary action if yours) */}
-      {yours && editable && (
-        <Link 
-          href={`/edit/${postId}`}
-          className="flex items-center justify-center gap-2 border border-white/10 rounded-xl px-4 h-10 bg-white/5 hover:bg-white/10 text-slate-300 text-[13px] font-bold capitalize transition-all"
-        >
-          <FontAwesomeIcon icon={faPen} className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Edit</span>
-        </Link>
-      )}
+      {isOpen && (
+        <>
+          {/* 2. The "Clickable Div" (Backdrop) */}
+          {/* This covers the whole screen and closes the menu on click */}
+          <div 
+            className="fixed inset-0 z-40 bg-transparent" 
+            onClick={closeMenu} 
+          />
 
-      {/* 3. Delete (Primary action if yours) */}
-      {yours && (
-        <Delete id={postId} />
+          {/* 3. The Menu Card */}
+          <div className="absolute right-0 mt-2 w-48 rounded-xl bg-[#1a1a1a] border border-white/10 shadow-2xl z-50 overflow-hidden">
+            <div className="flex flex-col p-1">
+              
+              <ShareButton 
+                postId={postId}
+                postTitle={postTitle}
+                postDescription={postDescription}
+                items={items}
+                username={username}
+                videoUrl={videoUrl}
+                isMenuMode={true}
+              />
+
+              {yours && editable && (
+                <Link 
+                  href={`/edit/${postId}`}
+                  onClick={closeMenu} // Close menu after clicking
+                  className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white rounded-lg transition-colors"
+                >
+                  <FontAwesomeIcon icon={faPen} className="w-3.5 h-3.5" />
+                  Edit Post
+                </Link>
+              )}
+
+              {yours && (
+                <div className="border-t border-white/5 mt-1 pt-1">
+                  <Delete id={postId} isMenuMode={true} /> 
+                </div>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
