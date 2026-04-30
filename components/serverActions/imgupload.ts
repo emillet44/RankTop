@@ -1,29 +1,16 @@
 'use server'
 
-//This server action will upload image blobs to Google Cloud Storage with the postid + rank as their name.
+import { storage } from '@/lib/gcs';
 
-const { Storage } = require('@google-cloud/storage');
-
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-  const options = {
-    credentials: {
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      private_key: privateKey
-    },
-    projectId: process.env.GOOGLE_PROJECT_ID
-  };
-
-const storage = new Storage(options);
-
-export async function upload(blob: Blob, imgname: String) {
+/**
+ * Server action to upload image blobs to GCS.
+ * NOTE: This is subject to a 1MB server action limit. 
+ * For larger files, use signed URLs and direct client-side uploads.
+ */
+export async function upload(blob: Blob, imgname: string) {
   const bucketName = 'ranktop-i';
-
   const arrayBuffer = await blob.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  async function uploadFile() {
-    await storage.bucket(bucketName).file(imgname).save(buffer);
-  }
-
-  await uploadFile();
+  await storage.bucket(bucketName).file(imgname).save(buffer);
 }

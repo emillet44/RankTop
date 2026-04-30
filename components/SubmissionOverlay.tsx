@@ -4,8 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/navigation';
 import { newList } from '@/components/serverActions/listupload';
-import { upload } from '@/components/serverActions/imgupload';
 import { saveReRanking } from '@/components/serverActions/rerankupload';
+import { getSignedGCSUrl } from '@/lib/signedurls';
 
 interface Timestamp {
   rankIndex: number;
@@ -312,17 +312,62 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
           let completed = 0;
           await Promise.all(
             imageEntries.map(async (entry) => {
-              await upload(entry.file, entry.name);
+              const uploadUrl = await getSignedGCSUrl('ranktop-i', entry.name, 'write');
+              if (!uploadUrl) throw new Error(`Failed to get upload URL for ${entry.name}`);
+              
+              await uploadWithProgress(uploadUrl, entry.file, (pct) => {
+                // Individual file progress within the total image set
+                const currentTotalProgress = (completed + pct/100) / total;
+                scheduleProgress(10 + currentTotalProgress * 85);
+              });
+              
               completed++;
-              scheduleProgress(10 + (completed / total) * 85);
               setMessage(`Uploading images... ${completed}/${total}`);
             })
           );
         }
       } else {
         setMessage('Saving post...');
-        scheduleProgress(40);
-        postId = await newList(formData);
+        scheduleProgress(10);
+        
+        const metadataOnly = new FormData();
+        formData.forEach((val, key) => {
+          if (!(val instanceof File)) {
+            metadataOnly.append(key, val);
+          }
+        });
+
+        postId = await newList(metadataOnly);
+
+        if (postType === 'image') {
+          setMessage('Uploading images...');
+          const imageEntries: { file: File; name: string }[] = [];
+          formData.forEach((val, key) => {
+            if (val instanceof File && key.startsWith('img')) {
+              const index = key.replace('img', '');
+              imageEntries.push({ file: val, name: `${postId}${index}.png` });
+            }
+          });
+
+          if (imageEntries.length > 0) {
+            const total = imageEntries.length;
+            let completed = 0;
+            await Promise.all(
+              imageEntries.map(async (entry) => {
+                const uploadUrl = await getSignedGCSUrl('ranktop-i', entry.name, 'write');
+                if (!uploadUrl) throw new Error(`Failed to get upload URL for ${entry.name}`);
+                
+                await uploadWithProgress(uploadUrl, entry.file, (pct) => {
+                  const currentTotalProgress = (completed + pct/100) / total;
+                  scheduleProgress(10 + currentTotalProgress * 85);
+                });
+                
+                completed++;
+                setMessage(`Uploading images... ${completed}/${total}`);
+              })
+            );
+          }
+        }
       }
 
       setIsComplete(true);

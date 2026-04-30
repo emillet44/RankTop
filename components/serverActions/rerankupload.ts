@@ -9,6 +9,9 @@ export async function saveReRanking(formData: FormData, id: string) {
   const data = Object.fromEntries(formData);
   const rankMap = JSON.parse(data['rankMap'] as string || '[]') as number[];
 
+  // Note: This action expects metadata only. Images are uploaded directly 
+  // from the client to GCS to bypass the 1MB server action limit.
+
   if (!userid) throw new Error("Authentication required");
 
   try {
