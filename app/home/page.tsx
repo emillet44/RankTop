@@ -22,7 +22,7 @@ export default async function Home() {
 
   //UpdatePostViews();
 
-  const starter = await LoadBatchCat(0, "None");
+  const starter = await LoadBatchCat(0, "All");
   return (
     <div className="flex flex-col min-h-screen">
       <Header />

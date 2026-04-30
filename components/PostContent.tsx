@@ -92,6 +92,9 @@ export function PostContent({
       ? consensusItems.map((r: RankedItem) => r.item)
       : postItems;
 
+  const isAuthor = userid === post.authorId;
+  const canRerank = enableReRanking && !isAuthor;
+
   const showToggle = hasRerank || hasCommunity;
 
   return (
@@ -275,13 +278,36 @@ export function PostContent({
                     </div>
                   ) : enableReRanking ? (
                     <div className="rounded-xl bg-white/[0.03] p-4 sm:p-5">
-                      <RerankForm
-                        post={post}
-                        id={id}
-                        initialImages={imageUrls}
-                        existingRerank={currentRerank}
-                        onOptimisticUpdate={handleRerankSubmit}
-                      />
+                      {canRerank ? (
+                        <RerankForm
+                          post={post}
+                          id={id}
+                          initialImages={imageUrls}
+                          existingRerank={currentRerank}
+                          onOptimisticUpdate={handleRerankSubmit}
+                        />
+                      ) : (
+                        <div className="grid grid-cols-1 gap-2.5">
+                          {displayItems.map((item, index) => (
+                            <div key={index} className="flex items-center gap-4 p-3 rounded-2xl border bg-black/40 border-white/5">
+                              <div className="flex-none w-11 h-11 flex items-center justify-center rounded-xl bg-black/40 border border-white/10 text-blue-400 font-bold text-base">
+                                {index + 1}
+                              </div>
+                              <div className="flex-none relative w-24 h-16 rounded-xl overflow-hidden bg-black/60 border border-white/10">
+                                {item.imageUrl ? (
+                                  <Image src={item.imageUrl} alt={item.text} fill sizes="96px" className="object-cover" />
+                                ) : (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-white/5" />
+                                )}
+                              </div>
+                              <div className="flex-grow min-w-0">
+                                <div className="w-full text-lg text-slate-100 font-semibold py-1 truncate">{item.text}</div>
+                                {item.note && <div className="text-[11px] font-bold text-slate-500 capitalize opacity-60">{item.note}</div>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : post.metadata?.images ? (
                     <div className="rounded-xl overflow-hidden">

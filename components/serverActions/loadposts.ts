@@ -109,23 +109,23 @@ export async function LoadBatch(batch: number, sort: string, category: string, d
   }
 
   // Sorting logic
-  let orderBy: any = [];
+  let orderBy: any = {};
   switch (sort) {
     case "Most Viewed":
-      orderBy = [{ metadata: { views: 'desc' } }];
+      orderBy = { metadata: { views: 'desc' } };
       break;
     case "Most Liked":
-      orderBy = [{ metadata: { likes: 'desc' } }];
+      orderBy = { metadata: { likes: 'desc' } };
       break;
     case "Newest":
     default:
-      orderBy = [{ metadata: { date: 'desc' } }];
+      orderBy = { metadata: { date: 'desc' } };
       break;
   }
 
   const bposts = await prisma.posts.findMany({
-    skip: 4 * batch,
-    take: 4,
+    skip: 10 * batch,
+    take: 10,
     where,
     orderBy,
     select: {

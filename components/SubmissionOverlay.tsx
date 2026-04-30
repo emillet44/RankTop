@@ -5,7 +5,6 @@ import { faExclamationTriangle, faCheckCircle } from '@fortawesome/free-solid-sv
 import { useRouter } from 'next/navigation';
 import { newList } from '@/components/serverActions/listupload';
 import { saveReRanking } from '@/components/serverActions/rerankupload';
-import { getSignedGCSUrl } from '@/lib/signedurls';
 
 interface Timestamp {
   rankIndex: number;
@@ -312,16 +311,22 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
           let completed = 0;
           await Promise.all(
             imageEntries.map(async (entry) => {
-              const uploadUrl = await getSignedGCSUrl('ranktop-i', entry.name, 'write');
-              if (!uploadUrl) throw new Error(`Failed to get upload URL for ${entry.name}`);
-              
-              await uploadWithProgress(uploadUrl, entry.file, (pct) => {
-                // Individual file progress within the total image set
-                const currentTotalProgress = (completed + pct/100) / total;
-                scheduleProgress(10 + currentTotalProgress * 85);
+              const uploadFormData = new FormData();
+              uploadFormData.append('file', entry.file);
+              uploadFormData.append('name', entry.name);
+
+              const uploadRes = await fetch('/api/posts/upload', {
+                method: 'POST',
+                body: uploadFormData,
               });
+
+              if (!uploadRes.ok) {
+                const errorData = await uploadRes.json();
+                throw new Error(errorData.error || `Upload failed with status ${uploadRes.status}`);
+              }
               
               completed++;
+              scheduleProgress(10 + (completed / total) * 85);
               setMessage(`Uploading images... ${completed}/${total}`);
             })
           );
@@ -354,15 +359,22 @@ export const SubmissionOverlay: React.FC<SubmissionOverlayProps> = ({
             let completed = 0;
             await Promise.all(
               imageEntries.map(async (entry) => {
-                const uploadUrl = await getSignedGCSUrl('ranktop-i', entry.name, 'write');
-                if (!uploadUrl) throw new Error(`Failed to get upload URL for ${entry.name}`);
-                
-                await uploadWithProgress(uploadUrl, entry.file, (pct) => {
-                  const currentTotalProgress = (completed + pct/100) / total;
-                  scheduleProgress(10 + currentTotalProgress * 85);
+                const uploadFormData = new FormData();
+                uploadFormData.append('file', entry.file);
+                uploadFormData.append('name', entry.name);
+
+                const uploadRes = await fetch('/api/posts/upload', {
+                  method: 'POST',
+                  body: uploadFormData,
                 });
+
+                if (!uploadRes.ok) {
+                  const errorData = await uploadRes.json();
+                  throw new Error(errorData.error || `Upload failed with status ${uploadRes.status}`);
+                }
                 
                 completed++;
+                scheduleProgress(10 + (completed / total) * 85);
                 setMessage(`Uploading images... ${completed}/${total}`);
               })
             );
