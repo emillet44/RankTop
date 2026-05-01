@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from 'next/image';
 import Script from 'next/script';
@@ -64,6 +64,22 @@ export function PostContent({
   const [viewMode, setViewMode] = useState<ViewMode>('original');
   const [optimisticRerank, setOptimisticRerank] = useState<any>(existingUserRerank);
 
+  useEffect(() => {
+    // Session-based cooldown to prevent view inflation from back-navigation/refresh
+    const sessionKey = `viewed_${id}`;
+    const hasViewed = sessionStorage.getItem(sessionKey);
+
+    if (!hasViewed) {
+      fetch(`/api/posts/${id}/views`, {
+        method: 'POST',
+      })
+      .then(() => {
+        sessionStorage.setItem(sessionKey, 'true');
+      })
+      .catch((err) => console.error("Error tracking view:", err));
+    }
+  }, [id]);
+
   const handleRerankSubmit = (newRerankData: any) => {
     setOptimisticRerank(newRerankData);
     setViewMode('mine');
@@ -81,7 +97,10 @@ export function PostContent({
   const originalItemMap = new Map<string, number>();
   const normalizeText = (text: string) => text.toLowerCase().trim().replace(/[^\w\s]/g, '');
 
-  const postItems = (post.items as any as Item[] || []);
+  const postItems = (post.items as any as Item[] || []).map((item, index) => ({
+    ...item,
+    imageUrl: imageUrls?.[index] || (item as any).imageUrl || null
+  }));
   postItems.forEach((item, index) => {
     originalItemMap.set(normalizeText(item.text), index);
   });

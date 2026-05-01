@@ -106,6 +106,12 @@ export function RerankItem({ rerank, postId, userid }: { rerank: any, postId: st
             <span className="text-[9px] text-slate-500 font-bold  tracking-[0.2em]">
               {new Date(rerank.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </span>
+            <Link 
+              href={`/post/${postId}/rerank/${rerank.id}`}
+              className="px-3 py-1 rounded-full bg-blue-600/10 border border-blue-500/20 text-[9px] font-black text-blue-400 uppercase tracking-wider hover:bg-blue-600/20 transition-all active:scale-[0.98]"
+            >
+              Visit
+            </Link>
           </div>
         </div>
       )}

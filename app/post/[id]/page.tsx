@@ -1,6 +1,5 @@
 import { Header } from "@/components/headers/Header";
 import { Footer } from "@/components/Footer";
-import { runReport } from "@/components/serverActions/pageview";
 import { Metadata } from "next";
 import { LoadSinglePost } from "@/components/serverActions/loadposts";
 import { fetchImageMetadata } from "@/components/serverActions/findimage";
@@ -86,7 +85,7 @@ export default async function Post(props: { params: Promise<{ id: string }> }) {
   })) != null;
 
   const yours = (post.username === username) || (username === "Cinnamon");
-  const views = await runReport(`/post/${params.id}`);
+  const views = post.metadata?.views || 0;
   const editable = views < 10;
   const videoThumbnail = `https://storage.googleapis.com/ranktop-v-thumb/${params.id}.jpg`;
   const enableReRanking = post.reRankType !== "NONE";

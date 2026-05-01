@@ -3,7 +3,6 @@ import { Footer } from "@/components/Footer";
 import { LoadBatchCat } from "@/components/serverActions/loadposts";
 import { Metadata } from 'next'
 import PostList from "@/components/PostList";
-import { UpdatePostViews } from "@/components/serverActions/batchviews";
 
 //The description under the title when it shows up on Google Search
 export const metadata: Metadata = {
@@ -19,8 +18,6 @@ export const metadata: Metadata = {
 //Who even is that guy? Anyways this page is now the only page to view posts, and loads posts dynamically in batches of 3, however with more posts 20 seems more adequate. This
 //page should also host the "Sort by" selector with options for views, likes, and categories in the future.
 export default async function Home() {
-
-  //UpdatePostViews();
 
   const starter = await LoadBatchCat(0, "All");
   return (

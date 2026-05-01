@@ -197,6 +197,19 @@ export async function LoadGroupResults(search: string) {
   return groups;
 }
 
+export async function LoadPublicGroups() {
+  const groups = await prisma.groups.findMany({
+    take: 12,
+    where: {
+      private: false,
+    },
+    orderBy: {
+      population: 'desc'
+    }
+  });
+  return groups;
+}
+
 export async function LoadUserPosts(batch: number, userid: string) {
   const uposts = await prisma.posts.findMany({
     skip: 9 * batch,
