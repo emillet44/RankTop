@@ -203,7 +203,7 @@ export const OverlayPreview = memo(function OverlayPreview({
         bgRafRef.current = null;
       }
     };
-  }, [frameLoaded, config.pushVideoDown, title, SERVER]);
+  }, [frameLoaded, config.pushVideoDown, config.subtitle, title, SERVER]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // LAYER B — Backdrop + title + ranks

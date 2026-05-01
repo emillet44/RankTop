@@ -8,7 +8,8 @@ import {
   faEye, 
   faEyeSlash, 
   faMagnifyingGlass,
-  faArrowRight
+  faArrowRight,
+  faCheck
 } from "@fortawesome/free-solid-svg-icons";
 import { FindGroup } from "./serverActions/addtogroup";
 
@@ -148,7 +149,8 @@ export function JoinGroupModal({ userid, onClose }: JoinGroupModalProps) {
               {message === "member" && (
                 <div className="text-center space-y-4">
                   <h3 className="text-lg font-black text-white">Already a Member</h3>
-                  <p className="text-slate-400 text-sm">You're already part of this community.</p>
+                  <p className="text-slate-400 text-sm">You&apos;re already part of this community.</p>
+
                   <button onClick={onClose} className="w-full py-3 bg-blue-600 text-white font-bold rounded-2xl transition-colors">
                     Close
                   </button>

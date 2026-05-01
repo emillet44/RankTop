@@ -69,7 +69,7 @@ export default function GroupsClient({ signedin, userid, usergroups, publicGroup
                   </div>
                 ) : usergroups.length === 0 ? (
                   <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-8 text-center">
-                    <p className="text-slate-400 text-xs font-medium">You haven't joined any groups yet.</p>
+                    <p className="text-slate-400 text-xs font-medium">You haven&apos;t joined any groups yet.</p>
                   </div>
                 ) : (
                   usergroups.map((group) => (

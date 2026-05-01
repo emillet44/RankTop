@@ -280,7 +280,7 @@ export function RerankForm({ post, id, initialImages, existingRerank, onOptimist
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', handleRelease);
     window.addEventListener('pointercancel', handleRelease);
-  }, [isFull, editingIndex]);
+  }, [isFull, editingIndex, startDragLoop]);
 
   const endDrag = useCallback(() => {
 
