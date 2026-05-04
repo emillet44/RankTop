@@ -12,42 +12,59 @@ export async function saveReRanking(formData: FormData, id: string) {
   // Note: This action expects metadata only. Images are uploaded directly 
   // from the client to GCS to bypass the 1MB server action limit.
 
-  if (!userid) throw new Error("Authentication required");
-
   try {
-    // 1. Check if user already has a reranking for this post BEFORE upserting
-    const existingRerank = await prisma.reRankings.findUnique({
-      where: {
-        userId_postId: {
-          userId: userid,
-          postId: id
-        }
-      }
-    });
+    let reranking;
+    let isNewRerank = false;
 
-    // 2. Handle the ReRankings record using upsert
-    const reranking = await prisma.reRankings.upsert({
-      where: {
-        userId_postId: {
-          userId: userid,
-          postId: id
+    if (userid) {
+      // 1. Check if user already has a reranking for this post
+      const existingRerank = await prisma.reRankings.findUnique({
+        where: {
+          userId_postId: {
+            userId: userid,
+            postId: id
+          }
         }
-      },
-      update: {
-        rankMap: rankMap,
-        createdAt: new Date() // Reset creation time on update
-      },
-      create: {
-        postId: id,
-        userId: userid,
-        items: [], // placeholder
-        normalizedItems: [], // placeholder
-        rankMap: rankMap
-      }
-    });
+      });
 
-    // 3. Increment rerankCount in Post_Metadata ONLY if it's a new re-ranking
-    if (!existingRerank) {
+      if (!existingRerank) isNewRerank = true;
+
+      // 2. Handle the ReRankings record using upsert for authenticated users
+      reranking = await prisma.reRankings.upsert({
+        where: {
+          userId_postId: {
+            userId: userid,
+            postId: id
+          }
+        },
+        update: {
+          rankMap: rankMap,
+          createdAt: new Date() // Reset creation time on update
+        },
+        create: {
+          postId: id,
+          userId: userid,
+          items: [], // placeholder
+          normalizedItems: [], // placeholder
+          rankMap: rankMap
+        }
+      });
+    } else {
+      // 3. For anonymous users, always create a new record
+      isNewRerank = true;
+      reranking = await prisma.reRankings.create({
+        data: {
+          postId: id,
+          userId: null,
+          items: [], // placeholder
+          normalizedItems: [], // placeholder
+          rankMap: rankMap
+        }
+      });
+    }
+
+    // 4. Increment rerankCount in Post_Metadata ONLY if it's a new re-ranking
+    if (isNewRerank) {
       await prisma.post_Metadata.update({
         where: { postId: id },
         data: {
